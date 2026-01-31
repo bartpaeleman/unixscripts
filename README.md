@@ -20,6 +20,7 @@ Standalone utility scripts for web development and system maintenance.
 | :--- | :--- | :--- |
 | **Web Scaffold** | Generates standard HTML/PHP/CSS/JS project structures. | [Read More](dev-scripts/web-scaffold/README.md) |
 | **DB Tools** | Database backup utilities for MySQL/MariaDB. | [Read More](dev-scripts/db-tools/README.md) |
+| **Container Master** | Interactive Docker/Container Station management. | [Read More](dev-scripts/container-master/README.md) |
 | **Cleanup** | Removes `.DS_Store`, `Thumbs.db` and other system junk files. | [Read More](dev-scripts/cleanup/README.md) |
 
 ## Quick Start
