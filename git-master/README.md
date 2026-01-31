@@ -20,6 +20,7 @@ git-master-clean/
 │   ├── .env.team       # Team deployment template
 │   └── .gitignore      # Security protection
 └── docs/               # Documentation
+    ├── PACKAGR-INFO`.md
     ├── QUICKSTART.md   # 5-minute setup guide
     ├── INSTALL-GUIDE.md
     ├── README.md       # Complete manual
