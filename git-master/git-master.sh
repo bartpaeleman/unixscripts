@@ -9,8 +9,8 @@ set -euo pipefail  # Exit on error, undefined vars, pipe failures
 
 # --- ENVIRONMENT DETECTION ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ENV_FILE="${SCRIPT_DIR}/.env"
-ENV_EXAMPLE="${SCRIPT_DIR}/.env.example"
+ENV_FILE="${SCRIPT_DIR}/config/.env"
+ENV_EXAMPLE="${SCRIPT_DIR}/config/.env.example"
 
 # Load environment variables
 load_env() {
