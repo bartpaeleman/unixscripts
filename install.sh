@@ -41,28 +41,49 @@ if [[ -f ".env" ]]; then
     [[ "$overwrite" != "y" ]] && printf "${GREEN}Keeping existing .env${NC}\n" && exit 0
 fi
 
-# Step 2: Copy template
-printf "${CYAN}Creating .env from template...${NC}\n"
-cp .env.example .env
+# Step 2: Copy template or use existing .env
+if [[ -f ".env" ]] && [[ -s ".env" ]]; then
+    printf "${GREEN}.env file found in repository${NC}\n"
+    read -p "Use this .env file? (y/n): " use_existing
+    
+    if [[ "$use_existing" != "y" ]]; then
+        printf "${CYAN}Creating .env from template...${NC}\n"
+        cp .env.example .env
+        NEED_CONFIG=true
+    else
+        printf "${GREEN}Using existing .env configuration${NC}\n"
+        NEED_CONFIG=false
+    fi
+else
+    printf "${CYAN}Creating .env from template...${NC}\n"
+    cp .env.example .env
+    NEED_CONFIG=true
+fi
 
-# Step 3: Gather configuration
-printf "\n${CYAN}Please provide the following information:${NC}\n\n"
+# Step 3: Gather configuration (only if needed)
+if [[ "$NEED_CONFIG" == true ]]; then
+    printf "\n${CYAN}Please provide the following information:${NC}\n\n"
 
-read -p "GitHub Username: " gh_user
-read -sp "GitHub Token (input hidden): " gh_token
-printf "\n"
-read -p "Projects root path [${DEFAULT_ROOT}]: " path_root
-path_root="${path_root:-$DEFAULT_ROOT}"
+    read -p "GitHub Username: " gh_user
+    read -sp "GitHub Token (input hidden): " gh_token
+    printf "\n"
+    read -p "Projects root path [${DEFAULT_ROOT}]: " path_root
+    path_root="${path_root:-$DEFAULT_ROOT}"
 
-# Step 4: Update .env file
-printf "\n${CYAN}Updating configuration...${NC}\n"
+    # Step 4: Update .env file
+    printf "\n${CYAN}Updating configuration...${NC}\n"
 
-sed -i.bak "s|GITHUB_TOKEN=\"\"|GITHUB_TOKEN=\"${gh_token}\"|g" .env
-sed -i.bak "s|GITHUB_USERNAME=\"\"|GITHUB_USERNAME=\"${gh_user}\"|g" .env
-sed -i.bak "s|PATH_ROOT=\"/share/Web\"|PATH_ROOT=\"${path_root}\"|g" .env
+    sed -i.bak "s|GITHUB_TOKEN=\"\"|GITHUB_TOKEN=\"${gh_token}\"|g" .env
+    sed -i.bak "s|GITHUB_USERNAME=\"\"|GITHUB_USERNAME=\"${gh_user}\"|g" .env
+    sed -i.bak "s|PATH_ROOT=\"/share/Web\"|PATH_ROOT=\"${path_root}\"|g" .env
 
-# Remove backup
-rm -f .env.bak
+    # Remove backup
+    rm -f .env.bak
+else
+    # Load existing .env to get path_root for directory creation
+    source .env
+    path_root="${PATH_ROOT}"
+fi
 
 # Step 5: Set permissions
 printf "${CYAN}Setting secure permissions...${NC}\n"
@@ -101,15 +122,23 @@ elif [[ "$PLATFORM" == "QNAP" ]]; then
         PERSIST_FILE="${path_root}/DEV/scripts/.env"
         PERSIST_SCRIPT="${path_root}/DEV/scripts/git-master.sh"
         
-        # Copy files
+        # Create scripts directory
         mkdir -p "${path_root}/DEV/scripts"
+        
+        # Copy files to persistent location
+        printf "${CYAN}Copying files to persistent location...${NC}\n"
         cp .env "$PERSIST_FILE"
         cp git-master.sh "$PERSIST_SCRIPT"
+        
+        # Set permissions
         chmod 600 "$PERSIST_FILE"
         chmod 700 "$PERSIST_SCRIPT"
         
+        printf "${GREEN}✓ Files copied to ${path_root}/DEV/scripts/${NC}\n"
+        
         # Update /etc/profile
         if ! grep -q "git-master" /etc/profile 2>/dev/null; then
+            printf "${CYAN}Updating /etc/profile...${NC}\n"
             printf "\n# Git Master Setup\n" >> /etc/profile
             printf "source ${PERSIST_FILE}\n" >> /etc/profile
             printf "alias gitmaster='${PERSIST_SCRIPT}'\n" >> /etc/profile
@@ -117,6 +146,8 @@ elif [[ "$PLATFORM" == "QNAP" ]]; then
             printf "alias dev='cd ${path_root}/DEV'\n" >> /etc/profile
             printf "alias test='cd ${path_root}/TEST'\n" >> /etc/profile
             printf "${GREEN}✓ Persistence installed${NC}\n"
+        else
+            printf "${YELLOW}⚠ /etc/profile already contains git-master config${NC}\n"
         fi
     fi
 fi
@@ -139,9 +170,21 @@ printf "${GREEN}${BOLD}╚══════════════════
 
 printf "${CYAN}Configuration Summary:${NC}\n"
 printf "  Platform: ${PLATFORM}\n"
-printf "  Username: ${gh_user}\n"
+if [[ "$NEED_CONFIG" == false ]]; then
+    printf "  Config: ${GREEN}Using repository .env file${NC}\n"
+else
+    printf "  Username: ${gh_user}\n"
+fi
 printf "  Root: ${path_root}\n"
-printf "  Script: ${SCRIPT_DIR}/git-master.sh\n\n"
+printf "  Script: ${SCRIPT_DIR}/git-master.sh\n"
+
+# Show persistent location if QNAP
+if [[ "$PLATFORM" == "QNAP" ]] && [[ "$install_persist" == "y" ]]; then
+    printf "  ${YELLOW}Persistent:${NC}\n"
+    printf "    Script: ${path_root}/DEV/scripts/git-master.sh\n"
+    printf "    Config: ${path_root}/DEV/scripts/.env\n"
+fi
+printf "\n"
 
 printf "${CYAN}Next Steps:${NC}\n"
 printf "  1. Run: ${YELLOW}./git-master.sh${NC}\n"

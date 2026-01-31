@@ -26,12 +26,24 @@ chmod +x git-master.sh
 
 ### 2. Configuration
 
+**Option A: Interactive Setup (Recommended for first-time users)**
+
 ```bash
 # Copy the example environment file
 cp .env.example .env
 
 # Edit with your settings
 nano .env  # or vim, code, etc.
+```
+
+**Option B: Pre-configured .env (For team deployment)**
+
+If you already have a configured `.env` file in your repository:
+
+```bash
+# The installer will detect and use your existing .env
+./install.sh
+# Choose 'y' when asked to use the repository .env file
 ```
 
 **Required `.env` settings:**
@@ -287,6 +299,47 @@ For issues or questions:
 - [GitHub Personal Access Tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
 - [Git Documentation](https://git-scm.com/doc)
 - [QNAP CLI Guide](https://www.qnap.com/en/how-to/faq/article/how-to-access-qnap-nas-by-ssh)
+
+## 👥 Team Deployment
+
+For deploying to multiple team members or machines:
+
+### Method 1: Pre-configured .env in Repository
+
+```bash
+# 1. Create a template .env with shared settings
+cp .env.example .env
+
+# 2. Fill in organization-wide settings
+# Keep GITHUB_TOKEN and GITHUB_USERNAME empty for users to fill
+PATH_ROOT="/share/Web"
+# ... other shared settings
+
+# 3. Commit to repository (if .env is NOT in .gitignore)
+git add .env
+git commit -m "Add team .env template"
+
+# 4. Team members clone and run
+git clone <repo>
+cd git-master
+./install.sh  # Will use the repository .env
+```
+
+### Method 2: Separate Team Config Repository
+
+```bash
+# Create a private config repository
+configs/
+├── git-master-team.env
+└── README.md
+
+# Team members download and copy
+cp ~/configs/git-master-team.env ~/git-master/.env
+cd ~/git-master
+./install.sh
+```
+
+**⚠️ Security Note**: Never commit actual tokens to repositories, even private ones. Use .env for paths and usernames only; let each user add their personal token.
 
 ---
 

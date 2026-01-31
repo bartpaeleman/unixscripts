@@ -69,6 +69,8 @@
 - ✅ Platform-specific setup
 - ✅ Comprehensive README
 - ✅ One-command installation
+- ✅ Support for pre-configured .env (team deployment)
+- ✅ Repository .env detection and usage
 
 ## 📊 Detailed Changes
 
