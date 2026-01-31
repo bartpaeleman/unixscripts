@@ -158,23 +158,6 @@ DEFAULT_BRANCH="main"
 AUTO_PRUNE=true
 ```
 
-### Path Structure Example
-
-```
-/share/Web/                    # PATH_ROOT (PROD)
-├── project-a/                 # Production code
-├── project-b/
-└── DEV/                       # PATH_DEV
-    ├── project-a/             # Development versions
-    ├── project-b/
-    ├── scripts/
-    │   ├── git-master.sh
-    │   └── .env
-    └── TEST/                  # PATH_TEST (UAT)
-        ├── project-a/
-        └── project-b/
-```
-
 ## 🛡️ Security Best Practices
 
 1. **Never commit `.env`** - It's in `.gitignore` by default
