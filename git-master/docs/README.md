@@ -2,6 +2,31 @@
 
 Professional Git workflow manager for QNAP NAS and macOS, designed to streamline development cycles on GitHub.
 
+## Quick Start
+
+```bash
+./install.sh    # Run installer
+./git-master.sh # Launch control panel
+```
+
+## What's Inside
+
+```
+git-master-clean/
+├── git-master.sh       # Main script (20+ Git commands)
+├── install.sh          # Interactive installer
+├── config/             # Configuration files
+│   ├── .env.example    # Template (copy to .env)
+│   ├── .env.team       # Team deployment template
+│   └── .gitignore      # Security protection
+└── docs/               # Documentation
+    ├── PACKAGR-INFO.md
+    ├── QUICKSTART.md   # 5-minute setup guide
+    ├── INSTALL-GUIDE.md
+    ├── README.md       # Complete manual
+    └── CHANGELOG.md    # Version history
+```
+
 ## ✨ Features
 
 - **Environment Management**: Seamless switching between PROD, DEV, and TEST
