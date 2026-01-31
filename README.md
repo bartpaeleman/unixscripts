@@ -1,44 +1,48 @@
-# Git Master Control Panel
+# Developer Tools Collection
 
-Professional Git workflow manager for QNAP NAS and macOS, designed to streamline development cycles on GitHub.
+A comprehensive collection of development utilities and scripts designed for QNAP NAS and macOS environments.
 
-## Overview
+## Repository Contents
 
-This repository contains the **Git Master Control Panel**, a command-line interface tool that simplifies complex Git operations, environment management, and release workflows.
+This repository is organized into several toolsets:
 
-### Key Features
+### 1. Git Master Control Panel
+A professional Git workflow manager to simplify development cycles.
+*   **Location**: `git-master/`
+*   **Key Features**: Environment management (PROD/DEV/TEST), automated branching, UAT workflows.
+*   **Documentation**: [Full Docs](git-master/docs/README.md)
 
-*   **Environment Management**: Switch between PROD, DEV, and TEST environments effortlessly.
-*   **Branch Operations**: Simplified creating, switching, and merging of branches.
-*   **UAT & Release**: Tools for User Acceptance Testing and staging releases.
-*   **Maintenance**: Utilities for cleaning up branches, undoing commits, and emergency resets.
-*   **Cross-Platform**: optimized for QNAP NAS and macOS.
+### 2. Development Scripts
+Standalone utility scripts for web development and system maintenance.
+*   **Location**: `dev-scripts/`
 
-## Contents
-
-*   `git-master/git-master.sh`: The main control panel script.
-*   `git-master/install.sh`: Interactive installation script.
-*   `git-master/docs/`: Detailed documentation.
+| Script | Description | Documentation |
+| :--- | :--- | :--- |
+| **Web Scaffold** | Generates standard HTML/PHP/CSS/JS project structures. | [Read More](dev-scripts/web-scaffold/README.md) |
+| **DB Tools** | Database backup utilities for MySQL/MariaDB. | [Read More](dev-scripts/db-tools/README.md) |
+| **Cleanup** | Removes `.DS_Store`, `Thumbs.db` and other system junk files. | [Read More](dev-scripts/cleanup/README.md) |
 
 ## Quick Start
 
-1.  **Clone the repository:**
-    ```bash
-    git clone <repository-url>
-    cd <repository-directory>
-    ```
+### Installing Git Master
+```bash
+cd git-master
+chmod +x install.sh
+./install.sh
+./git-master.sh
+```
 
-2.  **Run the installer:**
-    Navigate to the `git-master` directory and run the install script.
-    ```bash
-    cd git-master
-    chmod +x install.sh
-    ./install.sh
-    ```
+### Using Development Scripts
+Scripts are standalone and can be run directly:
+```bash
+# Example: Create a new web project
+./dev-scripts/web-scaffold/scaffold.sh
 
-3.  **Launch:**
-    ```bash
-    ./git-master.sh
-    ```
+# Example: Backup database
+./dev-scripts/db-tools/db-backup.sh
+```
 
-For detailed usage instructions, configuration options, and troubleshooting, please refer to the [Full Documentation](git-master/docs/README.md).
+## Requirements
+*   Bash Shell
+*   Git
+*   (Optional) MySQL Client for DB tools
