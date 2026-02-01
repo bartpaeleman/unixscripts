@@ -246,7 +246,15 @@ while true; do
             
             sel_repo="${repo_array[$r_idx]}"
             if [[ -n "$sel_repo" ]]; then
-                CLONE_URL="https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/${GITHUB_USERNAME}/${sel_repo}.git"
+                # Fetch actual login handle to ensure correct path (handles case where GITHUB_USERNAME is an email)
+                GH_LOGIN=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user | grep -m 1 '"login":' | sed 's/.*"login": "\([^"]*\)".*/\1/')
+
+                # Fallback to configured username if fetch fails
+                GH_LOGIN="${GH_LOGIN:-$GITHUB_USERNAME}"
+
+                # Construct URL using token for auth (avoids issues with special chars in username)
+                CLONE_URL="https://${GITHUB_TOKEN}@github.com/${GH_LOGIN}/${sel_repo}.git"
+
                 git clone "$CLONE_URL" && cd "$sel_repo" || printf "${RED}Clone failed${NC}\n"
             fi
             read -p "Enter..." junk ;;
