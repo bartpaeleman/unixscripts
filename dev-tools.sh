@@ -69,13 +69,13 @@ if [[ "$INSTALL_ALIAS" == "y" ]]; then
         cat >> "$PROFILE" <<EOF
 
 # --- DEV TOOLS COLLECTION ALIASES ---
-alias devtools='${REPO_DIR}/dev-tools.sh'
-alias gitmaster='${REPO_DIR}/git-master/git-master.sh'
-alias dockermaster='${REPO_DIR}/container-master/container-master.sh'
-alias netmaster='${REPO_DIR}/network-master/network-master.sh'
-alias dbmaster='${REPO_DIR}/db-tools/db-master.sh'
-alias cleanmaster='${REPO_DIR}/cleanup/cleanup-master.sh'
-alias scaffold='${REPO_DIR}/web-scaffold/scaffold.sh'
+alias devtools='"${REPO_DIR}/dev-tools.sh"'
+alias gitmaster='"${REPO_DIR}/git-master/git-master.sh"'
+alias dockermaster='"${REPO_DIR}/container-master/container-master.sh"'
+alias netmaster='"${REPO_DIR}/network-master/network-master.sh"'
+alias dbmaster='"${REPO_DIR}/db-tools/db-master.sh"'
+alias cleanmaster='"${REPO_DIR}/cleanup/cleanup-master.sh"'
+alias scaffold='"${REPO_DIR}/web-scaffold/scaffold.sh"'
 # ------------------------------------
 EOF
         echo -e "${GREEN}✓ Aliases added to $PROFILE${NC}"
