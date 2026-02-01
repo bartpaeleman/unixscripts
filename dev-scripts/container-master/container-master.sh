@@ -5,7 +5,7 @@
 # Docker Management for QNAP Container Station & macOS
 # ============================================================
 
-set -e
+# set -e is disabled for interactive menu stability
 
 # --- COLORS ---
 GREEN='\033[1;32m'
