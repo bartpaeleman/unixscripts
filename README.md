@@ -2,9 +2,16 @@
 
 A comprehensive collection of development utilities and scripts designed for QNAP NAS and macOS environments.
 
-## Repository Contents
+## Quick Start
 
-This repository is organized into several toolsets:
+Initialize all tools with a single command:
+
+```bash
+chmod +x dev-tools.sh
+./dev-tools.sh
+```
+
+## Repository Contents
 
 ### 1. Git Master Control Panel
 A professional Git workflow manager to simplify development cycles.
@@ -14,38 +21,31 @@ A professional Git workflow manager to simplify development cycles.
 
 ### 2. Development Scripts
 Standalone utility scripts for web development and system maintenance.
-*   **Location**: `dev-scripts/`
 
 | Script Suite | Description | Documentation |
 | :--- | :--- | :--- |
-| **Web Scaffold** | Generates standard projects with auto-documentation support. | [Read More](dev-scripts/web-scaffold/README.md) |
-| **DB Master** | Database backup and statistical analysis toolkit. | [Read More](dev-scripts/db-tools/README.md) |
-| **Container Master** | Interactive Docker management and inspection. | [Read More](dev-scripts/container-master/README.md) |
-| **Network Master** | Comprehensive network diagnostics and port scanning. | [Read More](dev-scripts/network-master/README.md) |
-| **Cleanup Master** | System junk removal and duplicate file finder. | [Read More](dev-scripts/cleanup/README.md) |
+| **Web Scaffold** | Generates standard projects with auto-documentation support. | [Read More](web-scaffold/README.md) |
+| **DB Master** | Database backup and statistical analysis toolkit. | [Read More](db-tools/README.md) |
+| **Container Master** | Interactive Docker management and inspection. | [Read More](container-master/README.md) |
+| **Network Master** | Comprehensive network diagnostics and port scanning. | [Read More](network-master/README.md) |
+| **Cleanup Master** | System junk removal and duplicate file finder. | [Read More](cleanup/README.md) |
 
-## Quick Start
+## Usage Examples
 
-### Installing Git Master
-```bash
-cd git-master
-chmod +x install.sh
-./install.sh
-./git-master.sh
-```
-
-### Using Development Scripts
-Scripts are standalone and have their own interactive menus:
+Scripts are standalone and have their own interactive menus. After running `./dev-tools.sh`, you can execute them directly:
 
 ```bash
-# Example: Manage Containers
-./dev-scripts/container-master/container-master.sh
+# Manage Containers
+./container-master/container-master.sh
 
-# Example: Database Tools
-./dev-scripts/db-tools/db-master.sh
+# Database Tools
+./db-tools/db-master.sh
 
-# Example: Network Diagnostics
-./dev-scripts/network-master/network-master.sh
+# Network Diagnostics
+./network-master/network-master.sh
+
+# Create Web Project
+./web-scaffold/scaffold.sh
 ```
 
 ## Requirements

@@ -53,8 +53,10 @@ backup_db() {
 
     # Use set +e locally to catch error without exiting script
     set +e
+    set -o pipefail
     mysqldump --defaults-extra-file="$TMP_CNF" "$DB_NAME" | gzip > "$FILENAME"
     STATUS=$?
+    set +o pipefail
     set -e
 
     if [ $STATUS -eq 0 ]; then
@@ -80,7 +82,9 @@ analyze_db() {
     get_creds
 
     echo -e "\nFetching statistics..."
-    python3 "$SCRIPT_DIR/db_stats.py" "$DB_HOST" "$DB_USER" "$DB_PASS" "$DB_NAME"
+    export DB_PASS
+    python3 "$SCRIPT_DIR/db_stats.py" "$DB_HOST" "$DB_USER" "$DB_NAME"
+    unset DB_PASS
     pause
 }
 

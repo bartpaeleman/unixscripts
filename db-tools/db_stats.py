@@ -1,8 +1,10 @@
 import sys
+import os
 import subprocess
 import re
 
-def get_db_stats(host, user, password, db_name):
+def get_db_stats(host, user, db_name):
+    password = os.environ.get('DB_PASS', '')
     # SQL query to get table sizes
     sql = f"""
     SELECT
@@ -28,8 +30,9 @@ def get_db_stats(host, user, password, db_name):
         print("Error: 'mysql' command not found.")
 
 if __name__ == "__main__":
-    if len(sys.argv) != 5:
-        print("Usage: python3 db_stats.py <host> <user> <password> <db_name>")
+    if len(sys.argv) != 4:
+        print("Usage: python3 db_stats.py <host> <user> <db_name>")
+        print("Note: DB_PASS must be set as an environment variable.")
         sys.exit(1)
 
-    get_db_stats(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    get_db_stats(sys.argv[1], sys.argv[2], sys.argv[3])
