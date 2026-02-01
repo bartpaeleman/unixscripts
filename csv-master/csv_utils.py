@@ -83,29 +83,32 @@ def convert_delimiter(filepath, output_path, old_delim, new_delim):
 
 def csv_to_json(filepath, output_path, delimiter=None):
     try:
-        with open(filepath, 'r', encoding='utf-8') as fin, \
-             open(output_path, 'w', encoding='utf-8') as fout:
+        with open(filepath, 'r', encoding='utf-8') as f_in, \
+             open(output_path, 'w', encoding='utf-8') as f_out:
 
             if not delimiter:
-                 delimiter = detect_delimiter(fin.readline())
-                 fin.seek(0)
+                 delimiter = detect_delimiter(f_in.readline())
+                 f_in.seek(0)
 
-            reader = csv.DictReader(fin, delimiter=delimiter)
+            reader = csv.DictReader(f_in, delimiter=delimiter)
 
-            fout.write("[\n")
+            f_out.write('[\n')
+
             first = True
             for row in reader:
                 if not first:
-                    fout.write(",\n")
+                    f_out.write(',\n')
+
+                # Dump the row to a JSON string with indentation
+                json_str = json.dumps(row, indent=4)
+
+                # Indent the entire JSON string by 4 spaces to align with the array
+                indented_json = '\n'.join('    ' + line for line in json_str.splitlines())
+
+                f_out.write(indented_json)
                 first = False
 
-                # Serialize row with indentation
-                json_str = json.dumps(row, indent=4)
-                # Indent the whole block
-                indented_json_str = "\n".join("    " + line for line in json_str.split("\n"))
-                fout.write(indented_json_str)
-
-            fout.write("\n]")
+            f_out.write('\n]')
 
         print(f"Successfully exported to {output_path}")
     except Exception as e:
