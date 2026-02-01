@@ -1,22 +1,30 @@
-# Database Backup Tool
+# Database Master Tool
 
-A secure wrapper script for `mysqldump` to quickly create gzipped backups of MySQL or MariaDB databases. Designed for QNAP and macOS development environments.
+A comprehensive toolkit for managing MySQL/MariaDB databases on QNAP and macOS. Includes backup capabilities and python-powered statistical analysis.
 
 ## Usage
 
 ```bash
-./db-backup.sh
+./db-master.sh
 ```
 
 ## Features
 
-- **Interactive**: Prompts for database details (Name, User, Host).
-- **Secure**: Handles password input securely (hides typing) and avoids "password on command line" warnings by using temporary config files.
-- **Compressed**: Automatically gzips the output file to save space.
-- **Auto-Detection**: Attempts to locate `mysqldump` in common QNAP paths if not in global PATH.
+### 1. Backup
+- **Secure**: Uses temporary credentials files to avoid CLI password exposure.
+- **Compressed**: Creates `.sql.gz` archives.
+- **Safe**: Auto-cleans failed partial backups.
+
+### 2. Analysis
+- **Python Integration**: Uses `db_stats.py` to query metadata.
+- **Visual Stats**: Displays a formatted table of:
+    - Table Names
+    - Size (MB)
+    - Row Counts
+- **Health Check**: Quickly identify bloating tables.
 
 ## Requirements
 
-- `mysqldump` (MySQL Client)
+- `mysql` client (and `mysqldump`)
+- `python3` (for analysis)
 - `gzip`
-- Bash shell

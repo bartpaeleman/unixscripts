@@ -16,13 +16,13 @@ A professional Git workflow manager to simplify development cycles.
 Standalone utility scripts for web development and system maintenance.
 *   **Location**: `dev-scripts/`
 
-| Script | Description | Documentation |
+| Script Suite | Description | Documentation |
 | :--- | :--- | :--- |
-| **Web Scaffold** | Generates standard HTML/PHP/CSS/JS project structures. | [Read More](dev-scripts/web-scaffold/README.md) |
-| **DB Tools** | Database backup utilities for MySQL/MariaDB. | [Read More](dev-scripts/db-tools/README.md) |
-| **Container Master** | Interactive Docker/Container Station management. | [Read More](dev-scripts/container-master/README.md) |
-| **Network Master** | Comprehensive menu for network diagnostics and tools. | [Read More](dev-scripts/network-master/README.md) |
-| **Cleanup** | Removes `.DS_Store`, `Thumbs.db` and other system junk files. | [Read More](dev-scripts/cleanup/README.md) |
+| **Web Scaffold** | Generates standard projects with auto-documentation support. | [Read More](dev-scripts/web-scaffold/README.md) |
+| **DB Master** | Database backup and statistical analysis toolkit. | [Read More](dev-scripts/db-tools/README.md) |
+| **Container Master** | Interactive Docker management and inspection. | [Read More](dev-scripts/container-master/README.md) |
+| **Network Master** | Comprehensive network diagnostics and port scanning. | [Read More](dev-scripts/network-master/README.md) |
+| **Cleanup Master** | System junk removal and duplicate file finder. | [Read More](dev-scripts/cleanup/README.md) |
 
 ## Quick Start
 
@@ -35,16 +35,21 @@ chmod +x install.sh
 ```
 
 ### Using Development Scripts
-Scripts are standalone and can be run directly:
-```bash
-# Example: Create a new web project
-./dev-scripts/web-scaffold/scaffold.sh
+Scripts are standalone and have their own interactive menus:
 
-# Example: Backup database
-./dev-scripts/db-tools/db-backup.sh
+```bash
+# Example: Manage Containers
+./dev-scripts/container-master/container-master.sh
+
+# Example: Database Tools
+./dev-scripts/db-tools/db-master.sh
+
+# Example: Network Diagnostics
+./dev-scripts/network-master/network-master.sh
 ```
 
 ## Requirements
 *   Bash Shell
 *   Git
-*   (Optional) MySQL Client for DB tools
+*   Python 3 (Required for Analysis, Stats, and Scanning features)
+*   Standard utilities (mysql, docker, etc.)

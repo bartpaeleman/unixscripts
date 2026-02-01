@@ -1,25 +1,27 @@
-# Project Cleanup Tool
+# Cleanup Master Tool
 
-A utility script to recursively remove operating system metadata files and other "junk" that often accidentally ends up in repositories or web server directories.
+A unified utility for maintaining clean file systems on development machines.
 
 ## Usage
 
 ```bash
-# Clean current directory
-./clean-junk.sh
-
-# Clean specific directory
-./clean-junk.sh /path/to/project
+./cleanup-master.sh
 ```
-
-## What it cleans
-
-- **.DS_Store**: macOS Folder settings
-- **Thumbs.db**: Windows Thumbnail cache
-- **._***: macOS Resource forks (common on non-HFS drives like QNAP SMB shares)
 
 ## Features
 
-- **Safe**: Scans and reports what it finds first.
-- **Interactive**: Requires confirmation before deleting files.
-- **Recursive**: Cleans subdirectories as well.
+### 1. System Junk Cleaner
+Recursively removes operating system metadata files that clutter repositories.
+- **Targets**: `.DS_Store` (macOS), `Thumbs.db` (Windows), `._*` (AppleDouble files).
+- **Safety**: Counts files and asks for confirmation before deletion.
+
+### 2. Duplicate Finder
+Uses Python to identify duplicate files based on content (MD5 hash), not just name.
+- **Script**: `dedupe.py`
+- **Output**: Lists original and duplicate file paths.
+- **Safety**: Read-only mode (does not delete duplicates automatically).
+
+## Requirements
+
+- Bash Shell
+- Python 3 (for duplicate finder)

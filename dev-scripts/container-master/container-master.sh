@@ -218,7 +218,11 @@ while true; do
         2) view_logs ;;
         3)
            read -p "Container Name/ID: " c_id
-           docker inspect "$c_id" | less
+           if command -v python3 &> /dev/null; then
+               python3 "$SCRIPT_DIR/inspect_viewer.py" "$c_id" | less
+           else
+               docker inspect "$c_id" | less
+           fi
            ;;
         4) manage_lifecycle "start" ;;
         5) manage_lifecycle "stop" ;;

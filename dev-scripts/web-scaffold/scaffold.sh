@@ -157,4 +157,17 @@ EOF
 chmod +x "$INSTALL_PATH/index.php"
 
 echo -e "${GREEN}✓ Project created successfully at: $INSTALL_PATH${NC}"
+
+# 5. Optional Documentation
+echo -e "\n${CYAN}--- Documentation ---${NC}"
+read -p "Generate README.md? (y/n): " GEN_DOC
+if [[ "$GEN_DOC" == "y" ]]; then
+    if command -v python3 &> /dev/null; then
+        python3 "$(dirname "$0")/generate_readme.py" "$INSTALL_PATH" "$PROJECT_NAME"
+    else
+        echo -e "${YELLOW}Python3 not found. Skipping README generation.${NC}"
+    fi
+fi
+
+echo -e "\n${GREEN}All done!${NC}"
 echo -e "  To start: cd $INSTALL_PATH"
