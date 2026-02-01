@@ -10,7 +10,7 @@ def analyze_text(filepath):
         lines = content.splitlines()
         words = re.findall(r'\b\w+\b', content.lower())
         chars = len(content)
-        non_space_chars = len(content.replace(" ", "").replace("\n", ""))
+        non_space_chars = len(content) - content.count(" ") - content.count("\n")
 
         # Frequency
         word_counts = collections.Counter(words)
