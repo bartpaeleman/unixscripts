@@ -4,23 +4,29 @@ import re
 
 def analyze_text(filepath):
     try:
+        lines_count = 0
+        word_counts = collections.Counter()
+        chars_count = 0
+        non_space_chars_count = 0
+        total_words_count = 0
+
         with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
-            content = f.read()
+            for line in f:
+                lines_count += 1
+                chars_count += len(line)
+                non_space_chars_count += len(line.replace(" ", "").replace("\n", ""))
 
-        lines = content.splitlines()
-        words = re.findall(r'\b\w+\b', content.lower())
-        chars = len(content)
-        non_space_chars = len(content.replace(" ", "").replace("\n", ""))
+                words = re.findall(r'\b\w+\b', line.lower())
+                word_counts.update(words)
+                total_words_count += len(words)
 
-        # Frequency
-        word_counts = collections.Counter(words)
         top_10 = word_counts.most_common(10)
 
         print(f"--- Statistics for {filepath} ---")
-        print(f"Lines:            {len(lines)}")
-        print(f"Words:            {len(words)}")
-        print(f"Characters:       {chars}")
-        print(f"Chars (no space): {non_space_chars}")
+        print(f"Lines:            {lines_count}")
+        print(f"Words:            {total_words_count}")
+        print(f"Characters:       {chars_count}")
+        print(f"Chars (no space): {non_space_chars_count}")
         print("-" * 30)
         print("Top 10 Words:")
         for word, count in top_10:
