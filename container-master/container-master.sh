@@ -56,8 +56,11 @@ list_containers() {
 
 view_logs() {
     echo -e "\n${CYAN}Select container to view logs:${NC}"
-    # Get list of container names
-    mapfile -t containers < <(docker ps -a --format "{{.Names}}")
+    # Get list of container names - macOS compatible way
+    containers=()
+    while IFS= read -r line; do
+        containers+=("$line")
+    done < <(docker ps -a --format "{{.Names}}")
 
     if [[ ${#containers[@]} -eq 0 ]]; then
         echo "No containers found."
@@ -83,7 +86,10 @@ manage_lifecycle() {
     local action="$1" # start, stop, restart
     echo -e "\n${CYAN}Select container to $action:${NC}"
 
-    mapfile -t containers < <(docker ps -a --format "{{.Names}}")
+    containers=()
+    while IFS= read -r line; do
+        containers+=("$line")
+    done < <(docker ps -a --format "{{.Names}}")
 
     if [[ ${#containers[@]} -eq 0 ]]; then
         echo "No containers found."
@@ -218,7 +224,11 @@ while true; do
         2) view_logs ;;
         3)
            read -p "Container Name/ID: " c_id
-           docker inspect "$c_id" | less
+           if command -v python3 &> /dev/null; then
+               python3 "$SCRIPT_DIR/inspect_viewer.py" "$c_id" | less
+           else
+               docker inspect "$c_id" | less
+           fi
            ;;
         4) manage_lifecycle "start" ;;
         5) manage_lifecycle "stop" ;;

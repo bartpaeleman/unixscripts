@@ -6,6 +6,7 @@ A robust, interactive shell script for managing Docker containers on QNAP Contai
 
 - **Interactive Menu**: Manage containers without memorizing Docker CLI commands.
 - **Monitoring**: View running containers, status, and live logs.
+- **Advanced Inspection**: Uses Python to parse complex JSON output from `docker inspect` into a human-readable summary (IPs, Ports, Volumes).
 - **Lifecycle Management**: Start, stop, restart, and remove containers.
 - **Stack Creation**: Quickly deploy stacks using pre-defined Docker Compose templates (LAMP, Node.js).
 - **Cleanup**: Utilities to prune unused images, containers, and volumes.
@@ -34,7 +35,8 @@ The `templates/` directory contains Docker Compose files for common stacks.
 - **lamp-stack**: PHP 8.2, Apache, MariaDB, phpMyAdmin.
 - **node-app**: Node.js 18 development environment.
 
-## Troubleshooting
+## Requirements
 
-- **"docker command not found"**: Ensure Container Station is installed (QNAP) or Docker Desktop is running (macOS).
-- **Permission denied**: You may need `sudo` if your user is not in the `docker` group.
+- Docker / Container Station
+- Bash Shell
+- Python 3 (for Advanced Inspection)

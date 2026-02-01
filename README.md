@@ -2,9 +2,16 @@
 
 A comprehensive collection of development utilities and scripts designed for QNAP NAS and macOS environments.
 
-## Repository Contents
+## Quick Start
 
-This repository is organized into several toolsets:
+Initialize all tools with a single command:
+
+```bash
+chmod +x dev-tools.sh
+./dev-tools.sh
+```
+
+## Repository Contents
 
 ### 1. Git Master Control Panel
 A professional Git workflow manager to simplify development cycles.
@@ -14,37 +21,35 @@ A professional Git workflow manager to simplify development cycles.
 
 ### 2. Development Scripts
 Standalone utility scripts for web development and system maintenance.
-*   **Location**: `dev-scripts/`
 
-| Script | Description | Documentation |
+| Script Suite | Description | Documentation |
 | :--- | :--- | :--- |
-| **Web Scaffold** | Generates standard HTML/PHP/CSS/JS project structures. | [Read More](dev-scripts/web-scaffold/README.md) |
-| **DB Tools** | Database backup utilities for MySQL/MariaDB. | [Read More](dev-scripts/db-tools/README.md) |
-| **Container Master** | Interactive Docker/Container Station management. | [Read More](dev-scripts/container-master/README.md) |
-| **Network Master** | Comprehensive menu for network diagnostics and tools. | [Read More](dev-scripts/network-master/README.md) |
-| **Cleanup** | Removes `.DS_Store`, `Thumbs.db` and other system junk files. | [Read More](dev-scripts/cleanup/README.md) |
+| **Web Scaffold** | Generates standard projects with auto-documentation support. | [Read More](web-scaffold/README.md) |
+| **DB Master** | Database backup and statistical analysis toolkit. | [Read More](db-tools/README.md) |
+| **Container Master** | Interactive Docker management and inspection. | [Read More](container-master/README.md) |
+| **Network Master** | Comprehensive network diagnostics and port scanning. | [Read More](network-master/README.md) |
+| **Cleanup Master** | System junk removal and duplicate file finder. | [Read More](cleanup/README.md) |
 
-## Quick Start
+## Usage Examples
 
-### Installing Git Master
+Scripts are standalone and have their own interactive menus. After running `./dev-tools.sh`, you can execute them directly:
+
 ```bash
-cd git-master
-chmod +x install.sh
-./install.sh
-./git-master.sh
-```
+# Manage Containers
+./container-master/container-master.sh
 
-### Using Development Scripts
-Scripts are standalone and can be run directly:
-```bash
-# Example: Create a new web project
-./dev-scripts/web-scaffold/scaffold.sh
+# Database Tools
+./db-tools/db-master.sh
 
-# Example: Backup database
-./dev-scripts/db-tools/db-backup.sh
+# Network Diagnostics
+./network-master/network-master.sh
+
+# Create Web Project
+./web-scaffold/scaffold.sh
 ```
 
 ## Requirements
 *   Bash Shell
 *   Git
-*   (Optional) MySQL Client for DB tools
+*   Python 3 (Required for Analysis, Stats, and Scanning features)
+*   Standard utilities (mysql, docker, etc.)

@@ -14,6 +14,7 @@ A simple shell script to generate a standard directory structure for new web dev
 - **Standard Structure**: Creates organized folders for CSS, JS, Images, and PHP includes.
 - **Boilerplate Code**: Generates starter `index.php`, `style.css`, `app.js`, and `config.php`.
 - **Git Ready**: Includes a basic `.gitignore` file.
+- **Auto-Documentation**: Integrates a Python script to generate a tailored `README.md` for the new project.
 
 ## Generated Structure
 
@@ -29,9 +30,11 @@ project-name/
 │   └── config.php
 ├── includes/
 ├── index.php
+├── README.md (Optional)
 └── .gitignore
 ```
 
 ## Requirements
 
 - Bash shell (macOS, Linux, or QNAP)
+- Python 3 (for README generation)
