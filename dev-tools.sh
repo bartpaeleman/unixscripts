@@ -83,16 +83,62 @@ EOF
             echo -e "  - $prof"
         done
 
-        echo -e "\nInstalling aliases to all detected profiles..."
+        echo -e "\nInstalling aliases..."
+
+        # Define aliases to check/install
+        # key:alias_name value:command
+        declare -A ALIASES
+        ALIASES["devtools"]="alias devtools='\"${REPO_DIR}/dev-tools.sh\"'"
+        ALIASES["gitmaster"]="alias gitmaster='\"${REPO_DIR}/git-master/git-master.sh\"'"
+        ALIASES["dockermaster"]="alias dockermaster='\"${REPO_DIR}/container-master/container-master.sh\"'"
+        ALIASES["netmaster"]="alias netmaster='\"${REPO_DIR}/network-master/network-master.sh\"'"
+        ALIASES["dbmaster"]="alias dbmaster='\"${REPO_DIR}/db-tools/db-master.sh\"'"
+        ALIASES["cleanmaster"]="alias cleanmaster='\"${REPO_DIR}/cleanup/cleanup-master.sh\"'"
+        ALIASES["scaffold"]="alias scaffold='\"${REPO_DIR}/web-scaffold/scaffold.sh\"'"
+        ALIASES["csvmaster"]="alias csvmaster='\"${REPO_DIR}/csv-master/csv-master.sh\"'"
+        ALIASES["textmaster"]="alias textmaster='\"${REPO_DIR}/text-master/text-master.sh\"'"
 
         for prof in "${PROFILES[@]}"; do
-            # Check if alias already exists to avoid duplication
-            if grep -q "DEV TOOLS COLLECTION ALIASES" "$prof"; then
-                echo -e "${YELLOW}Aliases already present in $prof. Skipping.${NC}"
-            else
-                echo "$ALIAS_BLOCK" >> "$prof"
-                echo -e "${GREEN}✓ Added to $prof${NC}"
+            echo -e "\nProcessing profile: ${CYAN}$prof${NC}"
+
+            # Ensure header exists
+            if ! grep -q "# --- DEV TOOLS COLLECTION ALIASES ---" "$prof"; then
+                echo "" >> "$prof"
+                echo "# --- DEV TOOLS COLLECTION ALIASES ---" >> "$prof"
+                echo "# ------------------------------------" >> "$prof"
             fi
+
+            for name in "${!ALIASES[@]}"; do
+                cmd="${ALIASES[$name]}"
+
+                # Check if alias exists in file
+                if grep -q "alias $name=" "$prof"; then
+                    # Check if it matches exactly
+                    if grep -Fq "$cmd" "$prof"; then
+                        echo -e "  $name: ${GREEN}Already correct${NC}"
+                    else
+                        echo -e "  $name: ${YELLOW}Exists with different path${NC}"
+                        read -p "    Overwrite? (y/n): " OVER
+                        if [[ "$OVER" == "y" ]]; then
+                            # Use sed to replace the line
+                            # Update in place
+                            sed -i.bak "/alias $name=/d" "$prof"
+                            # Insert before footer
+                            sed -i.bak "/# ------------------------------------/i $cmd" "$prof"
+                            echo -e "    ${GREEN}Updated${NC}"
+                            rm -f "$prof.bak"
+                        else
+                            echo "    Skipped"
+                        fi
+                    fi
+                else
+                    # Does not exist, append
+                    # Insert before footer
+                    sed -i.bak "/# ------------------------------------/i $cmd" "$prof"
+                    echo -e "  $name: ${GREEN}Installed${NC}"
+                    rm -f "$prof.bak"
+                fi
+            done
         done
 
         echo -e "\nPlease run ${BOLD}source <profile>${NC} or restart your shell."
