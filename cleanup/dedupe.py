@@ -15,19 +15,34 @@ def hash_file(filepath):
 
 def find_duplicates(directory):
     print(f"Scanning {directory} for duplicates...")
-    hashes = {}
+    files_by_size = {}
     duplicates = []
 
+    # First pass: Group by size
     for root, _, files in os.walk(directory):
         for file in files:
             path = os.path.join(root, file)
-            file_hash = hash_file(path)
-
-            if file_hash:
-                if file_hash in hashes:
-                    duplicates.append((path, hashes[file_hash]))
+            try:
+                size = os.path.getsize(path)
+                if size in files_by_size:
+                    files_by_size[size].append(path)
                 else:
-                    hashes[file_hash] = path
+                    files_by_size[size] = [path]
+            except (OSError, PermissionError):
+                continue
+
+    # Second pass: Check for duplicates within same-size groups
+    for size, paths in files_by_size.items():
+        if len(paths) > 1:
+            hashes = {}
+            for path in paths:
+                file_hash = hash_file(path)
+
+                if file_hash:
+                    if file_hash in hashes:
+                        duplicates.append((path, hashes[file_hash]))
+                    else:
+                        hashes[file_hash] = path
 
     return duplicates
 
