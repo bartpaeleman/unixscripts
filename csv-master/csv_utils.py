@@ -83,18 +83,30 @@ def convert_delimiter(filepath, output_path, old_delim, new_delim):
 
 def csv_to_json(filepath, output_path, delimiter=None):
     try:
-        data = []
-        with open(filepath, 'r', encoding='utf-8') as f:
-             if not delimiter:
-                 delimiter = detect_delimiter(f.readline())
-                 f.seek(0)
+        with open(filepath, 'r', encoding='utf-8') as fin, \
+             open(output_path, 'w', encoding='utf-8') as fout:
 
-             reader = csv.DictReader(f, delimiter=delimiter)
-             for row in reader:
-                 data.append(row)
+            if not delimiter:
+                 delimiter = detect_delimiter(fin.readline())
+                 fin.seek(0)
 
-        with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=4)
+            reader = csv.DictReader(fin, delimiter=delimiter)
+
+            fout.write("[\n")
+            first = True
+            for row in reader:
+                if not first:
+                    fout.write(",\n")
+                first = False
+
+                # Serialize row with indentation
+                json_str = json.dumps(row, indent=4)
+                # Indent the whole block
+                indented_json_str = "\n".join("    " + line for line in json_str.split("\n"))
+                fout.write(indented_json_str)
+
+            fout.write("\n]")
+
         print(f"Successfully exported to {output_path}")
     except Exception as e:
         print(f"Error exporting to JSON: {e}")
