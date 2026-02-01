@@ -19,41 +19,47 @@ def csv_to_table(filepath, delimiter=None):
                 f.seek(0)
 
             reader = csv.reader(f, delimiter=delimiter)
-            rows = list(reader)
 
-            if not rows:
+            # Pass 1: Calculate column widths
+            try:
+                first_row = next(reader)
+            except StopIteration:
                 print("Empty CSV file.")
                 return
 
-            # Calculate column widths
-            col_widths = [0] * len(rows[0])
-            for row in rows:
-                # Handle inconsistent row lengths
+            col_widths = [len(str(cell)) for cell in first_row]
+            row_count = 1
+
+            for row in reader:
+                row_count += 1
                 if len(row) > len(col_widths):
                     col_widths.extend([0] * (len(row) - len(col_widths)))
 
                 for i, cell in enumerate(row):
                     col_widths[i] = max(col_widths[i], len(str(cell)))
 
-            # Print Table
+            # Pass 2: Print Table
+            f.seek(0)
+            reader = csv.reader(f, delimiter=delimiter)
+
             separator = "+" + "+".join(["-" * (w + 2) for w in col_widths]) + "+"
 
             print(separator)
             # Header
-            header = rows[0]
+            header = next(reader)
             # Pad header if short
             header += [''] * (len(col_widths) - len(header))
             print("|" + "|".join([f" {cell:<{col_widths[i]}} " for i, cell in enumerate(header)]) + "|")
             print(separator)
 
             # Data
-            for row in rows[1:]:
+            for row in reader:
                 # Pad row if short
                 row += [''] * (len(col_widths) - len(row))
                 print("|" + "|".join([f" {cell:<{col_widths[i]}} " for i, cell in enumerate(row)]) + "|")
 
             print(separator)
-            print(f"Total Rows: {len(rows)}")
+            print(f"Total Rows: {row_count}")
 
     except Exception as e:
         print(f"Error reading CSV: {e}")
