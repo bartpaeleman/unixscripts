@@ -86,17 +86,21 @@ EOF
         echo -e "\nInstalling aliases..."
 
         # Define aliases to check/install
-        # key:alias_name value:command
-        declare -A ALIASES
-        ALIASES["devtools"]="alias devtools='\"${REPO_DIR}/dev-tools.sh\"'"
-        ALIASES["gitmaster"]="alias gitmaster='\"${REPO_DIR}/git-master/git-master.sh\"'"
-        ALIASES["dockermaster"]="alias dockermaster='\"${REPO_DIR}/container-master/container-master.sh\"'"
-        ALIASES["netmaster"]="alias netmaster='\"${REPO_DIR}/network-master/network-master.sh\"'"
-        ALIASES["dbmaster"]="alias dbmaster='\"${REPO_DIR}/db-tools/db-master.sh\"'"
-        ALIASES["cleanmaster"]="alias cleanmaster='\"${REPO_DIR}/cleanup/cleanup-master.sh\"'"
-        ALIASES["scaffold"]="alias scaffold='\"${REPO_DIR}/web-scaffold/scaffold.sh\"'"
-        ALIASES["csvmaster"]="alias csvmaster='\"${REPO_DIR}/csv-master/csv-master.sh\"'"
-        ALIASES["textmaster"]="alias textmaster='\"${REPO_DIR}/text-master/text-master.sh\"'"
+        # Using parallel arrays for Bash 3 compatibility (QNAP/macOS)
+        # declare -A not supported on older bash versions
+
+        ALIAS_NAMES=("devtools" "gitmaster" "dockermaster" "netmaster" "dbmaster" "cleanmaster" "scaffold" "csvmaster" "textmaster")
+        ALIAS_CMDS=(
+            "alias devtools='\"${REPO_DIR}/dev-tools.sh\"'"
+            "alias gitmaster='\"${REPO_DIR}/git-master/git-master.sh\"'"
+            "alias dockermaster='\"${REPO_DIR}/container-master/container-master.sh\"'"
+            "alias netmaster='\"${REPO_DIR}/network-master/network-master.sh\"'"
+            "alias dbmaster='\"${REPO_DIR}/db-tools/db-master.sh\"'"
+            "alias cleanmaster='\"${REPO_DIR}/cleanup/cleanup-master.sh\"'"
+            "alias scaffold='\"${REPO_DIR}/web-scaffold/scaffold.sh\"'"
+            "alias csvmaster='\"${REPO_DIR}/csv-master/csv-master.sh\"'"
+            "alias textmaster='\"${REPO_DIR}/text-master/text-master.sh\"'"
+        )
 
         for prof in "${PROFILES[@]}"; do
             echo -e "\nProcessing profile: ${CYAN}$prof${NC}"
@@ -108,8 +112,10 @@ EOF
                 echo "# ------------------------------------" >> "$prof"
             fi
 
-            for name in "${!ALIASES[@]}"; do
-                cmd="${ALIASES[$name]}"
+            # Iterate by index
+            for i in "${!ALIAS_NAMES[@]}"; do
+                name="${ALIAS_NAMES[$i]}"
+                cmd="${ALIAS_CMDS[$i]}"
 
                 # Check if alias exists in file
                 if grep -q "alias $name=" "$prof"; then
