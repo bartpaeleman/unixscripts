@@ -2,12 +2,14 @@ import sys
 import os
 import hashlib
 
+CHUNK_SIZE = 65536  # 64KB
+
 def hash_file(filepath):
     """Returns MD5 hash of a file."""
     hasher = hashlib.md5()
     try:
         with open(filepath, 'rb') as f:
-            while chunk := f.read(8192):
+            while chunk := f.read(CHUNK_SIZE):
                 hasher.update(chunk)
         return hasher.hexdigest()
     except (OSError, PermissionError):
