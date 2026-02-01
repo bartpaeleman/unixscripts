@@ -95,10 +95,12 @@ cleanup_dir() {
     fi
 
     read -p "Delete Duplicates (MD5 check)? (y/n): " DEL_DUPES
+    read -p "Delete Junk Files (.DS_Store, Thumbs.db)? (y/n): " DEL_JUNK
     read -p "Delete Empty Directories? (y/n): " DEL_EMPTY
 
     ARGS=""
     if [[ "$DEL_DUPES" == "y" ]]; then ARGS="$ARGS --dupes"; fi
+    if [[ "$DEL_JUNK" == "y" ]]; then ARGS="$ARGS --junk"; fi
     if [[ "$DEL_EMPTY" == "y" ]]; then ARGS="$ARGS --empty"; fi
 
     echo -e "\n${YELLOW}Previewing...${NC}"

@@ -23,6 +23,81 @@ def check_dependencies():
     print(f"  - pandas: {'OK' if PANDAS_AVAIL else 'MISSING (Install for advanced features)'}")
     print(f"  - pyyaml: {'OK' if YAML_AVAIL else 'MISSING (Install for YAML support)'}")
 
+# --- CSV VIEWING UTILS ---
+
+def detect_delimiter(first_line):
+    if ";" in first_line: return ";"
+    if "\t" in first_line: return "\t"
+    return ","
+
+def view_csv_as_table(filepath, delimiter=None):
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            if not delimiter:
+                first_line = f.readline()
+                delimiter = detect_delimiter(first_line)
+                f.seek(0)
+
+            reader = csv.reader(f, delimiter=delimiter)
+            try:
+                first_row = next(reader)
+            except StopIteration:
+                print("Empty CSV file.")
+                return
+
+            col_widths = [len(str(cell)) for cell in first_row]
+            row_count = 1
+
+            # Pass 1: Calculate widths
+            for row in reader:
+                row_count += 1
+                if len(row) > len(col_widths):
+                    col_widths.extend([0] * (len(row) - len(col_widths)))
+                for i, cell in enumerate(row):
+                    col_widths[i] = max(col_widths[i], len(str(cell)))
+
+            # Pass 2: Print
+            f.seek(0)
+            reader = csv.reader(f, delimiter=delimiter)
+
+            separator = "+" + "+".join(["-" * (w + 2) for w in col_widths]) + "+"
+            print(separator)
+
+            # Header
+            header = next(reader)
+            header += [''] * (len(col_widths) - len(header))
+            print("|" + "|".join([f" {cell:<{col_widths[i]}} " for i, cell in enumerate(header)]) + "|")
+            print(separator)
+
+            for row in reader:
+                row += [''] * (len(col_widths) - len(row))
+                print("|" + "|".join([f" {cell:<{col_widths[i]}} " for i, cell in enumerate(row)]) + "|")
+
+            print(separator)
+            print(f"Total Rows: {row_count}")
+
+    except Exception as e:
+        print(f"Error reading CSV: {e}")
+
+def convert_csv_delimiter(filepath, output_path, old_delim=None, new_delim=","):
+    print(f"Converting Delimiter: {filepath} -> {output_path} ({old_delim or 'auto'} -> {new_delim})")
+    try:
+        with open(filepath, 'r', encoding='utf-8') as fin, \
+             open(output_path, 'w', encoding='utf-8', newline='') as fout:
+
+            if not old_delim:
+                 old_delim = detect_delimiter(fin.readline())
+                 fin.seek(0)
+
+            reader = csv.reader(fin, delimiter=old_delim)
+            writer = csv.writer(fout, delimiter=new_delim)
+            writer.writerows(reader)
+        print("Done.")
+    except Exception as e:
+        print(f"Error converting delimiter: {e}")
+
+# --- FORMAT CONVERSION UTILS ---
+
 def convert_csv_to_json(input_file, output_file):
     print(f"Converting CSV {input_file} -> JSON {output_file}...")
     if PANDAS_AVAIL:
@@ -38,7 +113,17 @@ def convert_csv_to_json(input_file, output_file):
     try:
         data = []
         with open(input_file, 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
+            # Auto-detect delimiter for robustness
+            sample = f.read(1024)
+            f.seek(0)
+            sniffer = csv.Sniffer()
+            try:
+                dialect = sniffer.sniff(sample)
+                delimiter = dialect.delimiter
+            except:
+                delimiter = ',' # Default
+
+            reader = csv.DictReader(f, delimiter=delimiter)
             for row in reader:
                 data.append(row)
         with open(output_file, 'w', encoding='utf-8') as f:
@@ -94,7 +179,6 @@ def convert_yaml(input_file, output_file, to_format):
             with open(output_file, 'w') as f:
                 json.dump(data, f, indent=4)
         elif to_format == 'csv':
-            # Assuming list of dicts
              if PANDAS_AVAIL:
                  df = pd.json_normalize(data)
                  df.to_csv(output_file, index=False)
@@ -102,7 +186,6 @@ def convert_yaml(input_file, output_file, to_format):
                  print("Error: YAML to CSV requires Pandas for normalization.")
                  return
         elif to_format == 'yaml':
-            # Just copy/reformat?
             with open(output_file, 'w') as f:
                 yaml.dump(data, f)
         print("Done.")
@@ -148,7 +231,6 @@ def convert_json_to_xml(input_file, output_file):
     print("Warning: JSON to XML is complex. Producing basic structure.")
     try:
         if PANDAS_AVAIL:
-            # Pandas read_json -> to_xml is robust
             try:
                 df = pd.read_json(input_file)
                 df.to_xml(output_file)
@@ -163,13 +245,10 @@ def convert_json_to_xml(input_file, output_file):
 
 def normalize_csv(input_file, output_file):
     print(f"Normalizing CSV {input_file}...")
-    # Remove empty rows, strip whitespace
     if PANDAS_AVAIL:
         try:
             df = pd.read_csv(input_file)
-            # Drop empty rows
             df.dropna(how='all', inplace=True)
-            # Strip whitespace from string columns
             df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
             df.to_csv(output_file, index=False)
             print("Done (via Pandas).")
@@ -180,17 +259,29 @@ def normalize_csv(input_file, output_file):
     print("Normalization requires Pandas for best results. Skipping.")
 
 def main():
-    parser = argparse.ArgumentParser(description="Data Format Converter")
+    parser = argparse.ArgumentParser(description="Data Master Utility")
     subparsers = parser.add_subparsers(dest='command')
 
     # Dependencies
     subparsers.add_parser('check')
 
-    # Convert
+    # View
+    view_parser = subparsers.add_parser('view')
+    view_parser.add_argument('input_file')
+    view_parser.add_argument('--delim', default=None)
+
+    # Convert Delimiter
+    delim_parser = subparsers.add_parser('delim')
+    delim_parser.add_argument('input_file')
+    delim_parser.add_argument('output_file')
+    delim_parser.add_argument('--old', default=None)
+    delim_parser.add_argument('--new', required=True)
+
+    # Convert Format
     conv_parser = subparsers.add_parser('convert')
     conv_parser.add_argument('input_file')
     conv_parser.add_argument('output_file')
-    conv_parser.add_argument('--format', choices=['json', 'csv', 'yaml', 'xml'], help="Target format (if not implied by extension)")
+    conv_parser.add_argument('--format', choices=['json', 'csv', 'yaml', 'xml'], help="Target format")
 
     # Normalize
     norm_parser = subparsers.add_parser('normalize')
@@ -201,6 +292,13 @@ def main():
 
     if args.command == 'check':
         check_dependencies()
+    elif args.command == 'view':
+        delim = args.delim.replace('\\t', '\t') if args.delim else None
+        view_csv_as_table(args.input_file, delim)
+    elif args.command == 'delim':
+        old = args.old.replace('\\t', '\t') if args.old else None
+        new = args.new.replace('\\t', '\t')
+        convert_csv_delimiter(args.input_file, args.output_file, old, new)
     elif args.command == 'convert':
         in_ext = os.path.splitext(args.input_file)[1].lower()
         out_ext = os.path.splitext(args.output_file)[1].lower()

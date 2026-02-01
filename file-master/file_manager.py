@@ -99,31 +99,65 @@ def archive_directory(directory, archive_type):
         except Exception as e:
             print(f"Error creating tar: {e}")
 
-def cleanup(directory, delete_dupes=False, delete_empty=False, dry_run=False):
+def cleanup(directory, delete_dupes=False, delete_empty=False, delete_junk=False, dry_run=False):
     print(f"Cleaning up {directory}...")
 
     if delete_dupes:
-        print("Scanning for duplicates...")
-        hashes = {}
-        dupes_found = 0
+        print("Scanning for duplicates (Size + MD5)...")
+        # Pass 1: Group by size
+        files_by_size = {}
         for root, dirs, files in os.walk(directory):
             for file in files:
                 filepath = os.path.join(root, file)
-                file_hash = calculate_hash(filepath)
-                if file_hash:
-                    if file_hash in hashes:
-                        print(f"  Duplicate found: {filepath} (matches {hashes[file_hash]})")
-                        dupes_found += 1
-                        if not dry_run:
-                            try:
-                                os.remove(filepath)
-                                print("    Deleted.")
-                            except OSError as e:
-                                print(f"    Error deleting: {e}")
+                try:
+                    size = os.path.getsize(filepath)
+                    if size in files_by_size:
+                        files_by_size[size].append(filepath)
                     else:
-                        hashes[file_hash] = filepath
+                        files_by_size[size] = [filepath]
+                except OSError:
+                    continue
+
+        # Pass 2: Hash only potential dupes
+        hashes = {}
+        dupes_found = 0
+        for size, paths in files_by_size.items():
+            if len(paths) > 1:
+                for filepath in paths:
+                    file_hash = calculate_hash(filepath)
+                    if file_hash:
+                        if file_hash in hashes:
+                            print(f"  Duplicate found: {filepath} (matches {hashes[file_hash]})")
+                            dupes_found += 1
+                            if not dry_run:
+                                try:
+                                    os.remove(filepath)
+                                    print("    Deleted.")
+                                except OSError as e:
+                                    print(f"    Error deleting: {e}")
+                        else:
+                            hashes[file_hash] = filepath
+
         if dry_run:
             print(f"Dry run: {dupes_found} duplicates found.")
+
+    if delete_junk:
+        print("Scanning for junk files (.DS_Store, Thumbs.db, ._*)")
+        junk_files = []
+        for root, dirs, files in os.walk(directory):
+            for file in files:
+                if file in [".DS_Store", "Thumbs.db"] or file.startswith("._"):
+                    junk_files.append(os.path.join(root, file))
+
+        print(f"Found {len(junk_files)} junk files.")
+        for jf in junk_files:
+            print(f"  {jf}")
+            if not dry_run:
+                try:
+                    os.remove(jf)
+                    print("    Deleted.")
+                except OSError as e:
+                    print(f"    Error deleting: {e}")
 
     if delete_empty:
         print("Scanning for empty directories...")
@@ -179,6 +213,7 @@ def main():
     clean_parser.add_argument('directory')
     clean_parser.add_argument('--dupes', action='store_true')
     clean_parser.add_argument('--empty', action='store_true')
+    clean_parser.add_argument('--junk', action='store_true')
     clean_parser.add_argument('--run', action='store_true')
 
     # Compare
@@ -195,7 +230,7 @@ def main():
     elif args.command == 'archive':
         archive_directory(args.directory, args.type)
     elif args.command == 'cleanup':
-        cleanup(args.directory, delete_dupes=args.dupes, delete_empty=args.empty, dry_run=not args.run)
+        cleanup(args.directory, delete_dupes=args.dupes, delete_empty=args.empty, delete_junk=args.junk, dry_run=not args.run)
     elif args.command == 'compare':
         compare_files(args.file1, args.file2)
 
