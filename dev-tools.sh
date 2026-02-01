@@ -17,7 +17,7 @@ echo -e "${CYAN}=== Dev Tools Initialization ===${NC}"
 echo "Setting executable permissions..."
 
 # List of directories to process
-DIRS=("git-master" "web-scaffold" "db-tools" "container-master" "network-master" "cleanup" "csv-master" "text-master")
+DIRS=("git-master" "web-scaffold" "db-tools" "container-master" "network-master" "data-master" "file-master" "text-master")
 
 COUNT=0
 
@@ -50,14 +50,15 @@ if [[ "$INSTALL_ALIAS" == "y" ]]; then
     ALIAS_BLOCK=$(cat <<EOF
 
 # --- DEV TOOLS COLLECTION ALIASES ---
+alias scriptmaster='"${REPO_DIR}/script-master.sh"'
 alias devtools='"${REPO_DIR}/dev-tools.sh"'
 alias gitmaster='"${REPO_DIR}/git-master/git-master.sh"'
 alias dockermaster='"${REPO_DIR}/container-master/container-master.sh"'
 alias netmaster='"${REPO_DIR}/network-master/network-master.sh"'
 alias dbmaster='"${REPO_DIR}/db-tools/db-master.sh"'
-alias cleanmaster='"${REPO_DIR}/cleanup/cleanup-master.sh"'
 alias scaffold='"${REPO_DIR}/web-scaffold/scaffold.sh"'
-alias csvmaster='"${REPO_DIR}/csv-master/csv-master.sh"'
+alias datamaster='"${REPO_DIR}/data-master/data-master.sh"'
+alias filemaster='"${REPO_DIR}/file-master/file-master.sh"'
 alias textmaster='"${REPO_DIR}/text-master/text-master.sh"'
 # ------------------------------------
 EOF
@@ -89,16 +90,17 @@ EOF
         # Using parallel arrays for Bash 3 compatibility (QNAP/macOS)
         # declare -A not supported on older bash versions
 
-        ALIAS_NAMES=("devtools" "gitmaster" "dockermaster" "netmaster" "dbmaster" "cleanmaster" "scaffold" "csvmaster" "textmaster")
+        ALIAS_NAMES=("scriptmaster" "devtools" "gitmaster" "dockermaster" "netmaster" "dbmaster" "scaffold" "datamaster" "filemaster" "textmaster")
         ALIAS_CMDS=(
+            "alias scriptmaster='\"${REPO_DIR}/script-master.sh\"'"
             "alias devtools='\"${REPO_DIR}/dev-tools.sh\"'"
             "alias gitmaster='\"${REPO_DIR}/git-master/git-master.sh\"'"
             "alias dockermaster='\"${REPO_DIR}/container-master/container-master.sh\"'"
             "alias netmaster='\"${REPO_DIR}/network-master/network-master.sh\"'"
             "alias dbmaster='\"${REPO_DIR}/db-tools/db-master.sh\"'"
-            "alias cleanmaster='\"${REPO_DIR}/cleanup/cleanup-master.sh\"'"
             "alias scaffold='\"${REPO_DIR}/web-scaffold/scaffold.sh\"'"
-            "alias csvmaster='\"${REPO_DIR}/csv-master/csv-master.sh\"'"
+            "alias datamaster='\"${REPO_DIR}/data-master/data-master.sh\"'"
+            "alias filemaster='\"${REPO_DIR}/file-master/file-master.sh\"'"
             "alias textmaster='\"${REPO_DIR}/text-master/text-master.sh\"'"
         )
 
