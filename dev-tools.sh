@@ -17,7 +17,7 @@ echo -e "${CYAN}=== Dev Tools Initialization ===${NC}"
 echo "Setting executable permissions..."
 
 # List of directories to process
-DIRS=("git-master" "web-scaffold" "db-tools" "container-master" "network-master" "cleanup")
+DIRS=("git-master" "web-scaffold" "db-tools" "container-master" "network-master" "cleanup" "csv-master" "text-master")
 
 COUNT=0
 
@@ -57,6 +57,8 @@ alias netmaster='"${REPO_DIR}/network-master/network-master.sh"'
 alias dbmaster='"${REPO_DIR}/db-tools/db-master.sh"'
 alias cleanmaster='"${REPO_DIR}/cleanup/cleanup-master.sh"'
 alias scaffold='"${REPO_DIR}/web-scaffold/scaffold.sh"'
+alias csvmaster='"${REPO_DIR}/csv-master/csv-master.sh"'
+alias textmaster='"${REPO_DIR}/text-master/text-master.sh"'
 # ------------------------------------
 EOF
 )

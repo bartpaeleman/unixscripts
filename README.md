@@ -28,6 +28,8 @@ Standalone utility scripts for web development and system maintenance.
 | **DB Master** | Database backup and statistical analysis toolkit. | [Read More](db-tools/README.md) |
 | **Container Master** | Interactive Docker management and inspection. | [Read More](container-master/README.md) |
 | **Network Master** | Comprehensive network diagnostics and port scanning. | [Read More](network-master/README.md) |
+| **CSV Master** | Advanced CSV viewing, conversion and JSON export. | [Read More](csv-master/README.md) |
+| **Text Master** | Text analysis, comparison, and manipulation tools. | [Read More](text-master/README.md) |
 | **Cleanup Master** | System junk removal and duplicate file finder. | [Read More](cleanup/README.md) |
 
 ## Usage Examples
@@ -43,6 +45,9 @@ Scripts are standalone and have their own interactive menus. After running `./de
 
 # Network Diagnostics
 ./network-master/network-master.sh
+
+# Manipulate CSVs
+./csv-master/csv-master.sh
 
 # Create Web Project
 ./web-scaffold/scaffold.sh
