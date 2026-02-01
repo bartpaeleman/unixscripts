@@ -563,6 +563,7 @@ while true; do
             printf "1) Edit current .env\n"
             printf "2) Create new .env from template\n"
             printf "3) Show current configuration\n"
+            printf "4) Install Aliases (Multi-Shell Support)\n"
             printf "X) Cancel\n\n"
             read -p "Choose option: " setup_choice
             
@@ -595,6 +596,17 @@ while true; do
                     printf "  PATH_DEV: ${PATH_DEV}\n"
                     printf "  PATH_TEST: ${PATH_TEST}\n"
                     ;;
+                4)
+                     # Re-use the master dev-tools script if available, or simple local alias
+                     ROOT_DIR=$(dirname "$SCRIPT_DIR")
+                     if [[ -f "$ROOT_DIR/dev-tools.sh" ]]; then
+                         printf "${CYAN}Launching Master Dev Tools Setup...${NC}\n"
+                         "$ROOT_DIR/dev-tools.sh"
+                     else
+                         printf "${YELLOW}Master Dev Tools script not found. Please run it from root.${NC}\n"
+                     fi
+                     read -p "Enter..." junk
+                     ;;
                 [Xx]) ;;
             esac
             read -p "Enter..." junk ;;
