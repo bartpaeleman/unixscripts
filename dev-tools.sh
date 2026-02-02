@@ -120,63 +120,36 @@ EOF
         # Using parallel arrays for Bash 3 compatibility (QNAP/macOS)
         # declare -A not supported on older bash versions
 
-        ALIAS_NAMES=("scriptmaster" "devtools" "gitmaster" "dockermaster" "netmaster" "dbmaster" "scaffold" "datamaster" "filemaster" "textmaster")
-        ALIAS_CMDS=(
-            "alias scriptmaster='\"${REPO_DIR}/script-master.sh\"'"
-            "alias devtools='\"${REPO_DIR}/dev-tools.sh\"'"
-            "alias gitmaster='\"${REPO_DIR}/git-master/git-master.sh\"'"
-            "alias dockermaster='\"${REPO_DIR}/container-master/container-master.sh\"'"
-            "alias netmaster='\"${REPO_DIR}/network-master/network-master.sh\"'"
-            "alias dbmaster='\"${REPO_DIR}/db-tools/db-master.sh\"'"
-            "alias scaffold='\"${REPO_DIR}/web-scaffold/scaffold.sh\"'"
-            "alias datamaster='\"${REPO_DIR}/data-master/data-master.sh\"'"
-            "alias filemaster='\"${REPO_DIR}/file-master/file-master.sh\"'"
-            "alias textmaster='\"${REPO_DIR}/text-master/text-master.sh\"'"
-        )
-
         for prof in "${PROFILES[@]}"; do
             echo -e "\nProcessing profile: ${CYAN}$prof${NC}"
 
-            # Ensure header exists
-            if ! grep -q "# --- DEV TOOLS COLLECTION ALIASES ---" "$prof"; then
-                echo "" >> "$prof"
-                echo "# --- DEV TOOLS COLLECTION ALIASES ---" >> "$prof"
-                echo "# ------------------------------------" >> "$prof"
+            # Check for existing block
+            HAS_BLOCK=false
+            if grep -q "# --- DEV TOOLS COLLECTION ALIASES ---" "$prof"; then
+                HAS_BLOCK=true
             fi
 
-            # Iterate by index
-            for i in "${!ALIAS_NAMES[@]}"; do
-                name="${ALIAS_NAMES[$i]}"
-                cmd="${ALIAS_CMDS[$i]}"
+            # Check for conflicts
+            CONFLICT=false
+            if [[ "$HAS_BLOCK" == "true" ]]; then
+                 # If block exists, we assume we manage it.
+                 # But let's check if the content is exactly what we want.
+                 # Actually, simpler: just ask if we should update.
+                 echo -e "  ${YELLOW}Existing alias block found.${NC}"
+                 read -p "  Update/Overwrite all Dev Tools aliases? (y/n): " UPDATE_ALL
+                 if [[ "$UPDATE_ALL" != "y" ]]; then
+                     echo "  Skipped."
+                     continue
+                 fi
 
-                # Check if alias exists in file
-                if grep -q "alias $name=" "$prof"; then
-                    # Check if it matches exactly
-                    if grep -Fq "$cmd" "$prof"; then
-                        echo -e "  $name: ${GREEN}Already correct${NC}"
-                    else
-                        echo -e "  $name: ${YELLOW}Exists with different path${NC}"
-                        read -p "    Overwrite? (y/n): " OVER
-                        if [[ "$OVER" == "y" ]]; then
-                            # Use sed to replace the line
-                            # Update in place
-                            sed -i.bak "/alias $name=/d" "$prof"
-                            # Insert before footer
-                            sed -i.bak "/# ------------------------------------/i $cmd" "$prof"
-                            echo -e "    ${GREEN}Updated${NC}"
-                            rm -f "$prof.bak"
-                        else
-                            echo "    Skipped"
-                        fi
-                    fi
-                else
-                    # Does not exist, append
-                    # Insert before footer
-                    sed -i.bak "/# ------------------------------------/i $cmd" "$prof"
-                    echo -e "  $name: ${GREEN}Installed${NC}"
-                    rm -f "$prof.bak"
-                fi
-            done
+                 # Remove old block (Portable sed: delete range)
+                 sed -i.bak '/# --- DEV TOOLS COLLECTION ALIASES ---/,/# ------------------------------------/d' "$prof"
+                 rm -f "$prof.bak"
+            fi
+
+            # Append new block
+            echo "$ALIAS_BLOCK" >> "$prof"
+            echo -e "  ${GREEN}Aliases installed/updated.${NC}"
         done
 
         echo -e "\nPlease run ${BOLD}source <profile>${NC} or restart your shell."
