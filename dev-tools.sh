@@ -31,7 +31,7 @@ for dir in "${DIRS[@]}"; do
         # Make python scripts executable (optional, but good for direct invocation)
         find "$dir" -name "*.py" -type f -exec chmod +x {} \; -exec echo "  + {}" \;
 
-        ((COUNT++))
+        ((COUNT++)) || true
     else
         echo -e "${YELLOW}Warning: Directory '$dir' not found.${NC}"
     fi
@@ -69,6 +69,7 @@ EOF
     [[ -f "$HOME/.bashrc" ]] && PROFILES+=("$HOME/.bashrc")
     [[ -f "$HOME/.zshrc" ]] && PROFILES+=("$HOME/.zshrc")
     [[ -f "$HOME/.profile" ]] && PROFILES+=("$HOME/.profile")
+    [[ -f "$HOME/.bash_profile" ]] && PROFILES+=("$HOME/.bash_profile")
 
     # QNAP / System wide fallback
     if [[ -w "/etc/profile" ]]; then
@@ -76,9 +77,38 @@ EOF
     fi
 
     if [[ ${#PROFILES[@]} -eq 0 ]]; then
-        echo -e "${YELLOW}Could not detect any writable shell profile (.bashrc, .zshrc, .profile).${NC}"
-        echo "Please add the aliases manually."
-    else
+        echo -e "${YELLOW}Could not detect any existing writable shell profile.${NC}"
+
+        # Detect shell
+        CURRENT_SHELL=$(basename "$SHELL")
+        PREFERRED_PROFILE=""
+
+        if [[ "$CURRENT_SHELL" == "zsh" ]]; then
+            PREFERRED_PROFILE="$HOME/.zshrc"
+        elif [[ "$CURRENT_SHELL" == "bash" ]]; then
+            if [[ "$(uname)" == "Darwin" ]]; then
+                PREFERRED_PROFILE="$HOME/.bash_profile"
+            else
+                PREFERRED_PROFILE="$HOME/.bashrc"
+            fi
+        else
+            PREFERRED_PROFILE="$HOME/.profile"
+        fi
+
+        echo -e "Detected shell: ${CYAN}$CURRENT_SHELL${NC}"
+        echo -e "Preferred profile: ${CYAN}$PREFERRED_PROFILE${NC}"
+
+        read -p "Create $PREFERRED_PROFILE? (y/n): " CREATE_PROF
+        if [[ "$CREATE_PROF" == "y" ]]; then
+            touch "$PREFERRED_PROFILE"
+            PROFILES+=("$PREFERRED_PROFILE")
+            echo -e "${GREEN}Created $PREFERRED_PROFILE${NC}"
+        else
+            echo "Please add the aliases manually."
+        fi
+    fi
+
+    if [[ ${#PROFILES[@]} -gt 0 ]]; then
         echo -e "\n${CYAN}Detected Profiles:${NC}"
         for prof in "${PROFILES[@]}"; do
             echo -e "  - $prof"
