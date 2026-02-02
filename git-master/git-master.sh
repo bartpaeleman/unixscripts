@@ -15,15 +15,24 @@ ENV_EXAMPLE="${SCRIPT_DIR}/config/.env.example"
 # Load environment variables
 load_env() {
     if [[ ! -f "$ENV_FILE" ]]; then
-        printf "\033[1;31mERROR: .env file not found at: ${ENV_FILE}\033[0m\n"
+        printf "\n${YELLOW}Configuration file not found.${NC}\n"
+
         if [[ -f "$ENV_EXAMPLE" ]]; then
-            printf "Please copy .env.example to .env and configure your settings:\n"
-            printf "  cp \"${ENV_EXAMPLE}\" \"${ENV_FILE}\"\n"
-            printf "  nano \"${ENV_FILE}\"\n"
+            read -p "Create .env from template? (y/n): " create_env
+            if [[ "$create_env" == "y" ]]; then
+                cp "$ENV_EXAMPLE" "$ENV_FILE"
+                printf "${GREEN}Created .env file.${NC}\n"
+                printf "${CYAN}Opening editor to configure settings...${NC}\n"
+                sleep 1
+                ${EDITOR:-nano} "$ENV_FILE"
+            else
+                printf "${RED}Setup aborted. Please configure .env manually before running gitmaster.${NC}\n"
+                exit 1
+            fi
         else
-            printf "Please create a .env file with your configuration.\n"
+            printf "${RED}ERROR: Template .env.example missing. Please create .env manually.${NC}\n"
+            exit 1
         fi
-        exit 1
     fi
     
     # Parse .env file, ignoring comments and empty lines
