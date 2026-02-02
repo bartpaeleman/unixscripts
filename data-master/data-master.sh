@@ -23,6 +23,22 @@ pause() {
 
 check_deps() {
     python3 "$SCRIPT_DIR/data_utils.py" check
+    RET=$?
+
+    if [[ $RET -ne 0 ]]; then
+        echo ""
+        if command -v pip3 &>/dev/null; then
+            read -p "Install missing dependencies? (y/n): " INSTALL
+            if [[ "$INSTALL" == "y" ]]; then
+                echo -e "${CYAN}Installing pandas pyyaml...${NC}"
+                pip3 install --user pandas pyyaml
+                echo -e "${GREEN}Done. Re-checking...${NC}"
+                python3 "$SCRIPT_DIR/data_utils.py" check
+            fi
+        else
+            echo -e "${RED}pip3 not found. Please install pandas and pyyaml manually.${NC}"
+        fi
+    fi
     pause
 }
 

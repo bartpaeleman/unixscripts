@@ -22,6 +22,7 @@ def check_dependencies():
     print("Dependency Check:")
     print(f"  - pandas: {'OK' if PANDAS_AVAIL else 'MISSING (Install for advanced features)'}")
     print(f"  - pyyaml: {'OK' if YAML_AVAIL else 'MISSING (Install for YAML support)'}")
+    return PANDAS_AVAIL and YAML_AVAIL
 
 # --- CSV VIEWING UTILS ---
 
@@ -291,7 +292,8 @@ def main():
     args = parser.parse_args()
 
     if args.command == 'check':
-        check_dependencies()
+        if not check_dependencies():
+            sys.exit(1)
     elif args.command == 'view':
         delim = args.delim.replace('\\t', '\t') if args.delim else None
         view_csv_as_table(args.input_file, delim)
