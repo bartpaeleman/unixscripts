@@ -31,7 +31,7 @@ for dir in "${DIRS[@]}"; do
         # Make python scripts executable (optional, but good for direct invocation)
         find "$dir" -name "*.py" -type f -exec chmod +x {} \; -exec echo "  + {}" \;
 
-        ((COUNT++))
+        ((COUNT++)) || true
     else
         echo -e "${YELLOW}Warning: Directory '$dir' not found.${NC}"
     fi
@@ -69,6 +69,7 @@ EOF
     [[ -f "$HOME/.bashrc" ]] && PROFILES+=("$HOME/.bashrc")
     [[ -f "$HOME/.zshrc" ]] && PROFILES+=("$HOME/.zshrc")
     [[ -f "$HOME/.profile" ]] && PROFILES+=("$HOME/.profile")
+    [[ -f "$HOME/.bash_profile" ]] && PROFILES+=("$HOME/.bash_profile")
 
     # QNAP / System wide fallback
     if [[ -w "/etc/profile" ]]; then
@@ -76,9 +77,38 @@ EOF
     fi
 
     if [[ ${#PROFILES[@]} -eq 0 ]]; then
-        echo -e "${YELLOW}Could not detect any writable shell profile (.bashrc, .zshrc, .profile).${NC}"
-        echo "Please add the aliases manually."
-    else
+        echo -e "${YELLOW}Could not detect any existing writable shell profile.${NC}"
+
+        # Detect shell
+        CURRENT_SHELL=$(basename "$SHELL")
+        PREFERRED_PROFILE=""
+
+        if [[ "$CURRENT_SHELL" == "zsh" ]]; then
+            PREFERRED_PROFILE="$HOME/.zshrc"
+        elif [[ "$CURRENT_SHELL" == "bash" ]]; then
+            if [[ "$(uname)" == "Darwin" ]]; then
+                PREFERRED_PROFILE="$HOME/.bash_profile"
+            else
+                PREFERRED_PROFILE="$HOME/.bashrc"
+            fi
+        else
+            PREFERRED_PROFILE="$HOME/.profile"
+        fi
+
+        echo -e "Detected shell: ${CYAN}$CURRENT_SHELL${NC}"
+        echo -e "Preferred profile: ${CYAN}$PREFERRED_PROFILE${NC}"
+
+        read -p "Create $PREFERRED_PROFILE? (y/n): " CREATE_PROF
+        if [[ "$CREATE_PROF" == "y" ]]; then
+            touch "$PREFERRED_PROFILE"
+            PROFILES+=("$PREFERRED_PROFILE")
+            echo -e "${GREEN}Created $PREFERRED_PROFILE${NC}"
+        else
+            echo "Please add the aliases manually."
+        fi
+    fi
+
+    if [[ ${#PROFILES[@]} -gt 0 ]]; then
         echo -e "\n${CYAN}Detected Profiles:${NC}"
         for prof in "${PROFILES[@]}"; do
             echo -e "  - $prof"
@@ -90,63 +120,36 @@ EOF
         # Using parallel arrays for Bash 3 compatibility (QNAP/macOS)
         # declare -A not supported on older bash versions
 
-        ALIAS_NAMES=("scriptmaster" "devtools" "gitmaster" "dockermaster" "netmaster" "dbmaster" "scaffold" "datamaster" "filemaster" "textmaster")
-        ALIAS_CMDS=(
-            "alias scriptmaster='\"${REPO_DIR}/script-master.sh\"'"
-            "alias devtools='\"${REPO_DIR}/dev-tools.sh\"'"
-            "alias gitmaster='\"${REPO_DIR}/git-master/git-master.sh\"'"
-            "alias dockermaster='\"${REPO_DIR}/container-master/container-master.sh\"'"
-            "alias netmaster='\"${REPO_DIR}/network-master/network-master.sh\"'"
-            "alias dbmaster='\"${REPO_DIR}/db-tools/db-master.sh\"'"
-            "alias scaffold='\"${REPO_DIR}/web-scaffold/scaffold.sh\"'"
-            "alias datamaster='\"${REPO_DIR}/data-master/data-master.sh\"'"
-            "alias filemaster='\"${REPO_DIR}/file-master/file-master.sh\"'"
-            "alias textmaster='\"${REPO_DIR}/text-master/text-master.sh\"'"
-        )
-
         for prof in "${PROFILES[@]}"; do
             echo -e "\nProcessing profile: ${CYAN}$prof${NC}"
 
-            # Ensure header exists
-            if ! grep -q "# --- DEV TOOLS COLLECTION ALIASES ---" "$prof"; then
-                echo "" >> "$prof"
-                echo "# --- DEV TOOLS COLLECTION ALIASES ---" >> "$prof"
-                echo "# ------------------------------------" >> "$prof"
+            # Check for existing block
+            HAS_BLOCK=false
+            if grep -q "# --- DEV TOOLS COLLECTION ALIASES ---" "$prof"; then
+                HAS_BLOCK=true
             fi
 
-            # Iterate by index
-            for i in "${!ALIAS_NAMES[@]}"; do
-                name="${ALIAS_NAMES[$i]}"
-                cmd="${ALIAS_CMDS[$i]}"
+            # Check for conflicts
+            CONFLICT=false
+            if [[ "$HAS_BLOCK" == "true" ]]; then
+                 # If block exists, we assume we manage it.
+                 # But let's check if the content is exactly what we want.
+                 # Actually, simpler: just ask if we should update.
+                 echo -e "  ${YELLOW}Existing alias block found.${NC}"
+                 read -p "  Update/Overwrite all Dev Tools aliases? (y/n): " UPDATE_ALL
+                 if [[ "$UPDATE_ALL" != "y" ]]; then
+                     echo "  Skipped."
+                     continue
+                 fi
 
-                # Check if alias exists in file
-                if grep -q "alias $name=" "$prof"; then
-                    # Check if it matches exactly
-                    if grep -Fq "$cmd" "$prof"; then
-                        echo -e "  $name: ${GREEN}Already correct${NC}"
-                    else
-                        echo -e "  $name: ${YELLOW}Exists with different path${NC}"
-                        read -p "    Overwrite? (y/n): " OVER
-                        if [[ "$OVER" == "y" ]]; then
-                            # Use sed to replace the line
-                            # Update in place
-                            sed -i.bak "/alias $name=/d" "$prof"
-                            # Insert before footer
-                            sed -i.bak "/# ------------------------------------/i $cmd" "$prof"
-                            echo -e "    ${GREEN}Updated${NC}"
-                            rm -f "$prof.bak"
-                        else
-                            echo "    Skipped"
-                        fi
-                    fi
-                else
-                    # Does not exist, append
-                    # Insert before footer
-                    sed -i.bak "/# ------------------------------------/i $cmd" "$prof"
-                    echo -e "  $name: ${GREEN}Installed${NC}"
-                    rm -f "$prof.bak"
-                fi
-            done
+                 # Remove old block (Portable sed: delete range)
+                 sed -i.bak '/# --- DEV TOOLS COLLECTION ALIASES ---/,/# ------------------------------------/d' "$prof"
+                 rm -f "$prof.bak"
+            fi
+
+            # Append new block
+            echo "$ALIAS_BLOCK" >> "$prof"
+            echo -e "  ${GREEN}Aliases installed/updated.${NC}"
         done
 
         echo -e "\nPlease run ${BOLD}source <profile>${NC} or restart your shell."
