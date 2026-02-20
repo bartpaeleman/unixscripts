@@ -21,11 +21,25 @@ pause() {
     read -r
 }
 
+get_path_input() {
+    local prompt_msg="${1:-Target Directory}"
+    local default_path="$PWD"
+
+    echo -e "${CYAN}${prompt_msg}${NC} (Press Enter for Current Directory: ${YELLOW}${default_path}${NC})" >&2
+    read -p "> " input_path
+
+    if [[ -z "$input_path" || "$input_path" == "." ]]; then
+        echo "$default_path"
+    else
+        echo "$input_path"
+    fi
+}
+
 bulk_rename() {
     echo -e "\n${CYAN}=== Bulk Rename ===${NC}"
-    read -p "Target Directory: " DIR
+    DIR=$(get_path_input)
     if [[ ! -d "$DIR" ]]; then
-        echo "Directory not found."
+        echo "Directory not found: $DIR"
         pause
         return
     fi
@@ -63,10 +77,10 @@ create_struct() {
 
 archive_dir() {
     echo -e "\n${CYAN}=== Archive Directory ===${NC}"
-    read -p "Directory to Archive: " DIR
+    DIR=$(get_path_input "Directory to Archive")
 
     if [[ ! -d "$DIR" ]]; then
-        echo "Directory not found."
+        echo "Directory not found: $DIR"
         pause
         return
     fi
@@ -86,30 +100,66 @@ archive_dir() {
 
 cleanup_dir() {
     echo -e "\n${CYAN}=== Cleanup Directory ===${NC}"
-    read -p "Target Directory: " DIR
+    DIR=$(get_path_input)
 
     if [[ ! -d "$DIR" ]]; then
-        echo "Directory not found."
+        echo "Directory not found: $DIR"
         pause
         return
     fi
 
-    read -p "Delete Duplicates (MD5 check)? (y/n): " DEL_DUPES
-    read -p "Delete Junk Files (.DS_Store, Thumbs.db)? (y/n): " DEL_JUNK
-    read -p "Delete Empty Directories? (y/n): " DEL_EMPTY
+    while true; do
+        echo -e "\n${CYAN}Cleanup Options:${NC}"
+        echo "1) Remove Junk (.DS_Store, Thumbs.db, ._*)"
+        echo "2) Remove Empty Directories"
+        echo "3) Remove Duplicates (MD5)"
+        echo "4) Custom (Select combination)"
+        echo "5) All of the above"
+        echo "X) Cancel"
 
-    ARGS=""
-    if [[ "$DEL_DUPES" == "y" ]]; then ARGS="$ARGS --dupes"; fi
-    if [[ "$DEL_JUNK" == "y" ]]; then ARGS="$ARGS --junk"; fi
-    if [[ "$DEL_EMPTY" == "y" ]]; then ARGS="$ARGS --empty"; fi
+        read -p "Select Action: " clean_choice
 
-    echo -e "\n${YELLOW}Previewing...${NC}"
-    python3 "$SCRIPT_DIR/file_manager.py" cleanup "$DIR" $ARGS
+        ARGS=""
+        case $clean_choice in
+            1) ARGS="--junk" ;;
+            2) ARGS="--empty" ;;
+            3) ARGS="--dupes" ;;
+            4)
+                read -p "Delete Junk Files? (y/n): " c_junk
+                read -p "Delete Empty Directories? (y/n): " c_empty
+                read -p "Delete Duplicates? (y/n): " c_dupes
+                [[ "$c_junk" == "y" ]] && ARGS="$ARGS --junk"
+                [[ "$c_empty" == "y" ]] && ARGS="$ARGS --empty"
+                [[ "$c_dupes" == "y" ]] && ARGS="$ARGS --dupes"
+                ;;
+            5) ARGS="--junk --empty --dupes" ;;
+            [Xx]) return ;;
+            *) echo "Invalid option"; continue ;;
+        esac
 
-    read -p "Execute cleanup? (y/n): " CONFIRM
-    if [[ "$CONFIRM" == "y" ]]; then
-        python3 "$SCRIPT_DIR/file_manager.py" cleanup "$DIR" $ARGS --run
-    fi
+        if [[ -z "$ARGS" ]]; then
+            echo "No options selected."
+            continue
+        fi
+
+        echo -e "\n${YELLOW}Previewing Cleanup...${NC}"
+        # Only preview first (no --run)
+        # However, the python script does NOT have a dedicated "dry-run" flag, it just defaults to dry-run if --run is missing.
+        # Wait, checking file_manager.py...
+        # Yes: dry_run=not args.run.
+        # So invoking WITHOUT --run is a dry run.
+
+        python3 "$SCRIPT_DIR/file_manager.py" cleanup "$DIR" $ARGS
+
+        read -p "Execute cleanup? (y/n): " CONFIRM
+        if [[ "$CONFIRM" == "y" ]]; then
+            python3 "$SCRIPT_DIR/file_manager.py" cleanup "$DIR" $ARGS --run
+            echo "${GREEN}Cleanup complete.${NC}"
+        fi
+
+        # Break loop after action or return to menu? Usually return to main menu is better.
+        break
+    done
     pause
 }
 
