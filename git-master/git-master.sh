@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================================
-# GIT MASTER CONTROL PANEL v7.0.0
+# GIT MASTER CONTROL PANEL v7.1.0
 # Professional Git Workflow Manager for QNAP & macOS
 # ============================================================
 
@@ -178,7 +178,7 @@ while true; do
     
     # Header
     printf -- "${GREEN}${BOLD}===============================================================${NC}\n"
-    printf -- "       ${GREEN}${BOLD}GIT MASTER CONTROL PANEL v7.0.0${NC}\n"
+    printf -- "       ${GREEN}${BOLD}GIT MASTER CONTROL PANEL v7.1.0${NC}\n"
     printf -- "${GREEN}${BOLD}===============================================================${NC}\n"
     printf -- " Status   : $ENV_VAL\n"
     printf -- " Project  : ${CYAN}$PROJECT_NAME${NC} @ ${YELLOW}$CURRENT_BRANCH${NC}\n"
@@ -196,34 +196,35 @@ while true; do
     # --- FASE 1: CONTEXT & DEVELOPMENT ---
     printf "\n${YELLOW}${BOLD}[FASE 1] DEVELOPMENT CYCLE${NC}\n"
     printf " 1) DASHBOARD        - Status & History Overview (Scrollable)\n"
-    printf " 2) BRANCH EXPLORER  - Switch or Create new Feature Branch\n"
-    printf " 3) QUICK COMMIT     - Stage, Commit & Push active work\n"
-    printf " 4) SYNC FETCH       - Pull remote changes into active branch\n"
-    printf " 5) SYNC FORCE       - Overwrite Local or GitHub (Conflict fix)\n"
-    printf " 6) BACKUP POINT     - Create local snapshot branch\n"
+    printf " 2) CHECKOUT REPO    - Fetch & Switch to Repository (Branch)\n"
+    printf " 3) BRANCH EXPLORER  - Switch or Create new Feature Branch\n"
+    printf " 4) QUICK COMMIT     - Stage, Commit & Push active work\n"
+    printf " 5) SYNC FETCH       - Pull remote changes into active branch\n"
+    printf " 6) SYNC FORCE       - Overwrite Local or GitHub (Conflict fix)\n"
+    printf " 7) BACKUP POINT     - Create local snapshot branch\n"
 
     # --- FASE 2: UAT & RELEASE ---
     printf "\n${MAGENTA}${BOLD}[FASE 2] UAT & RELEASE${NC}\n"
-    printf " 7) PREPARE UAT      - Merge branch into TEST (Overwrite conflicts)\n"
-    printf " 8) STAGING PUSH     - Force sync current to DEV-STABLE\n"
-    printf " 9) MERGE FIXES      - Process external fixes (Jules)\n"
-    printf " 10) RELEASE TAG     - Mark current state (v1.x)\n"
+    printf " 8) PREPARE UAT      - Merge branch into TEST (Overwrite conflicts)\n"
+    printf " 9) STAGING PUSH     - Force sync current to DEV-STABLE\n"
+    printf " 10) MERGE FIXES     - Process external fixes (Jules)\n"
+    printf " 11) RELEASE TAG     - Mark current state (v1.x)\n"
 
     # --- FASE 3: MAINTENANCE & SAFETY ---
     printf "\n${RED}${BOLD}[FASE 3] MAINTENANCE & EMERGENCY${NC}\n"
-    printf " 11) CLEANUP PRUNE   - Delete branches gone on GitHub\n"
-    printf " 12) DELETE LOCAL    - Manually delete a local branch\n"
-    printf " 13) UNDO COMMIT     - Revert last commit (keep files)\n"
-    printf " 14) FORCE RESET     - Wipe local and reset to main (CAUTION)\n"
-    printf " 15) EMERGENCY       - Abort failed merges / Clear locks\n"
+    printf " 12) CLEANUP PRUNE   - Delete branches gone on GitHub\n"
+    printf " 13) DELETE LOCAL    - Manually delete a local branch\n"
+    printf " 14) UNDO COMMIT     - Revert last commit (keep files)\n"
+    printf " 15) FORCE RESET     - Wipe local and reset to main (CAUTION)\n"
+    printf " 16) EMERGENCY       - Abort failed merges / Clear locks\n"
     
     # --- FASE 4: ANALYSIS & TOOLS ---
     printf "\n${BOLD}[FASE 4] ANALYSIS & TOOLS${NC}\n"
-    printf " 16) DIFF VIEWER     - Compare changes between branches\n"
-    printf " 17) FILE HISTORY    - Show all commits for a file\n"
-    printf " 18) SEARCH CODE     - Find text in all files (grep)\n"
-    printf " 19) COMMIT FINDER   - Search commits by message\n"
-    printf " 20) BRANCH COMPARE  - See differences between branches\n"
+    printf " 17) DIFF VIEWER     - Compare changes between branches\n"
+    printf " 18) FILE HISTORY    - Show all commits for a file\n"
+    printf " 19) SEARCH CODE     - Find text in all files (grep)\n"
+    printf " 20) COMMIT FINDER   - Search commits by message\n"
+    printf " 21) BRANCH COMPARE  - See differences between branches\n"
 
     printf -- "\n---------------------------------------------------------------\n"
     printf " S) SETUP PERSISTENCE- Fix QNAP login & Aliases\n"
@@ -288,7 +289,60 @@ while true; do
             
             read -p "Enter..." junk ;;
 
-        2) # BRANCH EXPLORER
+        2) # CHECKOUT REPO
+            [[ "$IN_GIT" = false ]] && continue
+            check_dirty || continue
+
+            printf "${CYAN}Fetching updates from origin...${NC}\n"
+            # Capture output to detect new branches
+            git fetch origin --prune > /tmp/git_fetch_out 2>&1
+            cat /tmp/git_fetch_out
+
+            # Parse for new branches
+            # Usually: * [new branch]      feature/foo -> origin/feature/foo
+            # $4 is feature/foo
+            new_branches=$(grep "\[new branch\]" /tmp/git_fetch_out | awk '{print $4}')
+            rm -f /tmp/git_fetch_out
+
+            printf "\n${CYAN}${BOLD}Available Repositories (Branches):${NC}\n"
+
+            # Build list from git branch -r
+            i=1
+            declare -a repo_list
+            # git branch -r output: "  origin/HEAD -> origin/main", "  origin/main"
+            while IFS= read -r branch; do
+                # Clean up: remove "origin/" prefix
+                raw_branch=$(echo "$branch" | sed 's/^[* ]*//')
+                clean_branch=$(echo "$raw_branch" | sed 's/origin\///' | awk '{print $1}')
+
+                # Skip HEAD pointer
+                [[ "$clean_branch" == "HEAD" || "$raw_branch" == *"->"* ]] && continue
+
+                mark=""
+                # Check if clean_branch matches anything in new_branches
+                if echo "$new_branches" | grep -q "^$clean_branch$"; then
+                    mark=" ${GREEN}(NEW)${NC}"
+                fi
+
+                printf " %2d) %s%s\n" "$i" "$clean_branch" "$mark"
+                repo_list[$i]="$clean_branch"
+                ((i++))
+            done < <(git branch -r | grep -v HEAD)
+
+            read -p "Select Repo/Branch (X to cancel): " cr_idx
+            [[ "$cr_idx" =~ ^[Xx]$ ]] && continue
+
+            sel_br="${repo_list[$cr_idx]}"
+            if [[ -n "$sel_br" ]]; then
+                printf "${YELLOW}Checking out $sel_br...${NC}\n"
+                git checkout "$sel_br" 2>/dev/null || git checkout -b "$sel_br" "origin/$sel_br"
+                git pull origin "$sel_br"
+            else
+                printf "${RED}Invalid selection.${NC}\n"
+            fi
+            read -p "Enter..." junk ;;
+
+        3) # BRANCH EXPLORER
             [[ "$IN_GIT" = false ]] && continue
             check_dirty || continue
             get_branch_list_raw "be"
@@ -307,7 +361,7 @@ while true; do
             fi
             read -p "Enter..." junk junk ;;
 
-        3) # QUICK COMMIT
+        4) # QUICK COMMIT
             [[ "$IN_GIT" = false ]] && continue
             git status -s
             read -p "Commit Message (X to cancel): " msg
@@ -320,12 +374,12 @@ while true; do
                 read -p "Work pushed. Enter..." junk
             fi ;;
 
-        4) # SYNC FETCH
+        5) # SYNC FETCH
             [[ "$IN_GIT" = false ]] && continue
             git pull origin "$CURRENT_BRANCH"
             read -p "Pull complete. Enter..." junk ;;
 
-        5) # SYNC FORCE
+        6) # SYNC FORCE
             [[ "$IN_GIT" = false ]] && continue
             git fetch origin
             printf "A) OVERWRITE LOCAL (Loss of local work)\nB) FORCE PUSH (Loss of GitHub work)\nX) Cancel\n"
@@ -334,14 +388,14 @@ while true; do
             [[ "$fa_choice" =~ [Bb] ]] && git push origin "$CURRENT_BRANCH" --force
             read -p "Sync complete. Enter..." junk ;;
 
-        6) # BACKUP POINT
+        7) # BACKUP POINT
             [[ "$IN_GIT" = false ]] && continue
             TS=$(date +%Y%m%d_%H%M)
             git branch "backup/${CURRENT_BRANCH}_$TS"
             printf "${GREEN}Backup created.${NC}\n"
             read -p "Enter..." junk ;;
 
-        7) # PREPARE UAT
+        8) # PREPARE UAT
             [[ "$IN_GIT" = false ]] && continue
             printf "${MAGENTA}Preparing UAT Environment (Force Overwrite Mode)...${NC}\n"
             git stash > /dev/null 2>&1
@@ -365,7 +419,7 @@ while true; do
             fi
             read -p "Enter..." junk ;;
 
-        8) # STAGING PUSH
+        9) # STAGING PUSH
             [[ "$IN_GIT" = false ]] && continue
             git branch -f dev-stable-backup dev-stable 2>/dev/null
             read -p "Push ${CURRENT_BRANCH} → dev-stable? (y/n): " s_conf
@@ -377,7 +431,7 @@ while true; do
             fi
             read -p "Enter..." junk ;;
 
-        9) # MERGE FIXES
+        10) # MERGE FIXES
             [[ "$IN_GIT" = false ]] && continue
             get_branch_list_raw "mf"
             print_colored_branch_list "mf"
@@ -391,7 +445,7 @@ while true; do
             fi
             read -p "Enter..." junk ;;
 
-        10) # RELEASE TAG
+        11) # RELEASE TAG
             [[ "$IN_GIT" = false ]] && continue
             git tag -l | tail -n 5
             read -p "New version tag: " v_tag
@@ -401,7 +455,7 @@ while true; do
             fi
             read -p "Enter..." junk ;;
 
-        11) # CLEANUP PRUNE
+        12) # CLEANUP PRUNE
             [[ "$IN_GIT" = false ]] && continue
             git fetch origin --prune
             GONE=$(git branch -vv | grep ': gone]' | awk '{print $1}')
@@ -414,7 +468,7 @@ while true; do
             fi
             read -p "Enter..." junk ;;
 
-        12) # DELETE LOCAL
+        13) # DELETE LOCAL
             [[ "$IN_GIT" = false ]] && continue
             get_branch_list_raw "dk"
             print_colored_branch_list "dk"
@@ -427,13 +481,13 @@ while true; do
             fi
             read -p "Enter..." junk ;;
 
-        13) # UNDO COMMIT
+        14) # UNDO COMMIT
             [[ "$IN_GIT" = false ]] && continue
             git reset --soft HEAD~1
             printf "${YELLOW}Last commit undone. Changes are kept in stage (files kept)${NC}\n"
             read -p "Enter..." junk ;;
 
-        14) # FORCE RESET
+        15) # FORCE RESET
             [[ "$IN_GIT" = false ]] && continue
             if [[ $IS_PROD -eq 1 ]]; then
                 printf "${RED}${BOLD}!!! WARNING: YOU ARE IN PROD ENVIRONMENT !!!${NC}\n"
@@ -448,7 +502,7 @@ while true; do
             fi
             read -p "Enter..." junk ;;
 
-        15) # EMERGENCY
+        16) # EMERGENCY
             [[ "$IN_GIT" = false ]] && continue
             printf "1) ABORT MERGE 2) CLEAR LOCKS 3) POP STASH\n"
             read -p "Action: " em_c
@@ -458,7 +512,7 @@ while true; do
             [[ "$em_c" == "3" ]] && git stash pop
             read -p "Enter..." junk ;;
 
-        16) # DIFF VIEWER
+        17) # DIFF VIEWER
             [[ "$IN_GIT" = false ]] && continue
             clear
             printf "${CYAN}${BOLD}DIFF VIEWER${NC}\n\n"
@@ -489,7 +543,7 @@ while true; do
             esac
             read -p "Enter..." junk ;;
 
-        17) # FILE HISTORY
+        18) # FILE HISTORY
             [[ "$IN_GIT" = false ]] && continue
             clear
             printf "${CYAN}${BOLD}FILE HISTORY${NC}\n\n"
@@ -506,7 +560,7 @@ while true; do
             fi
             read -p "Enter..." junk ;;
 
-        18) # SEARCH CODE
+        19) # SEARCH CODE
             [[ "$IN_GIT" = false ]] && continue
             clear
             printf "${CYAN}${BOLD}CODE SEARCH${NC}\n\n"
@@ -521,7 +575,7 @@ while true; do
             fi
             read -p "Enter..." junk ;;
 
-        19) # COMMIT FINDER
+        20) # COMMIT FINDER
             [[ "$IN_GIT" = false ]] && continue
             clear
             printf "${CYAN}${BOLD}COMMIT FINDER${NC}\n\n"
@@ -538,7 +592,7 @@ while true; do
             fi
             read -p "Enter..." junk ;;
 
-        20) # BRANCH COMPARE
+        21) # BRANCH COMPARE
             [[ "$IN_GIT" = false ]] && continue
             clear
             printf "${CYAN}${BOLD}BRANCH COMPARISON${NC}\n\n"
