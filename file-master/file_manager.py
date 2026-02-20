@@ -1,4 +1,5 @@
-import argparse
+
+import sys
 import os
 import re
 import shutil
@@ -6,6 +7,8 @@ import hashlib
 import zipfile
 import tarfile
 import datetime
+
+# --- HELPER FUNCTIONS (UNCHANGED) ---
 
 def calculate_hash(filepath):
     hash_md5 = hashlib.md5()
@@ -15,11 +18,11 @@ def calculate_hash(filepath):
                 hash_md5.update(chunk)
         return hash_md5.hexdigest()
     except Exception as e:
-        print(f"Error hashing {filepath}: {e}")
+        print("Error hashing {}: {}".format(filepath, e))
         return None
 
 def bulk_rename(directory, pattern, replacement, dry_run=False):
-    print(f"Bulk Renaming in {directory} (Pattern: '{pattern}' -> '{replacement}')")
+    print("Bulk Renaming in {} (Pattern: '{}' -> '{}')".format(directory, pattern, replacement))
     count = 0
     try:
         regex = re.compile(pattern)
@@ -36,24 +39,24 @@ def bulk_rename(directory, pattern, replacement, dry_run=False):
                     new_path = os.path.join(root, new_filename)
 
                     if old_path != new_path:
-                        print(f"  {filename} -> {new_filename}")
+                        print("  {} -> {}".format(filename, new_filename))
                         if not dry_run:
                             try:
                                 os.rename(old_path, new_path)
                             except OSError as e:
-                                print(f"    Error: {e}")
+                                print("    Error: {}".format(e))
                         count += 1
     except re.error as e:
-        print(f"Invalid Regex: {e}")
+        print("Invalid Regex: {}".format(e))
         return
 
     if dry_run:
-        print(f"Dry run complete. {count} files would be renamed.")
+        print("Dry run complete. {} files would be renamed.".format(count))
     else:
-        print(f"Renamed {count} files.")
+        print("Renamed {} files.".format(count))
 
 def create_structure(template_file):
-    print(f"Creating structure from {template_file}...")
+    print("Creating structure from {}...".format(template_file))
     try:
         with open(template_file, 'r') as f:
             lines = f.readlines()
@@ -64,43 +67,43 @@ def create_structure(template_file):
                 if not os.path.exists(path):
                     try:
                         os.makedirs(path)
-                        print(f"  Created: {path}")
+                        print("  Created: {}".format(path))
                     except OSError as e:
-                        print(f"  Error creating {path}: {e}")
+                        print("  Error creating {}: {}".format(path, e))
                 else:
-                    print(f"  Exists: {path}")
+                    print("  Exists: {}".format(path))
     except Exception as e:
-        print(f"Error reading template: {e}")
+        print("Error reading template: {}".format(e))
 
 def archive_directory(directory, archive_type):
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     base_name = os.path.basename(os.path.normpath(directory))
-    archive_name = f"{base_name}_{timestamp}"
+    archive_name = "{}_{}".format(base_name, timestamp)
 
-    print(f"Archiving {directory} to {archive_name}.{archive_type}...")
+    print("Archiving {} to {}.{}...".format(directory, archive_name, archive_type))
 
     if archive_type == 'zip':
         try:
-            with zipfile.ZipFile(f"{archive_name}.zip", "w", zipfile.ZIP_DEFLATED) as zf:
+            with zipfile.ZipFile("{}.zip".format(archive_name), "w", zipfile.ZIP_DEFLATED) as zf:
                 for root, dirs, files in os.walk(directory):
                     for file in files:
                         abs_path = os.path.join(root, file)
                         rel_path = os.path.relpath(abs_path, directory)
                         zf.write(abs_path, rel_path)
-            print(f"Created {archive_name}.zip")
+            print("Created {}.zip".format(archive_name))
         except Exception as e:
-            print(f"Error creating zip: {e}")
+            print("Error creating zip: {}".format(e))
 
     elif archive_type == 'tar':
         try:
-            with tarfile.open(f"{archive_name}.tar.gz", "w:gz") as tf:
+            with tarfile.open("{}.tar.gz".format(archive_name), "w:gz") as tf:
                 tf.add(directory, arcname=base_name)
-            print(f"Created {archive_name}.tar.gz")
+            print("Created {}.tar.gz".format(archive_name))
         except Exception as e:
-            print(f"Error creating tar: {e}")
+            print("Error creating tar: {}".format(e))
 
 def cleanup(directory, delete_dupes=False, delete_empty=False, delete_junk=False, dry_run=False):
-    print(f"Cleaning up {directory}...")
+    print("Cleaning up {}...".format(directory))
 
     if delete_dupes:
         print("Scanning for duplicates (Size + MD5)...")
@@ -127,19 +130,19 @@ def cleanup(directory, delete_dupes=False, delete_empty=False, delete_junk=False
                     file_hash = calculate_hash(filepath)
                     if file_hash:
                         if file_hash in hashes:
-                            print(f"  Duplicate found: {filepath} (matches {hashes[file_hash]})")
+                            print("  Duplicate found: {} (matches {})".format(filepath, hashes[file_hash]))
                             dupes_found += 1
                             if not dry_run:
                                 try:
                                     os.remove(filepath)
                                     print("    Deleted.")
                                 except OSError as e:
-                                    print(f"    Error deleting: {e}")
+                                    print("    Error deleting: {}".format(e))
                         else:
                             hashes[file_hash] = filepath
 
         if dry_run:
-            print(f"Dry run: {dupes_found} duplicates found.")
+            print("Dry run: {} duplicates found.".format(dupes_found))
 
     if delete_junk:
         print("Scanning for junk files (.DS_Store, Thumbs.db, ._*)")
@@ -149,15 +152,15 @@ def cleanup(directory, delete_dupes=False, delete_empty=False, delete_junk=False
                 if file in [".DS_Store", "Thumbs.db"] or file.startswith("._"):
                     junk_files.append(os.path.join(root, file))
 
-        print(f"Found {len(junk_files)} junk files.")
+        print("Found {} junk files.".format(len(junk_files)))
         for jf in junk_files:
-            print(f"  {jf}")
+            print("  {}".format(jf))
             if not dry_run:
                 try:
                     os.remove(jf)
                     print("    Deleted.")
                 except OSError as e:
-                    print(f"    Error deleting: {e}")
+                    print("    Error deleting: {}".format(e))
 
     if delete_empty:
         print("Scanning for empty directories...")
@@ -165,19 +168,19 @@ def cleanup(directory, delete_dupes=False, delete_empty=False, delete_junk=False
         # Walk bottom-up
         for root, dirs, files in os.walk(directory, topdown=False):
             if not os.listdir(root):
-                print(f"  Empty directory: {root}")
+                print("  Empty directory: {}".format(root))
                 empty_found += 1
                 if not dry_run:
                     try:
                         os.rmdir(root)
                         print("    Removed.")
                     except OSError as e:
-                        print(f"    Error removing: {e}")
+                        print("    Error removing: {}".format(e))
         if dry_run:
-            print(f"Dry run: {empty_found} empty directories found.")
+            print("Dry run: {} empty directories found.".format(empty_found))
 
 def compare_files(file1, file2):
-    print(f"Comparing {file1} vs {file2}...")
+    print("Comparing {} vs {}...".format(file1, file2))
     h1 = calculate_hash(file1)
     h2 = calculate_hash(file2)
 
@@ -185,54 +188,91 @@ def compare_files(file1, file2):
         print("Files are IDENTICAL (Match by MD5).")
     else:
         print("Files are DIFFERENT.")
-        print(f"  {file1}: {h1}")
-        print(f"  {file2}: {h2}")
+        print("  {}: {}".format(file1, h1))
+        print("  {}: {}".format(file2, h2))
+
+# --- MANUAL ARGUMENT PARSING ---
+
+def print_usage():
+    print("Usage: python file_manager.py <command> [args...]")
+    print("Commands:")
+    print("  rename <dir> <pattern> <replace> [--run]")
+    print("  structure <template_file>")
+    print("  archive <dir> [--type zip|tar]")
+    print("  cleanup <dir> [--dupes] [--empty] [--junk] [--run]")
+    print("  compare <file1> <file2>")
 
 def main():
-    parser = argparse.ArgumentParser(description="File Master Tool")
-    subparsers = parser.add_subparsers(dest='command')
+    if len(sys.argv) < 2:
+        print_usage()
+        sys.exit(1)
 
-    # Rename
-    ren_parser = subparsers.add_parser('rename')
-    ren_parser.add_argument('directory')
-    ren_parser.add_argument('pattern')
-    ren_parser.add_argument('replacement')
-    ren_parser.add_argument('--run', action='store_true', help="Execute the rename (default is dry-run)")
+    command = sys.argv[1]
+    args = sys.argv[2:]
 
-    # Structure
-    struct_parser = subparsers.add_parser('structure')
-    struct_parser.add_argument('template_file')
+    if command == 'rename':
+        if len(args) < 3:
+            print("Error: Missing arguments for rename.")
+            print_usage()
+            sys.exit(1)
 
-    # Archive
-    arch_parser = subparsers.add_parser('archive')
-    arch_parser.add_argument('directory')
-    arch_parser.add_argument('--type', choices=['zip', 'tar'], default='zip')
+        directory = args[0]
+        pattern = args[1]
+        replacement = args[2]
 
-    # Cleanup
-    clean_parser = subparsers.add_parser('cleanup')
-    clean_parser.add_argument('directory')
-    clean_parser.add_argument('--dupes', action='store_true')
-    clean_parser.add_argument('--empty', action='store_true')
-    clean_parser.add_argument('--junk', action='store_true')
-    clean_parser.add_argument('--run', action='store_true')
+        run_flag = False
+        if len(args) > 3 and args[3] == '--run':
+            run_flag = True
 
-    # Compare
-    comp_parser = subparsers.add_parser('compare')
-    comp_parser.add_argument('file1')
-    comp_parser.add_argument('file2')
+        bulk_rename(directory, pattern, replacement, dry_run=not run_flag)
 
-    args = parser.parse_args()
+    elif command == 'structure':
+        if len(args) < 1:
+            print("Error: Missing template file.")
+            sys.exit(1)
+        create_structure(args[0])
 
-    if args.command == 'rename':
-        bulk_rename(args.directory, args.pattern, args.replacement, dry_run=not args.run)
-    elif args.command == 'structure':
-        create_structure(args.template_file)
-    elif args.command == 'archive':
-        archive_directory(args.directory, args.type)
-    elif args.command == 'cleanup':
-        cleanup(args.directory, delete_dupes=args.dupes, delete_empty=args.empty, delete_junk=args.junk, dry_run=not args.run)
-    elif args.command == 'compare':
-        compare_files(args.file1, args.file2)
+    elif command == 'archive':
+        if len(args) < 1:
+            print("Error: Missing directory.")
+            sys.exit(1)
+
+        directory = args[0]
+        archive_type = 'zip'
+
+        # Simple flag parsing
+        if '--type' in args:
+            idx = args.index('--type')
+            if idx + 1 < len(args):
+                val = args[idx+1]
+                if val in ['zip', 'tar']:
+                    archive_type = val
+
+        archive_directory(directory, archive_type)
+
+    elif command == 'cleanup':
+        if len(args) < 1:
+            print("Error: Missing directory.")
+            sys.exit(1)
+
+        directory = args[0]
+        delete_dupes = '--dupes' in args
+        delete_empty = '--empty' in args
+        delete_junk = '--junk' in args
+        run_flag = '--run' in args
+
+        cleanup(directory, delete_dupes=delete_dupes, delete_empty=delete_empty, delete_junk=delete_junk, dry_run=not run_flag)
+
+    elif command == 'compare':
+        if len(args) < 2:
+            print("Error: Missing files.")
+            sys.exit(1)
+        compare_files(args[0], args[1])
+
+    else:
+        print("Unknown command: {}".format(command))
+        print_usage()
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
