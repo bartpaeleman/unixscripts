@@ -2,15 +2,17 @@
 import sys
 import os
 import re
-import shutil
-import hashlib
-import zipfile
-import tarfile
 import datetime
 
-# --- HELPER FUNCTIONS (UNCHANGED) ---
+# --- HELPER FUNCTIONS ---
 
 def calculate_hash(filepath):
+    try:
+        import hashlib
+    except ImportError:
+        print("Error: hashlib module missing. Cannot calculate checksums.")
+        return None
+
     hash_md5 = hashlib.md5()
     try:
         with open(filepath, "rb") as f:
@@ -84,6 +86,12 @@ def archive_directory(directory, archive_type):
 
     if archive_type == 'zip':
         try:
+            import zipfile
+        except ImportError:
+            print("Error: zipfile module missing. Cannot create .zip archive.")
+            return
+
+        try:
             with zipfile.ZipFile("{}.zip".format(archive_name), "w", zipfile.ZIP_DEFLATED) as zf:
                 for root, dirs, files in os.walk(directory):
                     for file in files:
@@ -95,6 +103,12 @@ def archive_directory(directory, archive_type):
             print("Error creating zip: {}".format(e))
 
     elif archive_type == 'tar':
+        try:
+            import tarfile
+        except ImportError:
+            print("Error: tarfile module missing. Cannot create .tar.gz archive.")
+            return
+
         try:
             with tarfile.open("{}.tar.gz".format(archive_name), "w:gz") as tf:
                 tf.add(directory, arcname=base_name)
@@ -183,6 +197,10 @@ def compare_files(file1, file2):
     print("Comparing {} vs {}...".format(file1, file2))
     h1 = calculate_hash(file1)
     h2 = calculate_hash(file2)
+
+    if h1 is None or h2 is None:
+        print("Comparison failed due to missing hash module.")
+        return
 
     if h1 == h2:
         print("Files are IDENTICAL (Match by MD5).")
