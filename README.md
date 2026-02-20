@@ -28,7 +28,7 @@ Or if aliases are installed: `scriptmaster`
 ### 1. Git Master Control Panel
 A professional Git workflow manager to simplify development cycles.
 *   **Location**: `git-master/`
-*   **Key Features**: Environment management (PROD/DEV/TEST), automated branching, UAT workflows.
+*   **Key Features**: Environment management (PROD/DEV/TEST), automated branching, UAT workflows, and new "Checkout Repo" feature.
 
 ### 2. Development Scripts
 Standalone utility scripts for web development and system maintenance.
@@ -40,7 +40,7 @@ Standalone utility scripts for web development and system maintenance.
 | **Container Master** | Interactive Docker management and inspection. | `dockermaster` |
 | **Network Master** | Comprehensive network diagnostics and port scanning. | `netmaster` |
 | **Data Master** | Advanced CSV/JSON/XML/YAML conversion, viewing, and normalization. | `datamaster` |
-| **File Master** | Bulk rename (regex), archive (zip/tar), junk cleanup, and comparison. | `filemaster` |
+| **File Master** | Bulk rename, archive, granular cleanup (Junk/Empty/Dupes), and comparison. Defaults to current directory. | `filemaster` |
 | **Text Master** | Text analysis, search & replace, and file merging. | `textmaster` |
 
 ## Usage Examples

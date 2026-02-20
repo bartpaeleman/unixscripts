@@ -108,30 +108,31 @@ PATH_ROOT="/your/projects/path"
 | Key | Action | Description |
 |-----|--------|-------------|
 | `1` | Dashboard | View status, branches, and commit history |
-| `2` | Branch Explorer | Create or switch branches |
-| `3` | Quick Commit | Stage, commit, and push changes |
-| `4` | Pull | Fetch and merge remote changes |
-| `5` | Force Sync | Resolve conflicts (overwrite local or remote) |
-| `6` | Backup | Create a timestamped backup branch |
+| `2` | Checkout Repo | Fetch & Switch to Repository (Branch) |
+| `3` | Branch Explorer | Create or switch branches |
+| `4` | Quick Commit | Stage, commit, and push changes |
+| `5` | Pull | Fetch and merge remote changes |
+| `6` | Force Sync | Resolve conflicts (overwrite local or remote) |
+| `7` | Backup | Create a timestamped backup branch |
 
 ### UAT & Release (Phase 2)
 
 | Key | Action | Description |
 |-----|--------|-------------|
-| `7` | Prepare UAT | Merge external branch for testing |
-| `8` | Staging Push | Promote current branch to dev-stable |
-| `9` | Merge Fixes | Integrate fix branches |
-| `10` | Release Tag | Create version tag (e.g., v1.2.3) |
+| `8` | Prepare UAT | Merge external branch for testing |
+| `9` | Staging Push | Promote current branch to dev-stable |
+| `10` | Merge Fixes | Integrate fix branches |
+| `11` | Release Tag | Create version tag (e.g., v1.2.3) |
 
 ### Maintenance (Phase 3)
 
 | Key | Action | Description |
 |-----|--------|-------------|
-| `11` | Prune | Remove dead branches (deleted on GitHub) |
-| `12` | Delete Local | Remove a local branch |
-| `13` | Undo Commit | Rollback last commit (keep changes) |
-| `14` | Force Reset | Nuclear option - reset to main |
-| `15` | Emergency | Abort merges, clear locks, pop stash |
+| `12` | Prune | Remove dead branches (deleted on GitHub) |
+| `13` | Delete Local | Remove a local branch |
+| `14` | Undo Commit | Rollback last commit (keep changes) |
+| `15` | Force Reset | Nuclear option - reset to main |
+| `16` | Emergency | Abort merges, clear locks, pop stash |
 
 ## 🔧 Configuration Reference
 
@@ -272,13 +273,13 @@ chmod +x git-master.sh
 
 ## 📝 Version History
 
-### v7.0.0 (Current)
+### v7.1.0 (Current)
+- ✅ **New Feature**: "Checkout Repo" menu option (Phase 1) for easy remote branch switching
+- ✅ **Enhancement**: Safeguard against overwriting existing `.env` configuration
+- ✅ **Enhancement**: Granular cleanup options in File Master
+- ✅ **Fix**: Python dependency resolution on QNAP systems
 - ✅ Environment-based configuration (.env)
 - ✅ Improved security (no hardcoded secrets)
-- ✅ Compact menu design
-- ✅ Cross-platform compatibility
-- ✅ Better error handling
-- ✅ Template-based setup
 
 ### v6.9.1 (Legacy)
 - Original hardcoded version
