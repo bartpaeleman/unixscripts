@@ -637,6 +637,24 @@ while true; do
                     load_env
                     ;;
                 2)
+                    if [[ -f "$ENV_FILE" ]]; then
+                        printf "\n${YELLOW}=== CURRENT REQUIRED INFO ===${NC}\n"
+                        # Parse only REQUIRED fields for display
+                        grep -E "^(GITHUB_TOKEN|GITHUB_USERNAME|PATH_ROOT)=" "$ENV_FILE" | while IFS='=' read -r key value; do
+                            value="${value%\"}"
+                            value="${value#\"}"
+                            printf "  ${CYAN}%-15s${NC}: %s\n" "$key" "$value"
+                        done
+                        printf "${YELLOW}=============================${NC}\n\n"
+
+                        read -p "Existing configuration found. Use this configuration (and cancel overwrite)? (y/n): " use_existing
+                        if [[ "$use_existing" == "y" ]]; then
+                            printf "${GREEN}Keeping existing configuration.${NC}\n"
+                            read -p "Enter..." junk
+                            continue
+                        fi
+                    fi
+
                     if [[ -f "$ENV_EXAMPLE" ]]; then
                         read -p "This will overwrite current .env. Continue? (y/n): " confirm
                         if [[ "$confirm" == "y" ]]; then
