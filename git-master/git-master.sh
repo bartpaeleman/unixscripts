@@ -301,7 +301,7 @@ while true; do
             # Parse for new branches
             # Usually: * [new branch]      feature/foo -> origin/feature/foo
             # $4 is feature/foo
-            new_branches=$(grep "\[new branch\]" /tmp/git_fetch_out | awk '{print $4}')
+            new_branches=$(grep "\[new branch\]" /tmp/git_fetch_out | awk '{print $4}' || true)
             rm -f /tmp/git_fetch_out
 
             printf "\n${CYAN}${BOLD}Available Repositories (Branches):${NC}\n"
