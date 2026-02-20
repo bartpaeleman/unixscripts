@@ -156,10 +156,45 @@ detect_environment() {
 # --- INITIALIZATION ---
 load_env
 
+# --- COMMAND LINE ARGUMENTS ---
+CMD_SWITCH=""
+if [[ $# -gt 0 ]]; then
+    case "$1" in
+        -h|--help|-help)
+            printf "${GREEN}Git Master Control Panel - Command Line Switches${NC}\n"
+            printf "Usage: gitmaster [option]\n\n"
+            printf "  ${CYAN}-cl, --clone${NC}      New Clone (Option 0)\n"
+            printf "  ${CYAN}-st, --status${NC}     Dashboard (Option 1)\n"
+            printf "  ${CYAN}-co, --checkout${NC}   Checkout Repo (Option 2)\n"
+            printf "  ${CYAN}-br, --branch${NC}     Branch Explorer (Option 3)\n"
+            printf "  ${CYAN}-cm, --commit${NC}     Quick Commit (Option 4)\n"
+            printf "  ${CYAN}-pl, --pull${NC}       Sync Fetch (Option 5)\n"
+            printf "  ${CYAN}-fs, --force-sync${NC} Sync Force (Option 6)\n"
+            printf "  ${CYAN}-bk, --backup${NC}     Backup Point (Option 7)\n"
+            printf "  ${CYAN}-pr, --prune${NC}      Cleanup Prune (Option 12)\n"
+            printf "  ${CYAN}-h,  --help${NC}       Show this help\n"
+            exit 0
+            ;;
+        -cl|--clone)      CMD_SWITCH="0" ;;
+        -st|--status)     CMD_SWITCH="1" ;;
+        -co|--checkout)   CMD_SWITCH="2" ;;
+        -br|--branch)     CMD_SWITCH="3" ;;
+        -cm|--commit)     CMD_SWITCH="4" ;;
+        -pl|--pull)       CMD_SWITCH="5" ;;
+        -fs|--force-sync) CMD_SWITCH="6" ;;
+        -bk|--backup)     CMD_SWITCH="7" ;;
+        -pr|--prune)      CMD_SWITCH="12" ;;
+        *)
+            printf "${RED}Unknown option: $1${NC}\n"
+            printf "Use -h for help.\n"
+            exit 1
+            ;;
+    esac
+fi
+
 # --- MAIN PROGRAM ---
 
 while true; do
-    clear
     CUR_PATH=$(pwd)
     PROJECT_NAME=$(basename "$CUR_PATH")
     
@@ -175,62 +210,67 @@ while true; do
     # Environment detection
     ENV_VAL=$(detect_environment "$CUR_PATH")
     IS_PROD=$?
-    
-    # Header
-    printf -- "${GREEN}${BOLD}===============================================================${NC}\n"
-    printf -- "       ${GREEN}${BOLD}GIT MASTER CONTROL PANEL v7.1.0${NC}\n"
-    printf -- "${GREEN}${BOLD}===============================================================${NC}\n"
-    printf -- " Status   : $ENV_VAL\n"
-    printf -- " Project  : ${CYAN}$PROJECT_NAME${NC} @ ${YELLOW}$CURRENT_BRANCH${NC}\n"
-    printf -- " Path     : ${CYAN}$CUR_PATH${NC}\n"
-    printf -- " Auth     : $([ -n "$GITHUB_TOKEN" ] && echo -e "${GREEN}TOKEN ACTIVE${NC}" || echo -e "${RED}NO TOKEN FOUND${NC}")\n"
-    printf -- "${GREEN}${BOLD}===============================================================${NC}\n"
 
-    # --- FASE 0: NAVIGATION & SETUP ---
-    printf "${CYAN}${BOLD}[FASE 0] NAVIGATION & SETUP${NC}\n"
-    printf " P) GOTO PROD        - Switch to $PATH_PROD\n"
-    printf " D) GOTO DEV         - Switch to $PATH_DEV\n"
-    printf " T) GOTO TEST        - Switch to $PATH_TEST\n"
-    printf " 0) NEW CLONE        - Initial project setup\n"
+    if [[ -z "$CMD_SWITCH" ]]; then
+        clear
+        # Header
+        printf -- "${GREEN}${BOLD}===============================================================${NC}\n"
+        printf -- "       ${GREEN}${BOLD}GIT MASTER CONTROL PANEL v7.1.0${NC}\n"
+        printf -- "${GREEN}${BOLD}===============================================================${NC}\n"
+        printf -- " Status   : $ENV_VAL\n"
+        printf -- " Project  : ${CYAN}$PROJECT_NAME${NC} @ ${YELLOW}$CURRENT_BRANCH${NC}\n"
+        printf -- " Path     : ${CYAN}$CUR_PATH${NC}\n"
+        printf -- " Auth     : $([ -n "$GITHUB_TOKEN" ] && echo -e "${GREEN}TOKEN ACTIVE${NC}" || echo -e "${RED}NO TOKEN FOUND${NC}")\n"
+        printf -- "${GREEN}${BOLD}===============================================================${NC}\n"
 
-    # --- FASE 1: CONTEXT & DEVELOPMENT ---
-    printf "\n${YELLOW}${BOLD}[FASE 1] DEVELOPMENT CYCLE${NC}\n"
-    printf " 1) DASHBOARD        - Status & History Overview (Scrollable)\n"
-    printf " 2) CHECKOUT REPO    - Fetch & Switch to Repository (Branch)\n"
-    printf " 3) BRANCH EXPLORER  - Switch or Create new Feature Branch\n"
-    printf " 4) QUICK COMMIT     - Stage, Commit & Push active work\n"
-    printf " 5) SYNC FETCH       - Pull remote changes into active branch\n"
-    printf " 6) SYNC FORCE       - Overwrite Local or GitHub (Conflict fix)\n"
-    printf " 7) BACKUP POINT     - Create local snapshot branch\n"
+        # --- FASE 0: NAVIGATION & SETUP ---
+        printf "${CYAN}${BOLD}[FASE 0] NAVIGATION & SETUP${NC}\n"
+        printf " P) GOTO PROD        - Switch to $PATH_PROD\n"
+        printf " D) GOTO DEV         - Switch to $PATH_DEV\n"
+        printf " T) GOTO TEST        - Switch to $PATH_TEST\n"
+        printf " 0) NEW CLONE        - Initial project setup\n"
 
-    # --- FASE 2: UAT & RELEASE ---
-    printf "\n${MAGENTA}${BOLD}[FASE 2] UAT & RELEASE${NC}\n"
-    printf " 8) PREPARE UAT      - Merge branch into TEST (Overwrite conflicts)\n"
-    printf " 9) STAGING PUSH     - Force sync current to DEV-STABLE\n"
-    printf " 10) MERGE FIXES     - Process external fixes (Jules)\n"
-    printf " 11) RELEASE TAG     - Mark current state (v1.x)\n"
+        # --- FASE 1: CONTEXT & DEVELOPMENT ---
+        printf "\n${YELLOW}${BOLD}[FASE 1] DEVELOPMENT CYCLE${NC}\n"
+        printf " 1) DASHBOARD        - Status & History Overview (Scrollable)\n"
+        printf " 2) CHECKOUT REPO    - Fetch & Switch to Repository (Branch)\n"
+        printf " 3) BRANCH EXPLORER  - Switch or Create new Feature Branch\n"
+        printf " 4) QUICK COMMIT     - Stage, Commit & Push active work\n"
+        printf " 5) SYNC FETCH       - Pull remote changes into active branch\n"
+        printf " 6) SYNC FORCE       - Overwrite Local or GitHub (Conflict fix)\n"
+        printf " 7) BACKUP POINT     - Create local snapshot branch\n"
 
-    # --- FASE 3: MAINTENANCE & SAFETY ---
-    printf "\n${RED}${BOLD}[FASE 3] MAINTENANCE & EMERGENCY${NC}\n"
-    printf " 12) CLEANUP PRUNE   - Delete branches gone on GitHub\n"
-    printf " 13) DELETE LOCAL    - Manually delete a local branch\n"
-    printf " 14) UNDO COMMIT     - Revert last commit (keep files)\n"
-    printf " 15) FORCE RESET     - Wipe local and reset to main (CAUTION)\n"
-    printf " 16) EMERGENCY       - Abort failed merges / Clear locks\n"
-    
-    # --- FASE 4: ANALYSIS & TOOLS ---
-    printf "\n${BOLD}[FASE 4] ANALYSIS & TOOLS${NC}\n"
-    printf " 17) DIFF VIEWER     - Compare changes between branches\n"
-    printf " 18) FILE HISTORY    - Show all commits for a file\n"
-    printf " 19) SEARCH CODE     - Find text in all files (grep)\n"
-    printf " 20) COMMIT FINDER   - Search commits by message\n"
-    printf " 21) BRANCH COMPARE  - See differences between branches\n"
+        # --- FASE 2: UAT & RELEASE ---
+        printf "\n${MAGENTA}${BOLD}[FASE 2] UAT & RELEASE${NC}\n"
+        printf " 8) PREPARE UAT      - Merge branch into TEST (Overwrite conflicts)\n"
+        printf " 9) STAGING PUSH     - Force sync current to DEV-STABLE\n"
+        printf " 10) MERGE FIXES     - Process external fixes (Jules)\n"
+        printf " 11) RELEASE TAG     - Mark current state (v1.x)\n"
 
-    printf -- "\n---------------------------------------------------------------\n"
-    printf " S) SETUP PERSISTENCE- Fix QNAP login & Aliases\n"
-    printf " Q) QUIT\n"
-    printf -- "${BOLD}===============================================================${NC}\n"
-    read -p "Select action: " choice
+        # --- FASE 3: MAINTENANCE & SAFETY ---
+        printf "\n${RED}${BOLD}[FASE 3] MAINTENANCE & EMERGENCY${NC}\n"
+        printf " 12) CLEANUP PRUNE   - Delete branches gone on GitHub\n"
+        printf " 13) DELETE LOCAL    - Manually delete a local branch\n"
+        printf " 14) UNDO COMMIT     - Revert last commit (keep files)\n"
+        printf " 15) FORCE RESET     - Wipe local and reset to main (CAUTION)\n"
+        printf " 16) EMERGENCY       - Abort failed merges / Clear locks\n"
+
+        # --- FASE 4: ANALYSIS & TOOLS ---
+        printf "\n${BOLD}[FASE 4] ANALYSIS & TOOLS${NC}\n"
+        printf " 17) DIFF VIEWER     - Compare changes between branches\n"
+        printf " 18) FILE HISTORY    - Show all commits for a file\n"
+        printf " 19) SEARCH CODE     - Find text in all files (grep)\n"
+        printf " 20) COMMIT FINDER   - Search commits by message\n"
+        printf " 21) BRANCH COMPARE  - See differences between branches\n"
+
+        printf -- "\n---------------------------------------------------------------\n"
+        printf " S) SETUP PERSISTENCE- Fix QNAP login & Aliases\n"
+        printf " Q) QUIT\n"
+        printf -- "${BOLD}===============================================================${NC}\n"
+        read -p "Select action: " choice
+    else
+        choice="$CMD_SWITCH"
+    fi
 
     case $choice in
         [Pp]) cd "$PATH_PROD" 2>/dev/null || printf "${RED}Path not found${NC}\n" ;;
@@ -695,4 +735,9 @@ while true; do
         [Qq]) clear; exit 0 ;;
         *) sleep 0.1 ;;
     esac
+
+    # Exit if running in command-line switch mode
+    if [[ -n "$CMD_SWITCH" ]]; then
+        exit 0
+    fi
 done
