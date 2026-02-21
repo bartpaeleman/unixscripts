@@ -40,122 +40,12 @@ done
 echo -e "\n${GREEN}✓ Initialization complete.${NC}"
 
 # --- PERSISTENCE SETUP ---
-echo -e "\n${CYAN}=== Persistence Setup ===${NC}"
-echo "This step will create aliases to make tools available everywhere."
-read -p "Do you want to install aliases? (y/n): " INSTALL_ALIAS
-
-if [[ "$INSTALL_ALIAS" == "y" ]]; then
-    # Get absolute path of current directory
-    REPO_DIR="$(pwd)"
-    ALIAS_BLOCK=$(cat <<EOF
-
-# --- DEV TOOLS COLLECTION ALIASES ---
-alias scriptmaster='"${REPO_DIR}/script-master.sh"'
-alias devtools='"${REPO_DIR}/dev-tools.sh"'
-alias gitmaster='"${REPO_DIR}/git-master/git-master.sh"'
-alias dockermaster='"${REPO_DIR}/container-master/container-master.sh"'
-alias netmaster='"${REPO_DIR}/network-master/network-master.sh"'
-alias dbmaster='"${REPO_DIR}/db-tools/db-master.sh"'
-alias scaffold='"${REPO_DIR}/web-scaffold/scaffold.sh"'
-alias datamaster='"${REPO_DIR}/data-master/data-master.sh"'
-alias filemaster='"${REPO_DIR}/file-master/file-master.sh"'
-alias textmaster='"${REPO_DIR}/text-master/text-master.sh"'
-# ------------------------------------
-EOF
-)
-
-    # Detect all potential profiles
-    PROFILES=()
-    [[ -f "$HOME/.bashrc" ]] && PROFILES+=("$HOME/.bashrc")
-    [[ -f "$HOME/.zshrc" ]] && PROFILES+=("$HOME/.zshrc")
-    [[ -f "$HOME/.profile" ]] && PROFILES+=("$HOME/.profile")
-    [[ -f "$HOME/.bash_profile" ]] && PROFILES+=("$HOME/.bash_profile")
-
-    # QNAP / System wide fallback
-    if [[ -w "/etc/profile" ]]; then
-        PROFILES+=("/etc/profile")
-    fi
-
-    if [[ ${#PROFILES[@]} -eq 0 ]]; then
-        echo -e "${YELLOW}Could not detect any existing writable shell profile.${NC}"
-
-        # Detect shell
-        CURRENT_SHELL=$(basename "$SHELL")
-        PREFERRED_PROFILE=""
-
-        if [[ "$CURRENT_SHELL" == "zsh" ]]; then
-            PREFERRED_PROFILE="$HOME/.zshrc"
-        elif [[ "$CURRENT_SHELL" == "bash" ]]; then
-            if [[ "$(uname)" == "Darwin" ]]; then
-                PREFERRED_PROFILE="$HOME/.bash_profile"
-            else
-                PREFERRED_PROFILE="$HOME/.bashrc"
-            fi
-        else
-            PREFERRED_PROFILE="$HOME/.profile"
-        fi
-
-        echo -e "Detected shell: ${CYAN}$CURRENT_SHELL${NC}"
-        echo -e "Preferred profile: ${CYAN}$PREFERRED_PROFILE${NC}"
-
-        read -p "Create $PREFERRED_PROFILE? (y/n): " CREATE_PROF
-        if [[ "$CREATE_PROF" == "y" ]]; then
-            touch "$PREFERRED_PROFILE"
-            PROFILES+=("$PREFERRED_PROFILE")
-            echo -e "${GREEN}Created $PREFERRED_PROFILE${NC}"
-        else
-            echo "Please add the aliases manually."
-        fi
-    fi
-
-    if [[ ${#PROFILES[@]} -gt 0 ]]; then
-        echo -e "\n${CYAN}Detected Profiles:${NC}"
-        for prof in "${PROFILES[@]}"; do
-            echo -e "  - $prof"
-        done
-
-        echo -e "\nInstalling aliases..."
-
-        # Define aliases to check/install
-        # Using parallel arrays for Bash 3 compatibility (QNAP/macOS)
-        # declare -A not supported on older bash versions
-
-        for prof in "${PROFILES[@]}"; do
-            echo -e "\nProcessing profile: ${CYAN}$prof${NC}"
-
-            # Check for existing block
-            HAS_BLOCK=false
-            if grep -q "# --- DEV TOOLS COLLECTION ALIASES ---" "$prof"; then
-                HAS_BLOCK=true
-            fi
-
-            # Check for conflicts
-            CONFLICT=false
-            if [[ "$HAS_BLOCK" == "true" ]]; then
-                 # If block exists, we assume we manage it.
-                 # But let's check if the content is exactly what we want.
-                 # Actually, simpler: just ask if we should update.
-                 echo -e "  ${YELLOW}Existing alias block found.${NC}"
-                 read -p "  Update/Overwrite all Dev Tools aliases? (y/n): " UPDATE_ALL
-                 if [[ "$UPDATE_ALL" != "y" ]]; then
-                     echo "  Skipped."
-                     continue
-                 fi
-
-                 # Remove old block (Portable sed: delete range)
-                 sed -i.bak '/# --- DEV TOOLS COLLECTION ALIASES ---/,/# ------------------------------------/d' "$prof"
-                 rm -f "$prof.bak"
-            fi
-
-            # Append new block
-            echo "$ALIAS_BLOCK" >> "$prof"
-            echo -e "  ${GREEN}Aliases installed/updated.${NC}"
-        done
-
-        echo -e "\nPlease run ${BOLD}source <profile>${NC} or restart your shell."
-    fi
+# Handled by separate script
+if [[ -f "./setup-persistence.sh" ]]; then
+    chmod +x ./setup-persistence.sh
+    ./setup-persistence.sh
 else
-    echo "Skipping persistence setup."
+    echo -e "${YELLOW}Warning: setup-persistence.sh not found.${NC}"
 fi
 
 # --- PYTHON SETUP ---
