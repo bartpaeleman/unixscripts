@@ -84,7 +84,7 @@ fi
 ALIAS_BLOCK_NAV="# --- NAVIGATION ALIASES ---"
 if [[ -n "$PATH_PROD" ]]; then
     ALIAS_BLOCK_NAV="${ALIAS_BLOCK_NAV}
-alias pef='cd \"${PATH_PROD}\"'"
+alias prd='cd \"${PATH_PROD}\"'"
     echo -e "  Adding alias: ${GREEN}prd -> ${PATH_PROD}${NC}"
 fi
 if [[ -n "$PATH_DEV" ]]; then
