@@ -511,6 +511,21 @@ while true; do
             get_branch_list_raw "mf"
             print_colored_branch_list "mf"
             read -p "Select Fix Branch: " mf_idx
+            [[ "$mf_idx" =~ ^[Xx]$ ]] && continue
+
+            # Validate input
+            if [[ ! "$mf_idx" =~ ^[0-9]+$ ]]; then
+                 printf "${RED}Invalid input.${NC}\n"
+                 read -p "Enter..." junk
+                 continue
+            fi
+
+            # Check range (avoid unbound variable crash)
+            if [[ -z "$(eval echo "\${mf_${mf_idx}:-}")" ]]; then
+                printf "${RED}Invalid selection.${NC}\n"
+                read -p "Enter..." junk
+                continue
+            fi
             
             fix_br=$(eval echo "\$mf_${mf_idx}")
             fix_br="${fix_br#remotes/origin/}"
@@ -548,6 +563,21 @@ while true; do
             get_branch_list_raw "dk"
             print_colored_branch_list "dk"
             read -p "Number to DELETE (CAUTION): " dk_idx
+            [[ "$dk_idx" =~ ^[Xx]$ ]] && continue
+
+            # Validate input
+            if [[ ! "$dk_idx" =~ ^[0-9]+$ ]]; then
+                 printf "${RED}Invalid input.${NC}\n"
+                 read -p "Enter..." junk
+                 continue
+            fi
+
+            # Check range (avoid unbound variable crash)
+            if [[ -z "$(eval echo "\${dk_${dk_idx}:-}")" ]]; then
+                printf "${RED}Invalid selection.${NC}\n"
+                read -p "Enter..." junk
+                continue
+            fi
             
             del_br=$(eval echo "\$dk_${dk_idx}")
             if [[ "$del_br" != "$CURRENT_BRANCH" ]] && [[ -n "$del_br" ]]; then
@@ -605,7 +635,23 @@ while true; do
                     get_branch_list_raw "diff"
                     print_colored_branch_list "diff"
                     read -p "First branch: " b1
+                    [[ "$b1" =~ ^[Xx]$ ]] && continue
+
+                    if [[ ! "$b1" =~ ^[0-9]+$ ]] || [[ -z "$(eval echo "\${diff_${b1}:-}")" ]]; then
+                        printf "${RED}Invalid selection.${NC}\n"
+                        read -p "Enter..." junk
+                        continue
+                    fi
+
                     read -p "Second branch: " b2
+                    [[ "$b2" =~ ^[Xx]$ ]] && continue
+
+                    if [[ ! "$b2" =~ ^[0-9]+$ ]] || [[ -z "$(eval echo "\${diff_${b2}:-}")" ]]; then
+                        printf "${RED}Invalid selection.${NC}\n"
+                        read -p "Enter..." junk
+                        continue
+                    fi
+
                     br1=$(eval echo "\$diff_${b1}")
                     br2=$(eval echo "\$diff_${b2}")
                     git diff "${br1}".."${br2}" | more
@@ -675,7 +721,22 @@ while true; do
             print_colored_branch_list "cmp"
             
             read -p "Base branch (what you have): " base_idx
+            [[ "$base_idx" =~ ^[Xx]$ ]] && continue
+
+            if [[ ! "$base_idx" =~ ^[0-9]+$ ]] || [[ -z "$(eval echo "\${cmp_${base_idx}:-}")" ]]; then
+                printf "${RED}Invalid selection.${NC}\n"
+                read -p "Enter..." junk
+                continue
+            fi
+
             read -p "Compare branch (what you want to check): " cmp_idx
+            [[ "$cmp_idx" =~ ^[Xx]$ ]] && continue
+
+            if [[ ! "$cmp_idx" =~ ^[0-9]+$ ]] || [[ -z "$(eval echo "\${cmp_${cmp_idx}:-}")" ]]; then
+                printf "${RED}Invalid selection.${NC}\n"
+                read -p "Enter..." junk
+                continue
+            fi
             
             base_br=$(eval echo "\$cmp_${base_idx}")
             cmp_br=$(eval echo "\$cmp_${cmp_idx}")
