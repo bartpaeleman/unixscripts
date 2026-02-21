@@ -281,9 +281,28 @@ while true; do
             clear
             printf "${CYAN}Fetching repositories...${NC}\n"
             API_URL="https://api.github.com/user/repos?per_page=100&affiliation=owner"
-            # BusyBox-friendly: sed instead of grep -o
-            REPOS_RAW=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "$API_URL" \
-                | sed -n 's/.*"name": "\([^"]*\)".*/\1/p' | grep -v "License" | grep -v "GNU")
+
+            # Use a temporary file to store the API response to handle errors gracefully
+            API_OUT=$(mktemp)
+
+            # Capture the API response, || true prevents exit on curl failure
+            if ! curl -s -f -H "Authorization: token $GITHUB_TOKEN" "$API_URL" > "$API_OUT" 2>/dev/null; then
+                printf "${RED}Failed to fetch repositories. Check your token or network connection.${NC}\n"
+                rm -f "$API_OUT"
+                read -p "Enter..." junk
+                continue
+            fi
+
+            # Process the JSON response
+            # sed parses names, grep filters out unwanted ones. || true ensures grep doesn't kill script if empty
+            REPOS_RAW=$(cat "$API_OUT" | sed -n 's/.*"name": "\([^"]*\)".*/\1/p' | grep -v "License" | grep -v "GNU" || true)
+            rm -f "$API_OUT"
+
+            if [[ -z "$REPOS_RAW" ]]; then
+                printf "${YELLOW}No repositories found.${NC}\n"
+                read -p "Enter..." junk
+                continue
+            fi
             
             i=1
             declare -a repo_array
@@ -294,10 +313,26 @@ while true; do
             read -p "Select number (X to cancel): " r_idx
             [[ "$r_idx" =~ ^[Xx]$ ]] && continue
             
+            # Validate input is a number
+            if [[ ! "$r_idx" =~ ^[0-9]+$ ]]; then
+                 printf "${RED}Invalid input.${NC}\n"
+                 read -p "Enter..." junk
+                 continue
+            fi
+
+            # Check if index exists in array
+            if [[ -z "${repo_array[$r_idx]:-}" ]]; then
+                printf "${RED}Invalid selection.${NC}\n"
+                read -p "Enter..." junk
+                continue
+            fi
+
             sel_repo="${repo_array[$r_idx]}"
+
             if [[ -n "$sel_repo" ]]; then
                 # Fetch actual login handle to ensure correct path (handles case where GITHUB_USERNAME is an email)
-                GH_LOGIN=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user | grep -m 1 '"login":' | sed 's/.*"login": "\([^"]*\)".*/\1/')
+                # || true prevents exit if grep finds nothing
+                GH_LOGIN=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user | grep -m 1 '"login":' | sed 's/.*"login": "\([^"]*\)".*/\1/' || true)
 
                 # Fallback to configured username if fetch fails
                 GH_LOGIN="${GH_LOGIN:-$GITHUB_USERNAME}"
