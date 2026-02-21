@@ -84,18 +84,18 @@ fi
 ALIAS_BLOCK_NAV="# --- NAVIGATION ALIASES ---"
 if [[ -n "$PATH_PROD" ]]; then
     ALIAS_BLOCK_NAV="${ALIAS_BLOCK_NAV}
-alias cdprod='cd \"${PATH_PROD}\"'"
-    echo -e "  Adding alias: ${GREEN}cdprod -> ${PATH_PROD}${NC}"
+alias pef='cd \"${PATH_PROD}\"'"
+    echo -e "  Adding alias: ${GREEN}prd -> ${PATH_PROD}${NC}"
 fi
 if [[ -n "$PATH_DEV" ]]; then
     ALIAS_BLOCK_NAV="${ALIAS_BLOCK_NAV}
-alias cddev='cd \"${PATH_DEV}\"'"
-    echo -e "  Adding alias: ${GREEN}cddev -> ${PATH_DEV}${NC}"
+alias dev='cd \"${PATH_DEV}\"'"
+    echo -e "  Adding alias: ${GREEN}dev -> ${PATH_DEV}${NC}"
 fi
 if [[ -n "$PATH_TEST" ]]; then
     ALIAS_BLOCK_NAV="${ALIAS_BLOCK_NAV}
-alias cdtest='cd \"${PATH_TEST}\"'"
-    echo -e "  Adding alias: ${GREEN}cdtest -> ${PATH_TEST}${NC}"
+alias tst='cd \"${PATH_TEST}\"'"
+    echo -e "  Adding alias: ${GREEN}tst -> ${PATH_TEST}${NC}"
 fi
 ALIAS_BLOCK_NAV="${ALIAS_BLOCK_NAV}
 # ----------------------------"
