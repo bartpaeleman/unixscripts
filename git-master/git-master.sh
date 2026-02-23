@@ -36,16 +36,28 @@ load_env() {
     fi
     
     # Parse .env file, ignoring comments and empty lines
-    while IFS='=' read -r key value; do
+    # Using '|| [ -n "$key" ]' to handle files without trailing newline
+    while IFS='=' read -r key value || [ -n "$key" ]; do
         # Skip comments and empty lines
         [[ "$key" =~ ^[[:space:]]*# ]] && continue
         [[ -z "$key" ]] && continue
         
-        # Remove quotes and export
+        # Trim leading/trailing whitespace from key
+        key=$(echo "$key" | xargs)
+
+        # Validate key is a valid identifier (alphanumeric + underscore, starts with letter/underscore)
+        if [[ ! "$key" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
+            # echo "Warning: Skipping invalid key '$key'"
+            continue
+        fi
+
+        # Remove quotes and whitespace (including carriage return) from value
         value="${value%\"}"
         value="${value#\"}"
+        value=$(echo "$value" | tr -d '\r')
+
         export "$key=$value"
-    done < <(grep -v '^[[:space:]]*$' "$ENV_FILE")
+    done < "$ENV_FILE"
     
     # Validate required variables
     if [[ -z "${GITHUB_TOKEN:-}" ]] || [[ -z "${GITHUB_USERNAME:-}" ]]; then
@@ -153,6 +165,41 @@ detect_environment() {
     fi
 }
 
+# Ensure authentication token is configured in git remote
+check_and_fix_remote_auth() {
+    # Only run if we are in a git repo and have a token
+    if [[ "${IN_GIT:-false}" == "true" ]] && [[ -n "${GITHUB_TOKEN:-}" ]]; then
+        local remote_url
+        remote_url=$(git remote get-url origin 2>/dev/null || echo "")
+
+        # Check if it's an HTTPS URL to github.com
+        if [[ "$remote_url" == https://github.com/* ]]; then
+            # Check for bad characters (like carriage return) in URL
+            # or if token is missing (no @ symbol before github.com)
+            if [[ "$remote_url" =~ $'\r' ]] || [[ "$remote_url" != *"@"* ]]; then
+
+                 # Clean up the URL: remove https:// prefix and strip any existing auth/junk
+                 # This handles both cases: fresh install (no auth) and repair (bad auth/CRLF)
+                 local clean_path="${remote_url#https://}"
+
+                 # If @ exists, strip everything before it to get just 'github.com/...'
+                 if [[ "$clean_path" == *"@"* ]]; then
+                     clean_path="${clean_path#*@}"
+                 fi
+
+                 # Remove any trailing carriage returns from clean_path just in case
+                 clean_path=$(echo "$clean_path" | tr -d '\r')
+
+                 # Construct new URL with clean token
+                 local new_url="https://${GITHUB_TOKEN}@${clean_path}"
+
+                 # Update remote URL silently
+                 git remote set-url origin "$new_url"
+            fi
+        fi
+    fi
+}
+
 # --- INITIALIZATION ---
 load_env
 
@@ -163,7 +210,6 @@ if [[ $# -gt 0 ]]; then
         -h|--help|-help)
             printf "${GREEN}Git Master Control Panel - Command Line Switches${NC}\n"
             printf "Usage: gitmaster [option]\n\n"
-            printf "  ${CYAN}-cl, --clone${NC}      New Clone (Option 0)\n"
             printf "  ${CYAN}-st, --status${NC}     Dashboard (Option 1)\n"
             printf "  ${CYAN}-co, --checkout${NC}   Checkout Repo (Option 2)\n"
             printf "  ${CYAN}-br, --branch${NC}     Branch Explorer (Option 3)\n"
@@ -175,7 +221,6 @@ if [[ $# -gt 0 ]]; then
             printf "  ${CYAN}-h,  --help${NC}       Show this help\n"
             exit 0
             ;;
-        -cl|--clone)      CMD_SWITCH="0" ;;
         -st|--status)     CMD_SWITCH="1" ;;
         -co|--checkout)   CMD_SWITCH="2" ;;
         -br|--branch)     CMD_SWITCH="3" ;;
@@ -211,6 +256,9 @@ while true; do
     ENV_VAL=$(detect_environment "$CUR_PATH")
     IS_PROD=$?
 
+    # Check and fix authentication if needed
+    check_and_fix_remote_auth
+
     if [[ -z "$CMD_SWITCH" ]]; then
         clear
         # Header
@@ -223,15 +271,8 @@ while true; do
         printf -- " Auth     : $([ -n "$GITHUB_TOKEN" ] && echo -e "${GREEN}TOKEN ACTIVE${NC}" || echo -e "${RED}NO TOKEN FOUND${NC}")\n"
         printf -- "${GREEN}${BOLD}===============================================================${NC}\n"
 
-        # --- FASE 0: NAVIGATION & SETUP ---
-        printf "${CYAN}${BOLD}[FASE 0] NAVIGATION & SETUP${NC}\n"
-        printf " P) GOTO PROD        - Switch to $PATH_PROD\n"
-        printf " D) GOTO DEV         - Switch to $PATH_DEV\n"
-        printf " T) GOTO TEST        - Switch to $PATH_TEST\n"
-        printf " 0) NEW CLONE        - Initial project setup\n"
-
         # --- FASE 1: CONTEXT & DEVELOPMENT ---
-        printf "\n${YELLOW}${BOLD}[FASE 1] DEVELOPMENT CYCLE${NC}\n"
+        printf "${YELLOW}${BOLD}[FASE 1] DEVELOPMENT CYCLE${NC}\n"
         printf " 1) DASHBOARD        - Status & History Overview (Scrollable)\n"
         printf " 2) CHECKOUT REPO    - Fetch & Switch to Repository (Branch)\n"
         printf " 3) BRANCH EXPLORER  - Switch or Create new Feature Branch\n"
@@ -273,82 +314,11 @@ while true; do
     fi
 
     case $choice in
-        [Pp]) cd "$PATH_PROD" 2>/dev/null || printf "${RED}Path not found${NC}\n" ;;
-        [Dd]) cd "$PATH_DEV" 2>/dev/null || printf "${RED}Path not found${NC}\n" ;;
-        [Tt]) cd "$PATH_TEST" 2>/dev/null || printf "${RED}Path not found${NC}\n" ;;
-        
-        0) # NEW CLONE
-            clear
-            printf "${CYAN}Fetching repositories...${NC}\n"
-            API_URL="https://api.github.com/user/repos?per_page=100&affiliation=owner"
-
-            # Use a temporary file to store the API response to handle errors gracefully
-            API_OUT=$(mktemp)
-
-            # Capture the API response, || true prevents exit on curl failure
-            if ! curl -s -f -H "Authorization: token $GITHUB_TOKEN" "$API_URL" > "$API_OUT" 2>/dev/null; then
-                printf "${RED}Failed to fetch repositories. Check your token or network connection.${NC}\n"
-                rm -f "$API_OUT"
-                read -p "Enter..." junk
-                continue
-            fi
-
-            # Process the JSON response
-            # sed parses names, grep filters out unwanted ones. || true ensures grep doesn't kill script if empty
-            REPOS_RAW=$(cat "$API_OUT" | sed -n 's/.*"name": "\([^"]*\)".*/\1/p' | grep -v "License" | grep -v "GNU" || true)
-            rm -f "$API_OUT"
-
-            if [[ -z "$REPOS_RAW" ]]; then
-                printf "${YELLOW}No repositories found.${NC}\n"
-                read -p "Enter..." junk
-                continue
-            fi
-            
-            i=1
-            declare -a repo_array
-            while IFS= read -r repo; do
-                [[ -n "$repo" ]] && printf "%2d) %s\n" "$i" "$repo" && repo_array[$i]="$repo" && ((i++))
-            done <<< "$REPOS_RAW"
-            
-            read -p "Select number (X to cancel): " r_idx
-            [[ "$r_idx" =~ ^[Xx]$ ]] && continue
-            
-            # Validate input is a number
-            if [[ ! "$r_idx" =~ ^[0-9]+$ ]]; then
-                 printf "${RED}Invalid input.${NC}\n"
-                 read -p "Enter..." junk
-                 continue
-            fi
-
-            # Check if index exists in array
-            if [[ -z "${repo_array[$r_idx]:-}" ]]; then
-                printf "${RED}Invalid selection.${NC}\n"
-                read -p "Enter..." junk
-                continue
-            fi
-
-            sel_repo="${repo_array[$r_idx]}"
-
-            if [[ -n "$sel_repo" ]]; then
-                # Fetch actual login handle to ensure correct path (handles case where GITHUB_USERNAME is an email)
-                # || true prevents exit if grep finds nothing
-                GH_LOGIN=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user | grep -m 1 '"login":' | sed 's/.*"login": "\([^"]*\)".*/\1/' || true)
-
-                # Fallback to configured username if fetch fails
-                GH_LOGIN="${GH_LOGIN:-$GITHUB_USERNAME}"
-
-                # Construct URL using token for auth (avoids issues with special chars in username)
-                CLONE_URL="https://${GITHUB_TOKEN}@github.com/${GH_LOGIN}/${sel_repo}.git"
-
-                git clone "$CLONE_URL" && cd "$sel_repo" || printf "${RED}Clone failed${NC}\n"
-            fi
-            read -p "Enter..." junk ;;
-
         1) # DASHBOARD
             [[ "$IN_GIT" = false ]] && { printf "${RED}Not in git repo${NC}\n"; read -p "Enter..." junk; continue; }
             clear
             printf "${CYAN}${BOLD}DASHBOARD: $PROJECT_NAME${NC}\n\n"
-            git fetch origin --prune 2>/dev/null
+            git fetch origin --prune 2>/dev/null || true
             
             # Use more instead of less for BusyBox compatibility
             # Simpler git log flags for BusyBox
@@ -370,7 +340,8 @@ while true; do
 
             printf "${CYAN}Fetching updates from origin...${NC}\n"
             # Capture output to detect new branches
-            git fetch origin --prune > /tmp/git_fetch_out 2>&1
+            # || true prevents crash if fetch fails (e.g., network/auth error)
+            git fetch origin --prune > /tmp/git_fetch_out 2>&1 || true
             cat /tmp/git_fetch_out
 
             # Parse for new branches
@@ -451,12 +422,12 @@ while true; do
 
         5) # SYNC FETCH
             [[ "$IN_GIT" = false ]] && continue
-            git pull origin "$CURRENT_BRANCH"
+            git pull origin "$CURRENT_BRANCH" || printf "${RED}Pull failed. Check conflicts/network.${NC}\n"
             read -p "Pull complete. Enter..." junk ;;
 
         6) # SYNC FORCE
             [[ "$IN_GIT" = false ]] && continue
-            git fetch origin
+            git fetch origin || printf "${RED}Fetch failed.${NC}\n"
             printf "A) OVERWRITE LOCAL (Loss of local work)\nB) FORCE PUSH (Loss of GitHub work)\nX) Cancel\n"
             read -p "Action: " fa_choice
             [[ "$fa_choice" =~ [Aa] ]] && git reset --hard "origin/$CURRENT_BRANCH"
@@ -511,6 +482,21 @@ while true; do
             get_branch_list_raw "mf"
             print_colored_branch_list "mf"
             read -p "Select Fix Branch: " mf_idx
+            [[ "$mf_idx" =~ ^[Xx]$ ]] && continue
+
+            # Validate input
+            if [[ ! "$mf_idx" =~ ^[0-9]+$ ]]; then
+                 printf "${RED}Invalid input.${NC}\n"
+                 read -p "Enter..." junk
+                 continue
+            fi
+
+            # Check range (avoid unbound variable crash)
+            if [[ -z "$(eval echo "\${mf_${mf_idx}:-}")" ]]; then
+                printf "${RED}Invalid selection.${NC}\n"
+                read -p "Enter..." junk
+                continue
+            fi
             
             fix_br=$(eval echo "\$mf_${mf_idx}")
             fix_br="${fix_br#remotes/origin/}"
@@ -532,8 +518,9 @@ while true; do
 
         12) # CLEANUP PRUNE
             [[ "$IN_GIT" = false ]] && continue
-            git fetch origin --prune
-            GONE=$(git branch -vv | grep ': gone]' | awk '{print $1}')
+            git fetch origin --prune || true
+            # || true prevents script exit if grep finds nothing (set -e)
+            GONE=$(git branch -vv | grep ': gone]' | awk '{print $1}' || true)
             
             if [[ -n "$GONE" ]]; then
                 echo "$GONE" | xargs git branch -D
@@ -548,6 +535,21 @@ while true; do
             get_branch_list_raw "dk"
             print_colored_branch_list "dk"
             read -p "Number to DELETE (CAUTION): " dk_idx
+            [[ "$dk_idx" =~ ^[Xx]$ ]] && continue
+
+            # Validate input
+            if [[ ! "$dk_idx" =~ ^[0-9]+$ ]]; then
+                 printf "${RED}Invalid input.${NC}\n"
+                 read -p "Enter..." junk
+                 continue
+            fi
+
+            # Check range (avoid unbound variable crash)
+            if [[ -z "$(eval echo "\${dk_${dk_idx}:-}")" ]]; then
+                printf "${RED}Invalid selection.${NC}\n"
+                read -p "Enter..." junk
+                continue
+            fi
             
             del_br=$(eval echo "\$dk_${dk_idx}")
             if [[ "$del_br" != "$CURRENT_BRANCH" ]] && [[ -n "$del_br" ]]; then
@@ -605,7 +607,23 @@ while true; do
                     get_branch_list_raw "diff"
                     print_colored_branch_list "diff"
                     read -p "First branch: " b1
+                    [[ "$b1" =~ ^[Xx]$ ]] && continue
+
+                    if [[ ! "$b1" =~ ^[0-9]+$ ]] || [[ -z "$(eval echo "\${diff_${b1}:-}")" ]]; then
+                        printf "${RED}Invalid selection.${NC}\n"
+                        read -p "Enter..." junk
+                        continue
+                    fi
+
                     read -p "Second branch: " b2
+                    [[ "$b2" =~ ^[Xx]$ ]] && continue
+
+                    if [[ ! "$b2" =~ ^[0-9]+$ ]] || [[ -z "$(eval echo "\${diff_${b2}:-}")" ]]; then
+                        printf "${RED}Invalid selection.${NC}\n"
+                        read -p "Enter..." junk
+                        continue
+                    fi
+
                     br1=$(eval echo "\$diff_${b1}")
                     br2=$(eval echo "\$diff_${b2}")
                     git diff "${br1}".."${br2}" | more
@@ -675,7 +693,22 @@ while true; do
             print_colored_branch_list "cmp"
             
             read -p "Base branch (what you have): " base_idx
+            [[ "$base_idx" =~ ^[Xx]$ ]] && continue
+
+            if [[ ! "$base_idx" =~ ^[0-9]+$ ]] || [[ -z "$(eval echo "\${cmp_${base_idx}:-}")" ]]; then
+                printf "${RED}Invalid selection.${NC}\n"
+                read -p "Enter..." junk
+                continue
+            fi
+
             read -p "Compare branch (what you want to check): " cmp_idx
+            [[ "$cmp_idx" =~ ^[Xx]$ ]] && continue
+
+            if [[ ! "$cmp_idx" =~ ^[0-9]+$ ]] || [[ -z "$(eval echo "\${cmp_${cmp_idx}:-}")" ]]; then
+                printf "${RED}Invalid selection.${NC}\n"
+                read -p "Enter..." junk
+                continue
+            fi
             
             base_br=$(eval echo "\$cmp_${base_idx}")
             cmp_br=$(eval echo "\$cmp_${cmp_idx}")
