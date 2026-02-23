@@ -248,14 +248,8 @@ while true; do
         printf -- " Auth     : $([ -n "$GITHUB_TOKEN" ] && echo -e "${GREEN}TOKEN ACTIVE${NC}" || echo -e "${RED}NO TOKEN FOUND${NC}")\n"
         printf -- "${GREEN}${BOLD}===============================================================${NC}\n"
 
-        # --- FASE 0: NAVIGATION & SETUP ---
-        printf "${CYAN}${BOLD}[FASE 0] NAVIGATION & SETUP${NC}\n"
-        printf " P) GOTO PROD        - Switch to $PATH_PROD\n"
-        printf " D) GOTO DEV         - Switch to $PATH_DEV\n"
-        printf " T) GOTO TEST        - Switch to $PATH_TEST\n"
-
         # --- FASE 1: CONTEXT & DEVELOPMENT ---
-        printf "\n${YELLOW}${BOLD}[FASE 1] DEVELOPMENT CYCLE${NC}\n"
+        printf "${YELLOW}${BOLD}[FASE 1] DEVELOPMENT CYCLE${NC}\n"
         printf " 1) DASHBOARD        - Status & History Overview (Scrollable)\n"
         printf " 2) CHECKOUT REPO    - Fetch & Switch to Repository (Branch)\n"
         printf " 3) BRANCH EXPLORER  - Switch or Create new Feature Branch\n"
@@ -297,10 +291,6 @@ while true; do
     fi
 
     case $choice in
-        [Pp]) cd "$PATH_PROD" 2>/dev/null || printf "${RED}Path not found${NC}\n" ;;
-        [Dd]) cd "$PATH_DEV" 2>/dev/null || printf "${RED}Path not found${NC}\n" ;;
-        [Tt]) cd "$PATH_TEST" 2>/dev/null || printf "${RED}Path not found${NC}\n" ;;
-        
         1) # DASHBOARD
             [[ "$IN_GIT" = false ]] && { printf "${RED}Not in git repo${NC}\n"; read -p "Enter..." junk; continue; }
             clear
