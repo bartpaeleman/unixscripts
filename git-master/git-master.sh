@@ -42,6 +42,15 @@ load_env() {
         [[ "$key" =~ ^[[:space:]]*# ]] && continue
         [[ -z "$key" ]] && continue
         
+        # Trim leading/trailing whitespace from key
+        key=$(echo "$key" | xargs)
+
+        # Validate key is a valid identifier (alphanumeric + underscore, starts with letter/underscore)
+        if [[ ! "$key" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
+            # echo "Warning: Skipping invalid key '$key'"
+            continue
+        fi
+
         # Remove quotes and export
         value="${value%\"}"
         value="${value#\"}"
