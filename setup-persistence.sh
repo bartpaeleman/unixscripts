@@ -40,28 +40,7 @@ else
     echo -e "  ${GREEN}Set credential helper to cache (100 hours) (QNAP/Linux)${NC}"
 fi
 
-# --- 1. TOOL ALIASES ---
-# Get absolute path of current directory
-REPO_DIR="$SCRIPT_DIR"
-
-ALIAS_BLOCK_TOOLS=$(cat <<EOF
-# --- DEV TOOLS COLLECTION ALIASES ---
-alias scriptmaster='"${REPO_DIR}/script-master.sh"'
-alias devtools='"${REPO_DIR}/dev-tools.sh"'
-alias gitmaster='"${REPO_DIR}/git-master/git-master.sh"'
-alias dockermaster='"${REPO_DIR}/container-master/container-master.sh"'
-alias netmaster='"${REPO_DIR}/network-master/network-master.sh"'
-alias dbmaster='"${REPO_DIR}/db-tools/db-master.sh"'
-alias scaffold='"${REPO_DIR}/web-scaffold/scaffold.sh"'
-alias datamaster='"${REPO_DIR}/data-master/data-master.sh"'
-alias filemaster='"${REPO_DIR}/file-master/file-master.sh"'
-alias textmaster='"${REPO_DIR}/text-master/text-master.sh"'
-alias persis='"${REPO_DIR}/setup-persistence.sh"'
-# ------------------------------------
-EOF
-)
-
-# --- 2. NAVIGATION ALIASES ---
+# --- 1. INSTALLATION TO PATH_DEV ---
 # Try to load paths from git-master .env
 PATH_PROD=""
 PATH_DEV=""
@@ -82,10 +61,65 @@ if [[ -f "$ENV_FILE" ]]; then
 fi
 
 # Fallback prompts if paths are missing
+if [[ -z "$PATH_DEV" ]]; then
+    read -p "Enter path for DEV (where scripts will be installed): " PATH_DEV
+fi
+
+if [[ -n "$PATH_DEV" ]]; then
+    echo -e "\n${CYAN}Installing Git Master to ${PATH_DEV}/scripts...${NC}"
+    INSTALL_DIR="${PATH_DEV}/scripts"
+    mkdir -p "$INSTALL_DIR"
+    mkdir -p "$INSTALL_DIR/config"
+
+    # Install Script
+    cp "${SCRIPT_DIR}/git-master/git-master.sh" "$INSTALL_DIR/git-master.sh"
+    chmod +x "$INSTALL_DIR/git-master.sh"
+    echo -e "  ${GREEN}Installed git-master.sh${NC}"
+
+    # Install .env if missing in target, or update?
+    # Safer to NOT overwrite existing .env in target to preserve user config
+    if [[ -f "$ENV_FILE" ]]; then
+        if [[ ! -f "$INSTALL_DIR/config/.env" ]]; then
+            cp "$ENV_FILE" "$INSTALL_DIR/config/.env"
+            echo -e "  ${GREEN}Copied .env configuration${NC}"
+        else
+            echo -e "  ${YELLOW}Target .env already exists. Skipping overwrite.${NC}"
+        fi
+    else
+        echo -e "  ${RED}Source .env not found. Please configure git-master first.${NC}"
+    fi
+fi
+
+# --- 2. TOOL ALIASES ---
+# Get absolute path of current directory
+REPO_DIR="$SCRIPT_DIR"
+
+ALIAS_BLOCK_TOOLS=$(cat <<EOF
+# --- DEV TOOLS COLLECTION ALIASES ---
+alias scriptmaster='"${REPO_DIR}/script-master.sh"'
+alias devtools='"${REPO_DIR}/dev-tools.sh"'
+alias gitmaster='"${REPO_DIR}/git-master/git-master.sh"'
+alias dockermaster='"${REPO_DIR}/container-master/container-master.sh"'
+alias netmaster='"${REPO_DIR}/network-master/network-master.sh"'
+alias dbmaster='"${REPO_DIR}/db-tools/db-master.sh"'
+alias scaffold='"${REPO_DIR}/web-scaffold/scaffold.sh"'
+alias datamaster='"${REPO_DIR}/data-master/data-master.sh"'
+alias filemaster='"${REPO_DIR}/file-master/file-master.sh"'
+alias textmaster='"${REPO_DIR}/text-master/text-master.sh"'
+alias persis='"${REPO_DIR}/setup-persistence.sh"'
+# ------------------------------------
+EOF
+)
+
+# --- 3. NAVIGATION ALIASES ---
+# (Paths already loaded in step 1)
+
+# Fallback prompts if paths are missing (reuse from Step 1 or prompt new if needed)
 if [[ -z "$PATH_PROD" ]]; then
     echo -e "${YELLOW}Could not detect PATH_PROD automatically.${NC}"
     read -p "Enter path for PROD (leave empty to skip alias): " PATH_PROD
 fi
+# PATH_DEV is likely set in Step 1, but check anyway
 if [[ -z "$PATH_DEV" ]]; then
     read -p "Enter path for DEV (leave empty to skip alias): " PATH_DEV
 fi

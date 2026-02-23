@@ -51,9 +51,11 @@ load_env() {
             continue
         fi
 
-        # Remove quotes and export
+        # Remove quotes and whitespace (including carriage return) from value
         value="${value%\"}"
         value="${value#\"}"
+        value=$(echo "$value" | tr -d '\r')
+
         export "$key=$value"
     done < "$ENV_FILE"
     
@@ -172,15 +174,27 @@ check_and_fix_remote_auth() {
 
         # Check if it's an HTTPS URL to github.com
         if [[ "$remote_url" == https://github.com/* ]]; then
-            # Check if token is missing (no @ symbol before github.com)
-            if [[ "$remote_url" != *"@"* ]]; then
-                 # Construct new URL with token
-                 # Remove https:// prefix and prepend https://${GITHUB_TOKEN}@
-                 local new_url="https://${GITHUB_TOKEN}@${remote_url#https://}"
+            # Check for bad characters (like carriage return) in URL
+            # or if token is missing (no @ symbol before github.com)
+            if [[ "$remote_url" =~ $'\r' ]] || [[ "$remote_url" != *"@"* ]]; then
+
+                 # Clean up the URL: remove https:// prefix and strip any existing auth/junk
+                 # This handles both cases: fresh install (no auth) and repair (bad auth/CRLF)
+                 local clean_path="${remote_url#https://}"
+
+                 # If @ exists, strip everything before it to get just 'github.com/...'
+                 if [[ "$clean_path" == *"@"* ]]; then
+                     clean_path="${clean_path#*@}"
+                 fi
+
+                 # Remove any trailing carriage returns from clean_path just in case
+                 clean_path=$(echo "$clean_path" | tr -d '\r')
+
+                 # Construct new URL with clean token
+                 local new_url="https://${GITHUB_TOKEN}@${clean_path}"
 
                  # Update remote URL silently
                  git remote set-url origin "$new_url"
-                 # printf "${GREEN}Added authentication token to git remote.${NC}\n"
             fi
         fi
     fi
