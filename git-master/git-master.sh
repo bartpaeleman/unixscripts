@@ -154,6 +154,29 @@ detect_environment() {
     fi
 }
 
+# Ensure authentication token is configured in git remote
+check_and_fix_remote_auth() {
+    # Only run if we are in a git repo and have a token
+    if [[ "${IN_GIT:-false}" == "true" ]] && [[ -n "${GITHUB_TOKEN:-}" ]]; then
+        local remote_url
+        remote_url=$(git remote get-url origin 2>/dev/null || echo "")
+
+        # Check if it's an HTTPS URL to github.com
+        if [[ "$remote_url" == https://github.com/* ]]; then
+            # Check if token is missing (no @ symbol before github.com)
+            if [[ "$remote_url" != *"@"* ]]; then
+                 # Construct new URL with token
+                 # Remove https:// prefix and prepend https://${GITHUB_TOKEN}@
+                 local new_url="https://${GITHUB_TOKEN}@${remote_url#https://}"
+
+                 # Update remote URL silently
+                 git remote set-url origin "$new_url"
+                 # printf "${GREEN}Added authentication token to git remote.${NC}\n"
+            fi
+        fi
+    fi
+}
+
 # --- INITIALIZATION ---
 load_env
 
@@ -211,6 +234,9 @@ while true; do
     # Environment detection
     ENV_VAL=$(detect_environment "$CUR_PATH")
     IS_PROD=$?
+
+    # Check and fix authentication if needed
+    check_and_fix_remote_auth
 
     if [[ -z "$CMD_SWITCH" ]]; then
         clear
