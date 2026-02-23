@@ -28,6 +28,18 @@ if [[ "$INSTALL_ALIAS" != "y" ]]; then
     exit 0
 fi
 
+# --- 0. CREDENTIAL HELPER SETUP ---
+echo -e "\n${CYAN}Configuring Git Credentials...${NC}"
+if [[ "$(uname)" == "Darwin" ]]; then
+    # macOS
+    git config --global credential.helper osxkeychain
+    echo -e "  ${GREEN}Set credential helper to osxkeychain (macOS)${NC}"
+else
+    # QNAP / Linux
+    git config --global credential.helper 'cache --timeout=360000'
+    echo -e "  ${GREEN}Set credential helper to cache (100 hours) (QNAP/Linux)${NC}"
+fi
+
 # --- 1. TOOL ALIASES ---
 # Get absolute path of current directory
 REPO_DIR="$SCRIPT_DIR"
