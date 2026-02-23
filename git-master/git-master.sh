@@ -305,7 +305,7 @@ while true; do
             [[ "$IN_GIT" = false ]] && { printf "${RED}Not in git repo${NC}\n"; read -p "Enter..." junk; continue; }
             clear
             printf "${CYAN}${BOLD}DASHBOARD: $PROJECT_NAME${NC}\n\n"
-            git fetch origin --prune 2>/dev/null
+            git fetch origin --prune 2>/dev/null || true
             
             # Use more instead of less for BusyBox compatibility
             # Simpler git log flags for BusyBox
@@ -327,7 +327,8 @@ while true; do
 
             printf "${CYAN}Fetching updates from origin...${NC}\n"
             # Capture output to detect new branches
-            git fetch origin --prune > /tmp/git_fetch_out 2>&1
+            # || true prevents crash if fetch fails (e.g., network/auth error)
+            git fetch origin --prune > /tmp/git_fetch_out 2>&1 || true
             cat /tmp/git_fetch_out
 
             # Parse for new branches
@@ -408,12 +409,12 @@ while true; do
 
         5) # SYNC FETCH
             [[ "$IN_GIT" = false ]] && continue
-            git pull origin "$CURRENT_BRANCH"
+            git pull origin "$CURRENT_BRANCH" || printf "${RED}Pull failed. Check conflicts/network.${NC}\n"
             read -p "Pull complete. Enter..." junk ;;
 
         6) # SYNC FORCE
             [[ "$IN_GIT" = false ]] && continue
-            git fetch origin
+            git fetch origin || printf "${RED}Fetch failed.${NC}\n"
             printf "A) OVERWRITE LOCAL (Loss of local work)\nB) FORCE PUSH (Loss of GitHub work)\nX) Cancel\n"
             read -p "Action: " fa_choice
             [[ "$fa_choice" =~ [Aa] ]] && git reset --hard "origin/$CURRENT_BRANCH"
@@ -504,7 +505,7 @@ while true; do
 
         12) # CLEANUP PRUNE
             [[ "$IN_GIT" = false ]] && continue
-            git fetch origin --prune
+            git fetch origin --prune || true
             # || true prevents script exit if grep finds nothing (set -e)
             GONE=$(git branch -vv | grep ': gone]' | awk '{print $1}' || true)
             
