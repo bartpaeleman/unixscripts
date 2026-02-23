@@ -36,7 +36,8 @@ load_env() {
     fi
     
     # Parse .env file, ignoring comments and empty lines
-    while IFS='=' read -r key value; do
+    # Using '|| [ -n "$key" ]' to handle files without trailing newline
+    while IFS='=' read -r key value || [ -n "$key" ]; do
         # Skip comments and empty lines
         [[ "$key" =~ ^[[:space:]]*# ]] && continue
         [[ -z "$key" ]] && continue
@@ -45,7 +46,7 @@ load_env() {
         value="${value%\"}"
         value="${value#\"}"
         export "$key=$value"
-    done < <(grep -v '^[[:space:]]*$' "$ENV_FILE")
+    done < "$ENV_FILE"
     
     # Validate required variables
     if [[ -z "${GITHUB_TOKEN:-}" ]] || [[ -z "${GITHUB_USERNAME:-}" ]]; then
@@ -548,7 +549,8 @@ while true; do
         12) # CLEANUP PRUNE
             [[ "$IN_GIT" = false ]] && continue
             git fetch origin --prune
-            GONE=$(git branch -vv | grep ': gone]' | awk '{print $1}')
+            # || true prevents script exit if grep finds nothing (set -e)
+            GONE=$(git branch -vv | grep ': gone]' | awk '{print $1}' || true)
             
             if [[ -n "$GONE" ]]; then
                 echo "$GONE" | xargs git branch -D
