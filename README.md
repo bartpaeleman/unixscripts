@@ -2,16 +2,31 @@
 
 A comprehensive collection of development utilities and scripts designed for QNAP NAS and macOS environments.
 
-## Quick Start
+## Installation
 
-Initialize all tools with a single command:
+For a robust setup, use the interactive installer. This script will:
+1.  Ask where you want to install the tools (default: `~/dev-tools`).
+2.  Copy all necessary files to that location.
+3.  Configure your environment (`.env`) with GitHub credentials.
+4.  Set up aliases and permissions automatically.
+
+```bash
+chmod +x install.sh
+./install.sh
+```
+
+Follow the on-screen prompts to complete the installation.
+
+## Quick Start (Manual)
+
+If you prefer to run the tools from the current directory without a full installation:
 
 ```bash
 chmod +x dev-tools.sh
 ./dev-tools.sh
 ```
 
-This will set executable permissions and offer to install persistent aliases.
+This will set executable permissions and offer to install persistent aliases for the current location.
 
 ## Central Hub: Script Master
 
