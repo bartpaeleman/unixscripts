@@ -14,14 +14,18 @@ YELLOW='\033[1;33m'
 RED='\033[1;31m'
 NC='\033[0m'
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# SCRIPT_DIR is already calculated above
 ENV_FILE="${SCRIPT_DIR}/git-master/config/.env"
 
 echo -e "${CYAN}=== Persistence Setup ===${NC}"
 echo "This script will create aliases to make tools available everywhere."
 echo "It will also create shortcuts to jump to PROD, DEV, and TEST directories."
 
-read -p "Do you want to install aliases? (y/n): " INSTALL_ALIAS
+# Determine the directory where the scripts are currently located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+echo -e "\nTarget directory for aliases: ${CYAN}${SCRIPT_DIR}${NC}"
+read -p "Install/Update aliases to point to this location? (y/n): " INSTALL_ALIAS
 
 if [[ "$INSTALL_ALIAS" != "y" ]]; then
     echo "Skipping persistence setup."
