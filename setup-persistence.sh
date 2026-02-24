@@ -40,7 +40,7 @@ else
     echo -e "  ${GREEN}Set credential helper to cache (100 hours) (QNAP/Linux)${NC}"
 fi
 
-# --- 1. INSTALLATION TO PATH_DEV ---
+# --- 1. CONFIGURATION LOADING ---
 # Try to load paths from git-master .env
 PATH_PROD=""
 PATH_DEV=""
@@ -58,36 +58,6 @@ if [[ -f "$ENV_FILE" ]]; then
     [[ -z "$PATH_PROD" && -n "$PATH_ROOT" ]] && PATH_PROD="$PATH_ROOT"
     [[ -z "$PATH_DEV" && -n "$PATH_ROOT" ]] && PATH_DEV="$PATH_ROOT/DEV"
     [[ -z "$PATH_TEST" && -n "$PATH_ROOT" ]] && PATH_TEST="$PATH_ROOT/TEST"
-fi
-
-# Fallback prompts if paths are missing
-if [[ -z "$PATH_DEV" ]]; then
-    read -p "Enter path for DEV (where scripts will be installed): " PATH_DEV
-fi
-
-if [[ -n "$PATH_DEV" ]]; then
-    echo -e "\n${CYAN}Installing Git Master to ${PATH_DEV}/scripts...${NC}"
-    INSTALL_DIR="${PATH_DEV}/scripts"
-    mkdir -p "$INSTALL_DIR"
-    mkdir -p "$INSTALL_DIR/config"
-
-    # Install Script
-    cp "${SCRIPT_DIR}/git-master/git-master.sh" "$INSTALL_DIR/git-master.sh"
-    chmod +x "$INSTALL_DIR/git-master.sh"
-    echo -e "  ${GREEN}Installed git-master.sh${NC}"
-
-    # Install .env if missing in target, or update?
-    # Safer to NOT overwrite existing .env in target to preserve user config
-    if [[ -f "$ENV_FILE" ]]; then
-        if [[ ! -f "$INSTALL_DIR/config/.env" ]]; then
-            cp "$ENV_FILE" "$INSTALL_DIR/config/.env"
-            echo -e "  ${GREEN}Copied .env configuration${NC}"
-        else
-            echo -e "  ${YELLOW}Target .env already exists. Skipping overwrite.${NC}"
-        fi
-    else
-        echo -e "  ${RED}Source .env not found. Please configure git-master first.${NC}"
-    fi
 fi
 
 # --- 2. TOOL ALIASES ---
