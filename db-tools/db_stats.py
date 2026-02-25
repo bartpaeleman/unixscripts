@@ -19,6 +19,9 @@ def get_db_stats(host, user, db_name):
     # Construct command (using mysql CLI to avoid dependencies)
     cmd = ["mysql", "-h", host, "-u", user, f"-p{password}", "-e", sql, "-t"]
 
+    # If host is localhost or 127.0.0.1, QNAP might need explicit socket or TCP
+    # Since we don't know socket path, stick to what's passed, but handle error gracefully
+
     print(f"\n--- Statistics for {db_name} ---")
     try:
         # Suppress password warning
