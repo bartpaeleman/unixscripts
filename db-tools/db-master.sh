@@ -23,8 +23,9 @@ get_creds() {
     DB_USER=${DB_USER:-root}
     read -rsp "Database Password: " DB_PASS
     echo ""
-    read -p "Host [localhost]: " DB_HOST
-    DB_HOST=${DB_HOST:-localhost}
+    # QNAP fix: default to 127.0.0.1 to force TCP (skips socket issues)
+    read -p "Host [127.0.0.1]: " DB_HOST
+    DB_HOST=${DB_HOST:-127.0.0.1}
 }
 
 pause() {
