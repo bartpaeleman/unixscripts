@@ -75,7 +75,8 @@ load_config() {
 }
 
 save_config() {
-    echo "DEFAULT_DIR=\"$OUTPUT_DIR\"" > "$CONFIG_FILE"
+    local dir_to_save="${OUTPUT_DIR:-$DEFAULT_DIR}"
+    echo "DEFAULT_DIR=\"$dir_to_save\"" > "$CONFIG_FILE"
     echo "DEFAULT_VIDEO_FORMAT=\"$DEFAULT_VIDEO_FORMAT\"" >> "$CONFIG_FILE"
     echo "DEFAULT_AUDIO_FORMAT=\"$DEFAULT_AUDIO_FORMAT\"" >> "$CONFIG_FILE"
 }
@@ -162,42 +163,6 @@ choose_audio_format() {
     echo "$chosen_fmt"
 }
 
-# --- DOWNLOAD FUNCTIONS ---
-download_standard() {
-    configure_output_dir
-    get_url || return
-    local archive_args=("--download-archive" "$OUTPUT_DIR/download_archive.txt")
-
-    echo -e "\n${CYAN}⬇️ Video downloaden...${NC}"
-    yt-dlp "${archive_args[@]}" -o "$OUTPUT_DIR/%(title)s.%(ext)s" "$URL"
-    echo -e "\n${GREEN}✅ Klaar!${NC}"
-    pause
-}
-
-download_best() {
-    configure_output_dir
-    get_url || return
-    local vid_format=$(choose_video_format)
-    local archive_args=("--download-archive" "$OUTPUT_DIR/download_archive.txt")
-
-    echo -e "\n${CYAN}⬇️ Beste kwaliteit (video+audio) downloaden als ${vid_format}...${NC}"
-    yt-dlp "${archive_args[@]}" -f "bestvideo+bestaudio/best" --merge-output-format "$vid_format" -o "$OUTPUT_DIR/%(title)s.%(ext)s" "$URL"
-    echo -e "\n${GREEN}✅ Klaar!${NC}"
-    pause
-}
-
-download_audio() {
-    configure_output_dir
-    get_url || return
-    local aud_format=$(choose_audio_format)
-    local archive_args=("--download-archive" "$OUTPUT_DIR/download_archive.txt")
-
-    echo -e "\n${CYAN}🎵 Alleen audio (${aud_format}) downloaden...${NC}"
-    yt-dlp "${archive_args[@]}" -x --audio-format "$aud_format" -o "$OUTPUT_DIR/%(title)s.%(ext)s" "$URL"
-    echo -e "\n${GREEN}✅ Klaar!${NC}"
-    pause
-}
-
 list_formats() {
     get_url || return
     echo -e "\n${CYAN}📋 Beschikbare formaten ophalen...${NC}"
@@ -205,102 +170,195 @@ list_formats() {
     pause
 }
 
-download_clip() {
+execute_download() {
+    local target_type="$1"  # "url" of "batch"
+    local target="$2"       # De URL of het bestandspad
+    local media_type="$3"   # "video", "audio", of "thumbnail"
+    local format="$4"       # "mp4", "mp3", etc
+    local clip_start="$5"   # leeg of "00:01:00"
+    local clip_end="$6"     # leeg of "00:02:00"
+    local subtitles="$7"    # leeg of "nl", "en", etc
+
     configure_output_dir
-    get_url || return
-    local vid_format=$(choose_video_format)
 
-    read -p "Geef begintijd (bv 00:01:30) of laat leeg: " START
-    read -p "Geef eindtijd (bv 00:03:45) of laat leeg: " END
-
-    echo ""
-
-    # Archive doesn't make sense for partial clips usually, but we could add it
-    # We will exclude it for clips to ensure they always process if requested
-
-    if [ -n "$START" ] && [ -n "$END" ]; then
-        echo -e "🎬 ${CYAN}Download segment van $START tot $END als ${vid_format}...${NC}"
-
-        yt-dlp \
-            --download-sections "*${START}-${END}" \
-            -f "bestvideo+bestaudio/best" \
-            --merge-output-format "$vid_format" \
-            -o "$OUTPUT_DIR/%(title)s_clip.%(ext)s" \
-            "$URL"
-
-    else
-        echo -e "⬇️ ${CYAN}Geen geldige tijden. Volledige video downloaden...${NC}"
-        local archive_args=("--download-archive" "$OUTPUT_DIR/download_archive.txt")
-
-        yt-dlp "${archive_args[@]}" \
-            -f "bestvideo+bestaudio/best" \
-            --merge-output-format "$vid_format" \
-            -o "$OUTPUT_DIR/%(title)s.%(ext)s" \
-            "$URL"
-    fi
-
-    echo -e "\n${GREEN}✅ Klaar!${NC}"
-    pause
-}
-
-download_batch() {
-    configure_output_dir
+    local args=()
     local archive_args=("--download-archive" "$OUTPUT_DIR/download_archive.txt")
 
-    echo -e "\n${CYAN}Kies een batch tekstbestand (één URL per regel)${NC}"
-    read -p "Bestandspad: " BATCH_FILE
-
-    if [ ! -f "$BATCH_FILE" ]; then
-        echo -e "${RED}❌ Bestand niet gevonden: $BATCH_FILE${NC}"
-        pause
-        return
-    fi
-
-    echo -e "\n${CYAN}Kies formaat voor alle video's in batch:${NC}"
-    echo "1) Beste kwaliteit Video (standaard)"
-    echo "2) Alleen Audio"
-    read -p "Keuze: " batch_choice
-
-    if [ "$batch_choice" = "2" ]; then
-        local aud_format=$(choose_audio_format)
-        echo -e "\n${CYAN}⬇️ Batch Audio downloaden gestart...${NC}"
-        yt-dlp "${archive_args[@]}" -x --audio-format "$aud_format" -o "$OUTPUT_DIR/%(title)s.%(ext)s" -a "$BATCH_FILE"
+    # Bepaal Media Type & Formaat arguments
+    if [ "$media_type" = "thumbnail" ]; then
+        args+=("--write-thumbnail" "--skip-download")
+        echo -e "\n${CYAN}🖼️ Thumbnail downloaden...${NC}"
+    elif [ "$media_type" = "audio" ]; then
+        args+=("-x" "--audio-format" "$format")
+        echo -e "\n${CYAN}🎵 Audio ($format) downloaden...${NC}"
     else
-        local vid_format=$(choose_video_format)
-        echo -e "\n${CYAN}⬇️ Batch Video downloaden gestart...${NC}"
-        yt-dlp "${archive_args[@]}" -f "bestvideo+bestaudio/best" --merge-output-format "$vid_format" -o "$OUTPUT_DIR/%(title)s.%(ext)s" -a "$BATCH_FILE"
+        # Default is video
+        args+=("-f" "bestvideo+bestaudio/best" "--merge-output-format" "$format")
+        echo -e "\n${CYAN}⬇️ Video ($format) downloaden...${NC}"
     fi
 
-    echo -e "\n${GREEN}✅ Klaar!${NC}"
+    # Subtitles (alleen nuttig voor video, maar we laten yt-dlp beslissen indien gevraagd)
+    if [ -n "$subtitles" ]; then
+        args+=("--write-subs" "--sub-langs" "$subtitles")
+        echo -e "💬 Ondertitels ingeschakeld: $subtitles"
+    fi
+
+    # Fragment / Clip (Download Sections)
+    if [ -n "$clip_start" ] && [ -n "$clip_end" ]; then
+        args+=("--download-sections" "*${clip_start}-${clip_end}")
+        echo -e "✂️ Fragment geselecteerd: $clip_start tot $clip_end"
+    else
+        # Als er geen clip sectie is, voegen we het archive argument toe om dubbele volledige downloads te voorkomen.
+        # (Archive werkt slecht samen met section downloads)
+        args+=("${archive_args[@]}")
+    fi
+
+    # Bepaal Target (URL of Batch) en Output template
+    if [ "$target_type" = "batch" ]; then
+        args+=("-o" "$OUTPUT_DIR/%(title)s.%(ext)s" "-a" "$target")
+        echo -e "📦 Batch modus geactiveerd voor: $target"
+    else
+        if [ -n "$clip_start" ]; then
+            args+=("-o" "$OUTPUT_DIR/%(title)s_clip.%(ext)s" "$target")
+        else
+            args+=("-o" "$OUTPUT_DIR/%(title)s.%(ext)s" "$target")
+        fi
+    fi
+
+    echo -e "-----------------------------------\n"
+    yt-dlp "${args[@]}"
+
+    echo -e "\n${GREEN}✅ Download proces voltooid!${NC}"
     pause
 }
 
-download_thumbnail() {
-    configure_output_dir
-    get_url || return
+# --- DOWNLOAD CONFIGURATOR MENU ---
+download_menu() {
+    load_config
 
-    echo -e "\n${CYAN}🖼️ Thumbnail downloaden...${NC}"
-    yt-dlp --write-thumbnail --skip-download -o "$OUTPUT_DIR/%(title)s.%(ext)s" "$URL"
-    echo -e "\n${GREEN}✅ Klaar!${NC}"
-    pause
-}
+    local m_target_type="url"
+    local m_target=""
+    local m_media_type="video"
+    local m_format="${DEFAULT_VIDEO_FORMAT:-mp4}"
+    local m_clip_start=""
+    local m_clip_end=""
+    local m_subtitles=""
 
-download_with_subtitles() {
-    configure_output_dir
-    get_url || return
-    local vid_format=$(choose_video_format)
-    local archive_args=("--download-archive" "$OUTPUT_DIR/download_archive.txt")
+    while true; do
+        clear
+        echo -e "${CYAN}===================================${NC}"
+        echo -e "      ${CYAN}DOWNLOAD CONFIGURATOR${NC}"
+        echo -e "${CYAN}===================================${NC}"
 
-    echo -e "\n${CYAN}Kies ondertiteling taal (bijv. nl, en, of 'all' voor alles)${NC}"
-    read -p "Taalcode [ENTER=nl]: " sub_lang
-    if [ -z "$sub_lang" ]; then
-        sub_lang="nl"
-    fi
+        # Display current config
+        echo -e "${YELLOW}Huidige Instellingen:${NC}"
+        if [ "$m_target_type" = "url" ]; then
+            echo -e " 1) Bron URL    : ${GREEN}${m_target:-[Niet Ingesteld]}${NC}"
+        else
+            echo -e " 1) Bron Batch  : ${GREEN}${m_target:-[Geen Bestand]}${NC}"
+        fi
 
-    echo -e "\n${CYAN}⬇️ Video met ondertitels downloaden...${NC}"
-    yt-dlp "${archive_args[@]}" -f "bestvideo+bestaudio/best" --merge-output-format "$vid_format" --write-subs --sub-langs "$sub_lang" -o "$OUTPUT_DIR/%(title)s.%(ext)s" "$URL"
-    echo -e "\n${GREEN}✅ Klaar!${NC}"
-    pause
+        echo -e " 2) Media Type  : ${GREEN}${m_media_type}${NC}"
+        if [ "$m_media_type" != "thumbnail" ]; then
+            echo -e " 3) Formaat     : ${GREEN}${m_format}${NC}"
+        else
+            echo -e " 3) Formaat     : ${YELLOW}N.v.t. (afbeelding)${NC}"
+        fi
+
+        if [ "$m_target_type" = "url" ]; then
+            if [ -n "$m_clip_start" ]; then
+                echo -e " 4) Fragment    : ${GREEN}$m_clip_start - $m_clip_end${NC}"
+            else
+                echo -e " 4) Fragment    : ${YELLOW}Nee (Volledige video)${NC}"
+            fi
+        else
+            echo -e " 4) Fragment    : ${YELLOW}N.v.t. (batch modus)${NC}"
+        fi
+
+        if [ "$m_media_type" = "video" ]; then
+            if [ -n "$m_subtitles" ]; then
+                echo -e " 5) Ondertitels : ${GREEN}$m_subtitles${NC}"
+            else
+                echo -e " 5) Ondertitels : ${YELLOW}Nee${NC}"
+            fi
+        else
+             echo -e " 5) Ondertitels : ${YELLOW}N.v.t. ($m_media_type)${NC}"
+        fi
+
+        echo -e "-----------------------------------"
+        echo -e " ${GREEN}S) START DOWNLOAD${NC}"
+        echo -e " B) Terug naar hoofdmenu"
+        echo ""
+
+        read -p "Kies een optie om aan te passen of (S)tart: " choice
+
+        case ${choice:-} in
+            1)
+                read -p "Type (U)RL of (B)atch bestand? [U/B]: " t_choice
+                if [ "$t_choice" = "b" ] || [ "$t_choice" = "B" ]; then
+                    m_target_type="batch"
+                    read -p "Geef bestandspad: " m_target
+                    m_clip_start="" # Fragments in batch is usually bad idea
+                    m_clip_end=""
+                else
+                    m_target_type="url"
+                    read -p "Geef de video URL: " m_target
+                fi
+                ;;
+            2)
+                echo -e "Kies Type: 1) Video, 2) Audio, 3) Thumbnail"
+                read -p "Keuze [1-3]: " type_choice
+                case $type_choice in
+                    2) m_media_type="audio" ; m_format=$(choose_audio_format) ;;
+                    3) m_media_type="thumbnail" ; m_format="jpg" ;;
+                    *) m_media_type="video" ; m_format=$(choose_video_format) ;;
+                esac
+                ;;
+            3)
+                if [ "$m_media_type" = "video" ]; then
+                    m_format=$(choose_video_format)
+                elif [ "$m_media_type" = "audio" ]; then
+                    m_format=$(choose_audio_format)
+                fi
+                ;;
+            4)
+                if [ "$m_target_type" = "url" ]; then
+                    read -p "Geef begintijd (bv 00:01:30) of laat leeg om te wissen: " c_start
+                    if [ -z "$c_start" ]; then
+                        m_clip_start=""
+                        m_clip_end=""
+                    else
+                        read -p "Geef eindtijd (bv 00:03:45): " c_end
+                        m_clip_start="$c_start"
+                        m_clip_end="$c_end"
+                    fi
+                else
+                    echo "Fragment instellen wordt niet ondersteund in batch modus." ; sleep 2
+                fi
+                ;;
+            5)
+                if [ "$m_media_type" = "video" ]; then
+                    read -p "Geef taalcode (bv 'nl', 'en') of laat leeg om uit te schakelen: " s_lang
+                    m_subtitles="$s_lang"
+                else
+                    echo "Ondertitels zijn alleen beschikbaar voor video downloads." ; sleep 2
+                fi
+                ;;
+            [sS])
+                if [ -z "$m_target" ]; then
+                    echo -e "${RED}❌ Geen bron URL of bestand opgegeven!${NC}" ; sleep 2
+                else
+                    execute_download "$m_target_type" "$m_target" "$m_media_type" "$m_format" "$m_clip_start" "$m_clip_end" "$m_subtitles"
+                fi
+                ;;
+            [bB])
+                break
+                ;;
+            *)
+                echo -e "${RED}Ongeldige keuze.${NC}" ; sleep 1
+                ;;
+        esac
+    done
 }
 
 # --- LOCAL MEDIA FUNCTIONS ---
@@ -374,36 +432,24 @@ while true; do
     echo -e "${CYAN}===================================${NC}"
     echo -e "      ${CYAN}VIDEO MASTER CONTROL${NC}"
     echo -e "${CYAN}===================================${NC}"
-    echo -e "${YELLOW}Online Downloads:${NC}"
-    echo "1) Standaard Download (Auto)"
-    echo "2) Beste Kwaliteit Download (Kies Videoformaat)"
-    echo "3) Audio Download (Kies Audioformaat)"
-    echo "4) Beschikbare Kwaliteiten / Formaten Weergeven"
-    echo "5) Specifiek Video Segment Knippen (Clip)"
-    echo "6) Batch Downloaden (URL lijst)"
-    echo "7) Thumbnail Afbeelding Downloaden"
-    echo "8) Video Downloaden met Ondertiteling"
-    echo -e "${YELLOW}Lokale Media (Bestanden):${NC}"
-    echo "9) Lokaal Mediabestand Knippen (Trim)"
-    echo "10) Lokaal Mediabestand Converteren"
-    echo "11) Media Informatie Weergeven (Metadata)"
+    echo -e "${YELLOW}Online Media (yt-dlp):${NC}"
+    echo "1) Download Media (Configuratiemenu)"
+    echo "2) Beschikbare Kwaliteiten / Formaten Weergeven (URL)"
+    echo -e "${YELLOW}Lokale Media (ffmpeg/ffprobe):${NC}"
+    echo "3) Lokaal Mediabestand Knippen (Trim)"
+    echo "4) Lokaal Mediabestand Converteren (Format/Container)"
+    echo "5) Media Informatie Weergeven (Metadata)"
     echo -e "-----------------------------------"
     echo "X) Afsluiten"
     echo ""
 
     read -p "Maak uw keuze: " choice
     case ${choice:-} in
-        1) check_dependencies && download_standard ;;
-        2) check_dependencies && download_best ;;
-        3) check_dependencies && download_audio ;;
-        4) check_dependencies && list_formats ;;
-        5) check_dependencies && download_clip ;;
-        6) check_dependencies && download_batch ;;
-        7) check_dependencies && download_thumbnail ;;
-        8) check_dependencies && download_with_subtitles ;;
-        9) check_dependencies && trim_local_file ;;
-        10) check_dependencies && convert_local_file ;;
-        11) check_dependencies && media_info ;;
+        1) check_dependencies && download_menu ;;
+        2) check_dependencies && list_formats ;;
+        3) check_dependencies && trim_local_file ;;
+        4) check_dependencies && convert_local_file ;;
+        5) check_dependencies && media_info ;;
         [xX]) exit 0 ;;
         *) echo -e "${RED}Ongeldige keuze.${NC}" ; pause ;;
     esac
