@@ -67,6 +67,37 @@ check_dependencies() {
     return 0
 }
 
+update_dependencies() {
+    echo -e "\n${CYAN}🔄 Afhankelijkheden (yt-dlp, ffmpeg) updaten...${NC}"
+
+    # yt-dlp has a built-in self-updater which is often the best way if it has write access
+    echo -e "${YELLOW}Proberen yt-dlp zelf te updaten via interne updater...${NC}"
+    yt-dlp -U
+
+    if [ $? -ne 0 ]; then
+        echo -e "${YELLOW}Interne updater mislukt (mogelijk door rechten). Proberen via systeempakketten...${NC}"
+
+        if command -v brew &> /dev/null; then
+            echo -e "${CYAN}Mac (Homebrew) gedetecteerd. Updaten...${NC}"
+            brew upgrade yt-dlp ffmpeg ffprobe
+        elif command -v apt &> /dev/null; then
+            echo -e "${CYAN}Linux (APT) gedetecteerd. Updaten...${NC}"
+            sudo apt update && sudo apt install --only-upgrade yt-dlp ffmpeg
+        elif command -v pip &> /dev/null; then
+            echo -e "${CYAN}Python (pip) gedetecteerd. Updaten...${NC}"
+            pip install --upgrade yt-dlp
+        else
+            echo -e "${RED}Kon pakketbeheerder niet automatisch bepalen. Update handmatig.${NC}"
+        fi
+    else
+         echo -e "${GREEN}yt-dlp is succesvol geüpdatet via interne updater.${NC}"
+         echo -e "${YELLOW}Let op: ffmpeg moet mogelijk nog steeds handmatig via uw pakketbeheerder (brew/apt) worden geüpdatet.${NC}"
+    fi
+
+    echo -e "\n${GREEN}✅ Update proces voltooid!${NC}"
+    pause
+}
+
 # --- CONFIGURATION MANAGEMENT ---
 load_config() {
     if [ -f "$CONFIG_FILE" ]; then
@@ -440,6 +471,7 @@ while true; do
     echo "4) Lokaal Mediabestand Converteren (Format/Container)"
     echo "5) Media Informatie Weergeven (Metadata)"
     echo -e "-----------------------------------"
+    echo "U) Update Afhankelijkheden (yt-dlp/ffmpeg)"
     echo "X) Afsluiten"
     echo ""
 
@@ -450,6 +482,7 @@ while true; do
         3) check_dependencies && trim_local_file ;;
         4) check_dependencies && convert_local_file ;;
         5) check_dependencies && media_info ;;
+        [uU]) update_dependencies ;;
         [xX]) exit 0 ;;
         *) echo -e "${RED}Ongeldige keuze.${NC}" ; pause ;;
     esac
