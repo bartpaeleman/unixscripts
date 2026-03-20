@@ -80,6 +80,7 @@ alias scaffold='"${REPO_DIR}/web-scaffold/scaffold.sh"'
 alias datamaster='"${REPO_DIR}/data-master/data-master.sh"'
 alias filemaster='"${REPO_DIR}/file-master/file-master.sh"'
 alias textmaster='"${REPO_DIR}/text-master/text-master.sh"'
+alias videomaster='"${REPO_DIR}/video-master/video-master.sh"'
 alias persis='"${REPO_DIR}/setup-persistence.sh"'
 # ------------------------------------
 EOF

@@ -53,6 +53,10 @@ launch_text() {
     bash "$SCRIPT_DIR/text-master/text-master.sh"
 }
 
+launch_video() {
+    bash "$SCRIPT_DIR/video-master/video-master.sh"
+}
+
 setup_env() {
     bash "$SCRIPT_DIR/dev-tools.sh"
 }
@@ -71,6 +75,7 @@ while true; do
     echo "6) Data Master      (Convert/View CSV,JSON,XML)"
     echo "7) File Master      (Rename, Archive, Cleanup)"
     echo "8) Text Master      (Stats, Diff, Merge)"
+    echo "9) Video Master     (Download & Clip Videos)"
     echo -e "-----------------------------------"
     echo "S) Setup Environment (Permissions & Aliases)"
     echo "X) Exit"
@@ -85,6 +90,7 @@ while true; do
         6) launch_data ;;
         7) launch_file ;;
         8) launch_text ;;
+        9) launch_video ;;
         [sS]) setup_env ;;
         [xX]) exit 0 ;;
         *) echo "Invalid option." ; pause ;;
