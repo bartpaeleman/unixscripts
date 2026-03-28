@@ -295,14 +295,15 @@ while true; do
         printf " 14) UNDO COMMIT     - Revert last commit (keep files)\n"
         printf " 15) FORCE RESET     - Wipe local and reset to main (CAUTION)\n"
         printf " 16) EMERGENCY       - Abort failed merges / Clear locks\n"
+        printf " 17) RESTORE COMMIT  - Checkout, Revert or Reset to a previous commit\n"
 
         # --- FASE 4: ANALYSIS & TOOLS ---
         printf "\n${BOLD}[FASE 4] ANALYSIS & TOOLS${NC}\n"
-        printf " 17) DIFF VIEWER     - Compare changes between branches\n"
-        printf " 18) FILE HISTORY    - Show all commits for a file\n"
-        printf " 19) SEARCH CODE     - Find text in all files (grep)\n"
-        printf " 20) COMMIT FINDER   - Search commits by message\n"
-        printf " 21) BRANCH COMPARE  - See differences between branches\n"
+        printf " 18) DIFF VIEWER     - Compare changes between branches\n"
+        printf " 19) FILE HISTORY    - Show all commits for a file\n"
+        printf " 20) SEARCH CODE     - Find text in all files (grep)\n"
+        printf " 21) COMMIT FINDER   - Search commits by message\n"
+        printf " 22) BRANCH COMPARE  - See differences between branches\n"
 
         printf -- "\n---------------------------------------------------------------\n"
         printf " S) SETUP PERSISTENCE- Fix QNAP login & Aliases\n"
@@ -589,7 +590,55 @@ while true; do
             [[ "$em_c" == "3" ]] && git stash pop
             read -p "Enter..." junk ;;
 
-        17) # DIFF VIEWER
+        17) # RESTORE COMMIT
+            [[ "$IN_GIT" = false ]] && continue
+            clear
+            printf "${CYAN}${BOLD}RESTORE COMMIT${NC}\n\n"
+            printf "${YELLOW}Recent Commits:${NC}\n"
+            git log --oneline -n 30 | more
+            printf "\n"
+
+            read -p "Enter commit hash to restore to (X to cancel): " target_commit
+            [[ "$target_commit" =~ ^[Xx]$ ]] && continue
+
+            if [[ -z "$target_commit" ]] || ! git rev-parse --verify --quiet "$target_commit" > /dev/null; then
+                printf "${RED}Invalid commit hash.${NC}\n"
+                read -p "Enter..." junk
+                continue
+            fi
+
+            printf "\n${CYAN}Options for commit ${target_commit}:${NC}\n"
+            printf " 1) Checkout (Detached HEAD to test/look around)\n"
+            printf " 2) Revert (Create new commit undoing changes)\n"
+            printf " 3) Reset branch to here (Discard all changes after this commit)\n"
+            printf " X) Cancel\n"
+
+            read -p "Select action: " restore_choice
+
+            case "$restore_choice" in
+                1)
+                    git checkout "$target_commit"
+                    ;;
+                2)
+                    git revert "$target_commit" --no-edit
+                    ;;
+                3)
+                    printf "${RED}WARNING: This will discard all commits after ${target_commit}.${NC}\n"
+                    read -p "Type 'PROCEED' to confirm: " r_conf
+                    if [[ "$r_conf" == "PROCEED" ]]; then
+                        git reset --hard "$target_commit"
+                        printf "${GREEN}Reset successful.${NC}\n"
+                    else
+                        printf "${YELLOW}Aborted.${NC}\n"
+                    fi
+                    ;;
+                *)
+                    continue
+                    ;;
+            esac
+            read -p "Enter..." junk ;;
+
+        18) # DIFF VIEWER
             [[ "$IN_GIT" = false ]] && continue
             clear
             printf "${CYAN}${BOLD}DIFF VIEWER${NC}\n\n"
@@ -636,7 +685,7 @@ while true; do
             esac
             read -p "Enter..." junk ;;
 
-        18) # FILE HISTORY
+        19) # FILE HISTORY
             [[ "$IN_GIT" = false ]] && continue
             clear
             printf "${CYAN}${BOLD}FILE HISTORY${NC}\n\n"
@@ -653,7 +702,7 @@ while true; do
             fi
             read -p "Enter..." junk ;;
 
-        19) # SEARCH CODE
+        20) # SEARCH CODE
             [[ "$IN_GIT" = false ]] && continue
             clear
             printf "${CYAN}${BOLD}CODE SEARCH${NC}\n\n"
@@ -668,7 +717,7 @@ while true; do
             fi
             read -p "Enter..." junk ;;
 
-        20) # COMMIT FINDER
+        21) # COMMIT FINDER
             [[ "$IN_GIT" = false ]] && continue
             clear
             printf "${CYAN}${BOLD}COMMIT FINDER${NC}\n\n"
@@ -685,7 +734,7 @@ while true; do
             fi
             read -p "Enter..." junk ;;
 
-        21) # BRANCH COMPARE
+        22) # BRANCH COMPARE
             [[ "$IN_GIT" = false ]] && continue
             clear
             printf "${CYAN}${BOLD}BRANCH COMPARISON${NC}\n\n"
