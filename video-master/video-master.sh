@@ -442,6 +442,40 @@ convert_local_file() {
     pause
 }
 
+extract_local_audio() {
+    echo -e "\n${CYAN}Kies een lokaal mediabestand om audio (Extract Audio Only) uit te extraheren${NC}"
+    read -p "Bestandspad: " input_file
+
+    if [ ! -f "$input_file" ]; then
+        echo -e "${RED}❌ Bestand niet gevonden: $input_file${NC}"
+        pause
+        return
+    fi
+
+    read -p "Geef begintijd (bv 00:01:30) of laat leeg voor volledige audio: " start_time
+    local end_time=""
+    if [ -n "$start_time" ]; then
+        read -p "Geef eindtijd (bv 00:03:45) of duur (+00:02:15): " end_time
+    fi
+
+    read -p "Geef uitvoer bestandspad (bv output.mp3): " output_file
+
+    if [ -z "$output_file" ]; then
+        echo -e "${RED}❌ Geen uitvoer bestand gegeven.${NC}"
+        pause
+        return
+    fi
+
+    echo -e "\n${CYAN}🎵 Audio extraheren...${NC}"
+    if [ -n "$start_time" ] && [ -n "$end_time" ]; then
+        ffmpeg -i "$input_file" -ss "$start_time" -to "$end_time" -vn -q:a 0 "$output_file"
+    else
+        ffmpeg -i "$input_file" -vn -q:a 0 "$output_file"
+    fi
+    echo -e "\n${GREEN}✅ Klaar! Opgeslagen als $output_file${NC}"
+    pause
+}
+
 media_info() {
     echo -e "\n${CYAN}Kies een lokaal mediabestand voor metadata (Media Info)${NC}"
     read -p "Bestandspad: " input_file
@@ -470,6 +504,7 @@ while true; do
     echo "3) Lokaal Mediabestand Knippen (Trim)"
     echo "4) Lokaal Mediabestand Converteren (Format/Container)"
     echo "5) Media Informatie Weergeven (Metadata)"
+    echo "6) Lokaal Mediabestand Audio Extraheren (Extract Audio Only)"
     echo -e "-----------------------------------"
     echo "U) Update Afhankelijkheden (yt-dlp/ffmpeg)"
     echo "X) Afsluiten"
@@ -482,6 +517,7 @@ while true; do
         3) check_dependencies && trim_local_file ;;
         4) check_dependencies && convert_local_file ;;
         5) check_dependencies && media_info ;;
+        6) check_dependencies && extract_local_audio ;;
         [uU]) update_dependencies ;;
         [xX]) exit 0 ;;
         *) echo -e "${RED}Ongeldige keuze.${NC}" ; pause ;;
