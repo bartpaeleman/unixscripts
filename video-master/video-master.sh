@@ -205,7 +205,7 @@ execute_download() {
         args+=("--write-thumbnail" "--skip-download")
         echo -e "\n${CYAN}🖼️ Thumbnail downloaden...${NC}"
     elif [ "$media_type" = "audio" ]; then
-        args+=("-x" "--audio-format" "$format")
+        args+=("-f" "bestaudio/best" "-x" "--audio-format" "$format")
         echo -e "\n${CYAN}🎵 Audio ($format) downloaden...${NC}"
     else
         # Default is video
