@@ -385,40 +385,55 @@ download_menu() {
 # --- LOCAL MEDIA FUNCTIONS ---
 select_local_media_file() {
     # We must redirect all UI output to stderr (>&2) so it doesn't get captured in the variable.
-    echo -e "\n${YELLOW}Beschikbare mediabestanden in huidige map:${NC}" >&2
-    # Zoek naar veelvoorkomende media bestanden
-    local files=()
-    while IFS=  read -r -d $'\0'; do
-        files+=("$REPLY")
-    done < <(find . -maxdepth 1 -type f \( -iname "*.mp4" -o -iname "*.mkv" -o -iname "*.webm" -o -iname "*.avi" -o -iname "*.mp3" -o -iname "*.wav" -o -iname "*.m4a" -o -iname "*.flac" \) -print0 | sort -z)
+    local current_dir="."
 
-    if [ ${#files[@]} -eq 0 ]; then
-        echo -e "${YELLOW}Geen mediabestanden gevonden in de huidige map.${NC}" >&2
-        read -p "Voer handmatig het bestandspad in: " selected_file < /dev/tty
-        echo "$selected_file"
-        return
-    fi
+    while true; do
+        echo -e "\n${CYAN}Huidige map: $(realpath "$current_dir")${NC}" >&2
+        echo -e "${YELLOW}Beschikbare mediabestanden:${NC}" >&2
 
-    local i=1
-    for file in "${files[@]}"; do
-        # Verwijder ./ prefix voor weergave
-        local clean_name="${file#./}"
-        echo -e " ${GREEN}${i})${NC} $clean_name" >&2
-        ((i++))
+        local files=()
+        while IFS=  read -r -d $'\0'; do
+            files+=("$REPLY")
+        done < <(find "$current_dir" -maxdepth 1 -type f \( -iname "*.mp4" -o -iname "*.mkv" -o -iname "*.webm" -o -iname "*.avi" -o -iname "*.mp3" -o -iname "*.wav" -o -iname "*.m4a" -o -iname "*.flac" \) -print0 | sort -z)
+
+        local i=1
+        if [ ${#files[@]} -eq 0 ]; then
+            echo -e "  ${YELLOW}(Geen mediabestanden gevonden in deze map)${NC}" >&2
+        else
+            for file in "${files[@]}"; do
+                local clean_name=$(basename "$file")
+                echo -e " ${GREEN}${i})${NC} $clean_name" >&2
+                ((i++))
+            done
+        fi
+
+        echo -e " ${GREEN}M)${NC} Andere map kiezen" >&2
+        echo -e " ${GREEN}0)${NC} Handmatig een pad invoeren" >&2
+
+        local choice
+        read -p "Kies een optie: " choice < /dev/tty
+
+        if [ "$choice" = "M" ] || [ "$choice" = "m" ]; then
+            read -p "Voer pad naar map in: " new_dir < /dev/tty
+            if [ -d "$new_dir" ]; then
+                current_dir="$new_dir"
+            else
+                echo -e "${RED}❌ Map niet gevonden: $new_dir${NC}" >&2
+                sleep 1
+            fi
+        elif [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -gt 0 ] && [ "$choice" -le ${#files[@]} ]; then
+            local selected="${files[$((choice-1))]}"
+            # Zorg dat we het volledige pad teruggeven gebaseerd op current_dir
+            echo "$(realpath "$selected")"
+            return
+        else
+            read -p "Voer handmatig het bestandspad in: " selected_file < /dev/tty
+            if [ -n "$selected_file" ]; then
+                echo "$selected_file"
+                return
+            fi
+        fi
     done
-    echo -e " ${GREEN}0)${NC} Handmatig een pad invoeren" >&2
-
-    local choice
-    read -p "Kies een bestand [0-$((i-1))]: " choice < /dev/tty
-
-    if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -gt 0 ] && [ "$choice" -le ${#files[@]} ]; then
-        # Array index is choice - 1
-        local selected="${files[$((choice-1))]}"
-        echo "${selected#./}"
-    else
-        read -p "Voer handmatig het bestandspad in: " selected_file < /dev/tty
-        echo "$selected_file"
-    fi
 }
 
 trim_local_file() {
