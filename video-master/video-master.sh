@@ -150,14 +150,9 @@ choose_unified_format() {
     # Since this function is called inside a subshell like $(choose_unified_format)
     # we must redirect all UI output to stderr (>&2) so it doesn't get captured in the variable.
     local current_type="$1"
-    local default_fmt=""
-    if [ "$current_type" = "audio" ]; then
-        default_fmt="${DEFAULT_AUDIO_FORMAT:-mp3}"
-    else
-        default_fmt="${DEFAULT_VIDEO_FORMAT:-mp4}"
-    fi
+    local default_fmt="${DEFAULT_VIDEO_FORMAT:-mp4}"
 
-    echo -e "\n${CYAN}Kies formaat (Video: mp4, mkv, webm | Audio: mp3, aac, flac, wav, m4a)${NC}" >&2
+    echo -e "\n${CYAN}Kies formaat (Video: mp4, mkv, webm)${NC}" >&2
     read -p "Formaat [ENTER=${default_fmt}]: " chosen_fmt < /dev/tty
 
     if [ -z "$chosen_fmt" ]; then
@@ -169,12 +164,9 @@ choose_unified_format() {
         mp4|mkv|webm)
             echo "video:$chosen_fmt"
             ;;
-        mp3|aac|flac|wav|m4a)
-            echo "audio:$chosen_fmt"
-            ;;
         *)
             echo -e "${YELLOW}Ongeldig formaat, teruggevallen op ${default_fmt}${NC}" >&2
-            echo "${current_type}:${default_fmt}"
+            echo "video:${default_fmt}"
             ;;
     esac
 }
@@ -329,31 +321,22 @@ download_menu() {
                 fi
                 ;;
             2)
-                echo -e "Kies Type: 1) Video, 2) Audio, 3) Thumbnail"
-                read -p "Keuze [1-3]: " type_choice
+                echo -e "Kies Type: 1) Video, 2) Thumbnail"
+                read -p "Keuze [1-2]: " type_choice
                 case $type_choice in
-                    2) m_media_type="audio" ;;
-                    3) m_media_type="thumbnail" ; m_format="jpg" ;;
+                    2) m_media_type="thumbnail" ; m_format="jpg" ;;
                     *) m_media_type="video" ;;
                 esac
                 if [ "$m_media_type" != "thumbnail" ]; then
                     IFS=':' read -r m_media_type m_format <<< "$(choose_unified_format "$m_media_type")"
-                    if [ "$m_media_type" = "audio" ]; then
-                        DEFAULT_AUDIO_FORMAT="$m_format"
-                    else
-                        DEFAULT_VIDEO_FORMAT="$m_format"
-                    fi
+                    DEFAULT_VIDEO_FORMAT="$m_format"
                     save_config
                 fi
                 ;;
             3)
                 if [ "$m_media_type" != "thumbnail" ]; then
                     IFS=':' read -r m_media_type m_format <<< "$(choose_unified_format "$m_media_type")"
-                    if [ "$m_media_type" = "audio" ]; then
-                        DEFAULT_AUDIO_FORMAT="$m_format"
-                    else
-                        DEFAULT_VIDEO_FORMAT="$m_format"
-                    fi
+                    DEFAULT_VIDEO_FORMAT="$m_format"
                     save_config
                 else
                     echo -e "${YELLOW}Formaat is niet van toepassing voor thumbnails.${NC}" ; sleep 2
