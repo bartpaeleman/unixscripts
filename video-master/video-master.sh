@@ -146,52 +146,37 @@ get_url() {
 }
 
 # --- HELPER FUNCTIONS ---
-choose_video_format() {
-    # Since this function is called inside a subshell like $(choose_video_format)
+choose_unified_format() {
+    # Since this function is called inside a subshell like $(choose_unified_format)
     # we must redirect all UI output to stderr (>&2) so it doesn't get captured in the variable.
-    local fallback="mp4"
-    local default_fmt="${DEFAULT_VIDEO_FORMAT:-$fallback}"
+    local current_type="$1"
+    local default_fmt=""
+    if [ "$current_type" = "audio" ]; then
+        default_fmt="${DEFAULT_AUDIO_FORMAT:-mp3}"
+    else
+        default_fmt="${DEFAULT_VIDEO_FORMAT:-mp4}"
+    fi
 
-    echo -e "\n${CYAN}Kies videocontainerformaat (mp4, mkv, webm)${NC}" >&2
+    echo -e "\n${CYAN}Kies formaat (Video: mp4, mkv, webm | Audio: mp3, aac, flac, wav, m4a)${NC}" >&2
     read -p "Formaat [ENTER=${default_fmt}]: " chosen_fmt < /dev/tty
 
     if [ -z "$chosen_fmt" ]; then
         chosen_fmt="$default_fmt"
     fi
 
-    # Validatie
+    # Validatie & Type Detectie
     case "$chosen_fmt" in
-        mp4|mkv|webm) ;;
-        *) chosen_fmt="$fallback" ; echo -e "${YELLOW}Ongeldig formaat, teruggevallen op ${chosen_fmt}${NC}" >&2 ;;
+        mp4|mkv|webm)
+            echo "video:$chosen_fmt"
+            ;;
+        mp3|aac|flac|wav|m4a)
+            echo "audio:$chosen_fmt"
+            ;;
+        *)
+            echo -e "${YELLOW}Ongeldig formaat, teruggevallen op ${default_fmt}${NC}" >&2
+            echo "${current_type}:${default_fmt}"
+            ;;
     esac
-
-    # In a subshell, modifying a global var doesn't stick to the parent shell.
-    # However, saving it to disk allows the next step to read the updated config.
-    DEFAULT_VIDEO_FORMAT="$chosen_fmt"
-    save_config
-    echo "$chosen_fmt"
-}
-
-choose_audio_format() {
-    local fallback="mp3"
-    local default_fmt="${DEFAULT_AUDIO_FORMAT:-$fallback}"
-
-    echo -e "\n${CYAN}Kies audioformaat (mp3, aac, flac, wav, m4a)${NC}" >&2
-    read -p "Formaat [ENTER=${default_fmt}]: " chosen_fmt < /dev/tty
-
-    if [ -z "$chosen_fmt" ]; then
-        chosen_fmt="$default_fmt"
-    fi
-
-    # Validatie
-    case "$chosen_fmt" in
-        mp3|aac|flac|wav|m4a) ;;
-        *) chosen_fmt="$fallback" ; echo -e "${YELLOW}Ongeldig formaat, teruggevallen op ${chosen_fmt}${NC}" >&2 ;;
-    esac
-
-    DEFAULT_AUDIO_FORMAT="$chosen_fmt"
-    save_config
-    echo "$chosen_fmt"
 }
 
 list_formats() {
@@ -340,16 +325,31 @@ download_menu() {
                 echo -e "Kies Type: 1) Video, 2) Audio, 3) Thumbnail"
                 read -p "Keuze [1-3]: " type_choice
                 case $type_choice in
-                    2) m_media_type="audio" ; m_format=$(choose_audio_format) ;;
+                    2) m_media_type="audio" ;;
                     3) m_media_type="thumbnail" ; m_format="jpg" ;;
-                    *) m_media_type="video" ; m_format=$(choose_video_format) ;;
+                    *) m_media_type="video" ;;
                 esac
+                if [ "$m_media_type" != "thumbnail" ]; then
+                    IFS=':' read -r m_media_type m_format <<< "$(choose_unified_format "$m_media_type")"
+                    if [ "$m_media_type" = "audio" ]; then
+                        DEFAULT_AUDIO_FORMAT="$m_format"
+                    else
+                        DEFAULT_VIDEO_FORMAT="$m_format"
+                    fi
+                    save_config
+                fi
                 ;;
             3)
-                if [ "$m_media_type" = "video" ]; then
-                    m_format=$(choose_video_format)
-                elif [ "$m_media_type" = "audio" ]; then
-                    m_format=$(choose_audio_format)
+                if [ "$m_media_type" != "thumbnail" ]; then
+                    IFS=':' read -r m_media_type m_format <<< "$(choose_unified_format "$m_media_type")"
+                    if [ "$m_media_type" = "audio" ]; then
+                        DEFAULT_AUDIO_FORMAT="$m_format"
+                    else
+                        DEFAULT_VIDEO_FORMAT="$m_format"
+                    fi
+                    save_config
+                else
+                    echo -e "${YELLOW}Formaat is niet van toepassing voor thumbnails.${NC}" ; sleep 2
                 fi
                 ;;
             4)
