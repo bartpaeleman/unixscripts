@@ -32,6 +32,119 @@ pause() {
     read -r
 }
 
+# --- TIME FORMATTING & VALIDATION HELPER FUNCTIONS ---
+format_time() {
+    local t="$1"
+    local prefix=""
+    if [[ "$t" == "+"* ]]; then
+        prefix="+"
+        t="${t#+}"
+    fi
+
+    if [ -z "$t" ]; then
+        echo ""
+        return
+    fi
+
+    if [[ "$t" =~ ^[0-9]+$ ]]; then
+        local s=$((10#$t))
+        local h=$((s / 3600))
+        local m=$(( (s % 3600) / 60 ))
+        local sec=$((s % 60))
+        printf "%s%02d:%02d:%02d\n" "$prefix" "$h" "$m" "$sec"
+    elif [[ "$t" =~ ^[0-9]{1,2}:[0-9]{1,2}$ ]]; then
+        local m="${t%:*}"
+        local sec="${t#*:}"
+        m=$((10#$m))
+        sec=$((10#$sec))
+        local h=$((m / 60))
+        m=$((m % 60))
+        printf "%s%02d:%02d:%02d\n" "$prefix" "$h" "$m" "$sec"
+    else
+        echo "$prefix$t"
+    fi
+}
+
+time_to_seconds() {
+    local t="$1"
+    t="${t#+}"
+    if [[ "$t" =~ ^([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})$ ]]; then
+        local h=$((10#${BASH_REMATCH[1]}))
+        local m=$((10#${BASH_REMATCH[2]}))
+        local s=$((10#${BASH_REMATCH[3]}))
+        echo $((h * 3600 + m * 60 + s))
+    elif [[ "$t" =~ ^([0-9]{1,2}):([0-9]{1,2})$ ]]; then
+        local m=$((10#${BASH_REMATCH[1]}))
+        local s=$((10#${BASH_REMATCH[2]}))
+        echo $((m * 60 + s))
+    elif [[ "$t" =~ ^[0-9]+$ ]]; then
+        echo "$((10#$t))"
+    else
+        echo "-1"
+    fi
+}
+
+check_duration_warning() {
+    local input_file="$1"
+    local start="$2"
+    local end="$3"
+    local is_online="${4:-false}"
+
+    local duration_sec="-1"
+
+    if [ "$is_online" = "true" ]; then
+        # Online video duration fetching via yt-dlp
+        local dur_str=$(yt-dlp --print duration "$input_file" 2>/dev/null || echo "")
+        if [[ "$dur_str" =~ ^[0-9]+$ ]]; then
+            duration_sec="$dur_str"
+        fi
+    else
+        # Lokaal mediabestand
+        local dur_str=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$input_file" 2>/dev/null || echo "")
+        # Remove fractional part
+        if [[ "$dur_str" =~ ^([0-9]+)\. ]]; then
+            duration_sec="${BASH_REMATCH[1]}"
+        elif [[ "$dur_str" =~ ^[0-9]+$ ]]; then
+            duration_sec="$dur_str"
+        fi
+    fi
+
+    if [ "$duration_sec" -gt 0 ]; then
+        local start_sec=$(time_to_seconds "$start")
+        local end_sec=$(time_to_seconds "$end")
+
+        local exceeds=0
+        local exceeds_msg=""
+
+        if [ "$start_sec" -ge 0 ] && [ "$start_sec" -ge "$duration_sec" ]; then
+            exceeds=1
+            exceeds_msg="Begintijd ($start) is groter dan de duur van de media ($duration_sec seconden)."
+        fi
+
+        if [ -n "$end" ]; then
+            if [[ "$end" == "+"* ]]; then
+                if [ "$start_sec" -ge 0 ] && [ "$end_sec" -ge 0 ]; then
+                    if [ "$((start_sec + end_sec))" -gt "$duration_sec" ]; then
+                        exceeds=1
+                        exceeds_msg="Begintijd + Duur overschrijdt de lengte van de media ($duration_sec seconden)."
+                    fi
+                fi
+            else
+                if [ "$end_sec" -ge 0 ] && [ "$end_sec" -gt "$duration_sec" ]; then
+                    exceeds=1
+                    exceeds_msg="Eindtijd ($end) is groter dan de duur van de media ($duration_sec seconden)."
+                fi
+            fi
+        fi
+
+        if [ "$exceeds" -eq 1 ]; then
+            echo -e "\n${YELLOW}⚠️ Waarschuwing: $exceeds_msg${NC}" >&2
+            return 1
+        fi
+    fi
+    return 0
+}
+
 check_dependencies() {
     local missing=0
 
@@ -329,10 +442,11 @@ download_menu() {
                 fi
                 ;;
             2)
-                echo -e "Kies Type: 1) Video, 2) Thumbnail"
-                read -p "Keuze [1-2]: " type_choice
+                echo -e "Kies Type: 1) Video, 2) Audio, 3) Thumbnail"
+                read -p "Keuze [1-3]: " type_choice
                 case $type_choice in
-                    2) m_media_type="thumbnail" ; m_format="jpg" ;;
+                    2) m_media_type="audio" ;;
+                    3) m_media_type="thumbnail" ; m_format="jpg" ;;
                     *) m_media_type="video" ;;
                 esac
                 if [ "$m_media_type" != "thumbnail" ]; then
@@ -360,15 +474,28 @@ download_menu() {
                 ;;
             4)
                 if [ "$m_target_type" = "url" ]; then
-                    read -p "Geef begintijd (bv 00:01:30) of laat leeg om te wissen: " c_start
-                    if [ -z "$c_start" ]; then
-                        m_clip_start=""
-                        m_clip_end=""
-                    else
-                        read -p "Geef eindtijd (bv 00:03:45): " c_end
-                        m_clip_start="$c_start"
-                        m_clip_end="$c_end"
-                    fi
+                    while true; do
+                        read -p "Geef begintijd (bv 00:01:30) of laat leeg om te wissen: " c_start
+                        if [ -z "$c_start" ]; then
+                            m_clip_start=""
+                            m_clip_end=""
+                            break
+                        else
+                            c_start=$(format_time "$c_start")
+                            read -p "Geef eindtijd (bv 00:03:45) of duur (+00:02:15): " c_end
+                            c_end=$(format_time "$c_end")
+
+                            if ! check_duration_warning "$m_target" "$c_start" "$c_end" "true"; then
+                                read -p "Tijden overschrijden videoduur. Druk op (W) om te wijzigen, of Enter om te negeren: " choice
+                                if [ "$choice" = "W" ] || [ "$choice" = "w" ]; then
+                                    continue
+                                fi
+                            fi
+                            m_clip_start="$c_start"
+                            m_clip_end="$c_end"
+                            break
+                        fi
+                    done
                 else
                     echo "Fragment instellen wordt niet ondersteund in batch modus." ; sleep 2
                 fi
@@ -465,8 +592,23 @@ trim_local_file() {
     echo -e "\n${YELLOW}Map voor uitvoer instellen:${NC}"
     configure_output_dir
 
-    read -p "Geef begintijd (bv 00:01:30): " start_time
-    read -p "Geef eindtijd (bv 00:03:45) of duur (+00:02:15) of laat leeg: " end_time
+    local start_time=""
+    local end_time=""
+    while true; do
+        read -p "Geef begintijd (bv 00:01:30): " start_time
+        start_time=$(format_time "$start_time")
+
+        read -p "Geef eindtijd (bv 00:03:45) of duur (+00:02:15) of laat leeg: " end_time
+        end_time=$(format_time "$end_time")
+
+        if ! check_duration_warning "$input_file" "$start_time" "$end_time" "false"; then
+            read -p "Tijden overschrijden videoduur. Druk op (W) om te wijzigen, of Enter om te negeren: " choice
+            if [ "$choice" = "W" ] || [ "$choice" = "w" ]; then
+                continue
+            fi
+        fi
+        break
+    done
 
     local end_flag=""
     if [ -n "$end_time" ]; then
@@ -483,6 +625,12 @@ trim_local_file() {
         echo -e "${RED}❌ Ontbrekende gegevens.${NC}"
         pause
         return
+    fi
+
+    # Append default extension if missing
+    if [[ "$output_name" != *.* ]]; then
+        local ext="${input_file##*.}"
+        output_name="${output_name}.${ext}"
     fi
 
     local output_file="$OUTPUT_DIR/$output_name"
@@ -524,6 +672,11 @@ convert_local_file() {
         return
     fi
 
+    # Append default extension if missing
+    if [[ "$output_file" != *.* ]]; then
+        output_file="${output_file}.mkv"
+    fi
+
     echo -e "\n${CYAN}🔄 Bestand converteren...${NC}"
     ffmpeg -i "$input_file" -c copy "$output_file"
     echo -e "\n${GREEN}✅ Klaar! Opgeslagen als $output_file${NC}"
@@ -543,20 +696,36 @@ extract_local_audio() {
     echo -e "\n${YELLOW}Map voor uitvoer instellen:${NC}"
     configure_output_dir
 
-    read -p "Geef begintijd (bv 00:01:30) of laat leeg voor volledige audio: " start_time
+    local start_time=""
     local end_time=""
     local end_flag=""
-    if [ -n "$start_time" ]; then
-        read -p "Geef eindtijd (bv 00:03:45) of duur (+00:02:15) of laat leeg: " end_time
-        if [ -n "$end_time" ]; then
-            end_flag="-to"
-            # Check if duration was specified (starts with +)
-            if [[ "$end_time" == "+"* ]]; then
-                end_flag="-t"
-                end_time="${end_time#+}" # Verwijder de + voor ffmpeg
+
+    while true; do
+        read -p "Geef begintijd (bv 00:01:30) of laat leeg voor volledige audio: " start_time
+        if [ -n "$start_time" ]; then
+            start_time=$(format_time "$start_time")
+            read -p "Geef eindtijd (bv 00:03:45) of duur (+00:02:15) of laat leeg: " end_time
+            if [ -n "$end_time" ]; then
+                end_time=$(format_time "$end_time")
+            fi
+
+            if ! check_duration_warning "$input_file" "$start_time" "$end_time" "false"; then
+                read -p "Tijden overschrijden videoduur. Druk op (W) om te wijzigen, of Enter om te negeren: " choice
+                if [ "$choice" = "W" ] || [ "$choice" = "w" ]; then
+                    continue
+                fi
+            fi
+
+            if [ -n "$end_time" ]; then
+                end_flag="-to"
+                if [[ "$end_time" == "+"* ]]; then
+                    end_flag="-t"
+                    end_time="${end_time#+}" # Verwijder de + voor ffmpeg
+                fi
             fi
         fi
-    fi
+        break
+    done
 
     read -p "Geef uitvoer bestandsnaam (bv output.mp3): " output_name
 
@@ -564,6 +733,11 @@ extract_local_audio() {
         echo -e "${RED}❌ Geen uitvoer bestandsnaam gegeven.${NC}"
         pause
         return
+    fi
+
+    # Append default extension if missing
+    if [[ "$output_name" != *.* ]]; then
+        output_name="${output_name}.mp3"
     fi
 
     local output_file="$OUTPUT_DIR/$output_name"
