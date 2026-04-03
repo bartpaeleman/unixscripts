@@ -383,9 +383,47 @@ download_menu() {
 }
 
 # --- LOCAL MEDIA FUNCTIONS ---
+select_local_media_file() {
+    # We must redirect all UI output to stderr (>&2) so it doesn't get captured in the variable.
+    echo -e "\n${YELLOW}Beschikbare mediabestanden in huidige map:${NC}" >&2
+    # Zoek naar veelvoorkomende media bestanden
+    local files=()
+    while IFS=  read -r -d $'\0'; do
+        files+=("$REPLY")
+    done < <(find . -maxdepth 1 -type f \( -iname "*.mp4" -o -iname "*.mkv" -o -iname "*.webm" -o -iname "*.avi" -o -iname "*.mp3" -o -iname "*.wav" -o -iname "*.m4a" -o -iname "*.flac" \) -print0 | sort -z)
+
+    if [ ${#files[@]} -eq 0 ]; then
+        echo -e "${YELLOW}Geen mediabestanden gevonden in de huidige map.${NC}" >&2
+        read -p "Voer handmatig het bestandspad in: " selected_file < /dev/tty
+        echo "$selected_file"
+        return
+    fi
+
+    local i=1
+    for file in "${files[@]}"; do
+        # Verwijder ./ prefix voor weergave
+        local clean_name="${file#./}"
+        echo -e " ${GREEN}${i})${NC} $clean_name" >&2
+        ((i++))
+    done
+    echo -e " ${GREEN}0)${NC} Handmatig een pad invoeren" >&2
+
+    local choice
+    read -p "Kies een bestand [0-$((i-1))]: " choice < /dev/tty
+
+    if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -gt 0 ] && [ "$choice" -le ${#files[@]} ]; then
+        # Array index is choice - 1
+        local selected="${files[$((choice-1))]}"
+        echo "${selected#./}"
+    else
+        read -p "Voer handmatig het bestandspad in: " selected_file < /dev/tty
+        echo "$selected_file"
+    fi
+}
+
 trim_local_file() {
     echo -e "\n${CYAN}Kies een lokaal mediabestand om te knippen${NC}"
-    read -p "Bestandspad: " input_file
+    local input_file=$(select_local_media_file)
 
     if [ ! -f "$input_file" ]; then
         echo -e "${RED}❌ Bestand niet gevonden: $input_file${NC}"
@@ -411,7 +449,7 @@ trim_local_file() {
 
 convert_local_file() {
     echo -e "\n${CYAN}Kies een lokaal mediabestand om te converteren${NC}"
-    read -p "Invoer bestand: " input_file
+    local input_file=$(select_local_media_file)
 
     if [ ! -f "$input_file" ]; then
         echo -e "${RED}❌ Bestand niet gevonden: $input_file${NC}"
@@ -434,7 +472,7 @@ convert_local_file() {
 
 extract_local_audio() {
     echo -e "\n${CYAN}Kies een lokaal mediabestand om audio (Extract Audio Only) uit te extraheren${NC}"
-    read -p "Bestandspad: " input_file
+    local input_file=$(select_local_media_file)
 
     if [ ! -f "$input_file" ]; then
         echo -e "${RED}❌ Bestand niet gevonden: $input_file${NC}"
@@ -468,7 +506,7 @@ extract_local_audio() {
 
 media_info() {
     echo -e "\n${CYAN}Kies een lokaal mediabestand voor metadata (Media Info)${NC}"
-    read -p "Bestandspad: " input_file
+    local input_file=$(select_local_media_file)
 
     if [ ! -f "$input_file" ]; then
         echo -e "${RED}❌ Bestand niet gevonden: $input_file${NC}"
