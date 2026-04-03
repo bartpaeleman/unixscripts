@@ -122,7 +122,7 @@ configure_output_dir() {
     fi
 
     echo -e "${CYAN}Huidige standaard directory: ${BASE_DIR}${NC}"
-    read -p "Geef target directory (ENTER = $BASE_DIR): " USER_DIR
+    read -e -p "Geef target directory (ENTER = $BASE_DIR): " USER_DIR
 
     if [ -z "$USER_DIR" ]; then
         USER_DIR="$BASE_DIR"
@@ -430,7 +430,7 @@ select_local_media_file() {
         read -p "Kies een optie: " choice < /dev/tty
 
         if [ "$choice" = "M" ] || [ "$choice" = "m" ]; then
-            read -p "Voer pad naar map in: " new_dir < /dev/tty
+            read -e -p "Voer pad naar map in: " new_dir < /dev/tty
             if [ -d "$new_dir" ]; then
                 current_dir="$new_dir"
             else
@@ -443,7 +443,7 @@ select_local_media_file() {
             echo "$(realpath "$selected")"
             return
         else
-            read -p "Voer handmatig het bestandspad in: " selected_file < /dev/tty
+            read -e -p "Voer handmatig het bestandspad in: " selected_file < /dev/tty
             if [ -n "$selected_file" ]; then
                 echo "$selected_file"
                 return
@@ -493,7 +493,17 @@ trim_local_file() {
     else
         ffmpeg -i "$input_file" -ss "$start_time" -c copy "$output_file"
     fi
-    echo -e "\n${GREEN}✅ Klaar! Opgeslagen als $output_file${NC}"
+
+    if [ -f "$output_file" ]; then
+        local filesize=$(wc -c < "$output_file" | tr -d ' ')
+        if [ "$filesize" -lt 5000 ]; then
+            echo -e "\n${YELLOW}⚠️ Waarschuwing: Het opgeslagen bestand is zeer klein of leeg (${filesize} bytes). Controleer of de opgegeven begintijd/eindtijd binnen de duur van de video valt.${NC}"
+        else
+            echo -e "\n${GREEN}✅ Klaar! Opgeslagen als $output_file${NC}"
+        fi
+    else
+        echo -e "\n${RED}❌ Fout: Bestand kon niet worden gemaakt.${NC}"
+    fi
     pause
 }
 
@@ -568,7 +578,17 @@ extract_local_audio() {
     else
         ffmpeg -i "$input_file" -vn -q:a 0 "$output_file"
     fi
-    echo -e "\n${GREEN}✅ Klaar! Opgeslagen als $output_file${NC}"
+
+    if [ -f "$output_file" ]; then
+        local filesize=$(wc -c < "$output_file" | tr -d ' ')
+        if [ "$filesize" -lt 5000 ]; then
+            echo -e "\n${YELLOW}⚠️ Waarschuwing: Het opgeslagen bestand is zeer klein of leeg (${filesize} bytes). Controleer of de opgegeven begintijd/eindtijd binnen de duur van de video valt.${NC}"
+        else
+            echo -e "\n${GREEN}✅ Klaar! Opgeslagen als $output_file${NC}"
+        fi
+    else
+        echo -e "\n${RED}❌ Fout: Bestand kon niet worden gemaakt.${NC}"
+    fi
     pause
 }
 
