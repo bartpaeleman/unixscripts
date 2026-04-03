@@ -221,8 +221,15 @@ execute_download() {
 
     # Fragment / Clip (Download Sections)
     if [ -n "$clip_start" ] && [ -n "$clip_end" ]; then
-        args+=("--download-sections" "*${clip_start}-${clip_end}")
-        echo -e "✂️ Fragment geselecteerd: $clip_start tot $clip_end"
+        if [ "$media_type" = "audio" ]; then
+            # Voor audio clips gebruiken we ExtractAudio postprocessor i.p.v. --download-sections
+            # omdat yt-dlp's -x botst met native section downloads wat resulteert in 1KB bestanden.
+            args+=("--postprocessor-args" "ExtractAudio:-ss ${clip_start} -to ${clip_end}")
+            echo -e "✂️ Fragment geselecteerd: $clip_start tot $clip_end (via postprocessor)"
+        else
+            args+=("--download-sections" "*${clip_start}-${clip_end}")
+            echo -e "✂️ Fragment geselecteerd: $clip_start tot $clip_end"
+        fi
     else
         # Als er geen clip sectie is, voegen we het archive argument toe om dubbele volledige downloads te voorkomen.
         # (Archive werkt slecht samen met section downloads)
