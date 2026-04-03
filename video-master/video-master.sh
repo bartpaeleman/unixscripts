@@ -150,9 +150,14 @@ choose_unified_format() {
     # Since this function is called inside a subshell like $(choose_unified_format)
     # we must redirect all UI output to stderr (>&2) so it doesn't get captured in the variable.
     local current_type="$1"
-    local default_fmt="${DEFAULT_VIDEO_FORMAT:-mp4}"
+    local default_fmt=""
+    if [ "$current_type" = "audio" ]; then
+        default_fmt="${DEFAULT_AUDIO_FORMAT:-mp3}"
+    else
+        default_fmt="${DEFAULT_VIDEO_FORMAT:-mp4}"
+    fi
 
-    echo -e "\n${CYAN}Kies formaat (Video: mp4, mkv, webm)${NC}" >&2
+    echo -e "\n${CYAN}Kies formaat (Video: mp4, mkv, webm | Audio: mp3, aac, flac, wav, m4a)${NC}" >&2
     read -p "Formaat [ENTER=${default_fmt}]: " chosen_fmt < /dev/tty
 
     if [ -z "$chosen_fmt" ]; then
@@ -164,9 +169,12 @@ choose_unified_format() {
         mp4|mkv|webm)
             echo "video:$chosen_fmt"
             ;;
+        mp3|aac|flac|wav|m4a)
+            echo "audio:$chosen_fmt"
+            ;;
         *)
             echo -e "${YELLOW}Ongeldig formaat, teruggevallen op ${default_fmt}${NC}" >&2
-            echo "video:${default_fmt}"
+            echo "${current_type}:${default_fmt}"
             ;;
     esac
 }
@@ -329,14 +337,22 @@ download_menu() {
                 esac
                 if [ "$m_media_type" != "thumbnail" ]; then
                     IFS=':' read -r m_media_type m_format <<< "$(choose_unified_format "$m_media_type")"
-                    DEFAULT_VIDEO_FORMAT="$m_format"
+                    if [ "$m_media_type" = "audio" ]; then
+                        DEFAULT_AUDIO_FORMAT="$m_format"
+                    else
+                        DEFAULT_VIDEO_FORMAT="$m_format"
+                    fi
                     save_config
                 fi
                 ;;
             3)
                 if [ "$m_media_type" != "thumbnail" ]; then
                     IFS=':' read -r m_media_type m_format <<< "$(choose_unified_format "$m_media_type")"
-                    DEFAULT_VIDEO_FORMAT="$m_format"
+                    if [ "$m_media_type" = "audio" ]; then
+                        DEFAULT_AUDIO_FORMAT="$m_format"
+                    else
+                        DEFAULT_VIDEO_FORMAT="$m_format"
+                    fi
                     save_config
                 else
                     echo -e "${YELLOW}Formaat is niet van toepassing voor thumbnails.${NC}" ; sleep 2
@@ -446,18 +462,37 @@ trim_local_file() {
         return
     fi
 
-    read -p "Geef begintijd (bv 00:01:30): " start_time
-    read -p "Geef eindtijd (bv 00:03:45) of duur (+00:02:15): " end_time
-    read -p "Geef uitvoer bestandspad (bv output.mp4): " output_file
+    echo -e "\n${YELLOW}Map voor uitvoer instellen:${NC}"
+    configure_output_dir
 
-    if [ -z "$start_time" ] || [ -z "$end_time" ] || [ -z "$output_file" ]; then
+    read -p "Geef begintijd (bv 00:01:30): " start_time
+    read -p "Geef eindtijd (bv 00:03:45) of duur (+00:02:15) of laat leeg: " end_time
+
+    local end_flag=""
+    if [ -n "$end_time" ]; then
+        end_flag="-to"
+        if [[ "$end_time" == "+"* ]]; then
+            end_flag="-t"
+            end_time="${end_time#+}"
+        fi
+    fi
+
+    read -p "Geef uitvoer bestandsnaam (bv output.mp4): " output_name
+
+    if [ -z "$start_time" ] || [ -z "$output_name" ]; then
         echo -e "${RED}❌ Ontbrekende gegevens.${NC}"
         pause
         return
     fi
 
+    local output_file="$OUTPUT_DIR/$output_name"
+
     echo -e "\n${CYAN}✂️ Bestand knippen...${NC}"
-    ffmpeg -i "$input_file" -ss "$start_time" -to "$end_time" -c copy "$output_file"
+    if [ -n "$end_time" ]; then
+        ffmpeg -i "$input_file" -ss "$start_time" "$end_flag" "$end_time" -c copy "$output_file"
+    else
+        ffmpeg -i "$input_file" -ss "$start_time" -c copy "$output_file"
+    fi
     echo -e "\n${GREEN}✅ Klaar! Opgeslagen als $output_file${NC}"
     pause
 }
@@ -495,23 +530,41 @@ extract_local_audio() {
         return
     fi
 
+    echo -e "\n${YELLOW}Map voor uitvoer instellen:${NC}"
+    configure_output_dir
+
     read -p "Geef begintijd (bv 00:01:30) of laat leeg voor volledige audio: " start_time
     local end_time=""
+    local end_flag=""
     if [ -n "$start_time" ]; then
-        read -p "Geef eindtijd (bv 00:03:45) of duur (+00:02:15): " end_time
+        read -p "Geef eindtijd (bv 00:03:45) of duur (+00:02:15) of laat leeg: " end_time
+        if [ -n "$end_time" ]; then
+            end_flag="-to"
+            # Check if duration was specified (starts with +)
+            if [[ "$end_time" == "+"* ]]; then
+                end_flag="-t"
+                end_time="${end_time#+}" # Verwijder de + voor ffmpeg
+            fi
+        fi
     fi
 
-    read -p "Geef uitvoer bestandspad (bv output.mp3): " output_file
+    read -p "Geef uitvoer bestandsnaam (bv output.mp3): " output_name
 
-    if [ -z "$output_file" ]; then
-        echo -e "${RED}❌ Geen uitvoer bestand gegeven.${NC}"
+    if [ -z "$output_name" ]; then
+        echo -e "${RED}❌ Geen uitvoer bestandsnaam gegeven.${NC}"
         pause
         return
     fi
 
+    local output_file="$OUTPUT_DIR/$output_name"
+
     echo -e "\n${CYAN}🎵 Audio extraheren...${NC}"
-    if [ -n "$start_time" ] && [ -n "$end_time" ]; then
-        ffmpeg -i "$input_file" -ss "$start_time" -to "$end_time" -vn -q:a 0 "$output_file"
+    if [ -n "$start_time" ]; then
+        if [ -n "$end_time" ]; then
+            ffmpeg -i "$input_file" -ss "$start_time" "$end_flag" "$end_time" -vn -q:a 0 "$output_file"
+        else
+            ffmpeg -i "$input_file" -ss "$start_time" -vn -q:a 0 "$output_file"
+        fi
     else
         ffmpeg -i "$input_file" -vn -q:a 0 "$output_file"
     fi
