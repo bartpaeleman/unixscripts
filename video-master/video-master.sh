@@ -84,6 +84,41 @@ time_to_seconds() {
     fi
 }
 
+resolve_filename_conflict() {
+    local target_file="$1"
+
+    if [ ! -f "$target_file" ]; then
+        echo "$target_file"
+        return 0
+    fi
+
+    # Read from /dev/tty because this might be called in a subshell $(...)
+    echo -e "\n${YELLOW}⚠️ Bestand bestaat al:${NC} $(basename "$target_file")" >&2
+    local choice
+    read -p "Overschrijven (O) of volgnummer toevoegen (V)? [O/V]: " choice < /dev/tty
+
+    if [ "$choice" = "V" ] || [ "$choice" = "v" ]; then
+        local base="${target_file%.*}"
+        local ext="${target_file##*.}"
+        local counter=1
+        local new_file
+
+        while true; do
+            new_file=$(printf "%s-%02d.%s" "$base" "$counter" "$ext")
+            if [ ! -f "$new_file" ]; then
+                echo "$new_file"
+                return 0
+            fi
+            ((counter++))
+        done
+    else
+        # Overschrijven (of default)
+        rm -f "$target_file"
+        echo "$target_file"
+        return 0
+    fi
+}
+
 check_duration_warning() {
     local input_file="$1"
     local start="$2"
@@ -358,6 +393,35 @@ execute_download() {
             args+=("-o" "$OUTPUT_DIR/%(title)s_clip.%(ext)s" "$target")
         else
             args+=("-o" "$OUTPUT_DIR/%(title)s.%(ext)s" "$target")
+        fi
+
+        # Voor individuele downloads kunnen we proberen een verwachte bestandsnaam op te halen om conflicten te controleren
+        echo -e "\n${CYAN}🔍 Bestandsnaam voorbereiden...${NC}"
+        local expected_file=$(yt-dlp "${args[@]}" --print filename 2>/dev/null | head -n 1)
+        if [ -n "$expected_file" ] && [ -f "$expected_file" ]; then
+            echo -e "\n${YELLOW}⚠️ Bestand bestaat al:${NC} $(basename "$expected_file")" >&2
+            local conflict_choice
+            read -p "Overschrijven (O) of volgnummer toevoegen (V)? [O/V]: " conflict_choice < /dev/tty
+            if [ "$conflict_choice" = "V" ] || [ "$conflict_choice" = "v" ]; then
+                # Pas de output template aan voor yt-dlp
+                # Vervang de laatste -o argument
+                # We weten dat args+=("-o" "template" "$target") is gebruikt (de laatste 3)
+                # Dus we poppen het target
+                local target_arg="${args[${#args[@]}-1]}"
+                unset 'args[${#args[@]}-1]' # Remove target
+                unset 'args[${#args[@]}-1]' # Remove template
+                unset 'args[${#args[@]}-1]' # Remove -o
+
+                if [ -n "$clip_start" ]; then
+                    args+=("-o" "$OUTPUT_DIR/%(title)s_clip-%(autonumber)02d.%(ext)s" "$target_arg")
+                else
+                    args+=("-o" "$OUTPUT_DIR/%(title)s-%(autonumber)02d.%(ext)s" "$target_arg")
+                fi
+                echo -e "${GREEN}Volgnummer template geactiveerd.${NC}"
+            else
+                args+=("--force-overwrites")
+                echo -e "${GREEN}Overschrijven geactiveerd.${NC}"
+            fi
         fi
     fi
 
@@ -634,6 +698,10 @@ trim_local_file() {
     fi
 
     local output_file="$OUTPUT_DIR/$output_name"
+    output_file=$(resolve_filename_conflict "$output_file")
+    if [ -z "$output_file" ]; then
+        return
+    fi
 
     echo -e "\n${CYAN}✂️ Bestand knippen...${NC}"
     if [ -n "$end_time" ]; then
@@ -673,8 +741,14 @@ convert_local_file() {
     fi
 
     # Append default extension if missing
-    if [[ "$output_file" != *.* ]]; then
+    local output_name="$(basename "$output_file")"
+    if [[ "$output_name" != *.* ]]; then
         output_file="${output_file}.mkv"
+    fi
+
+    output_file=$(resolve_filename_conflict "$output_file")
+    if [ -z "$output_file" ]; then
+        return
     fi
 
     echo -e "\n${CYAN}🔄 Bestand converteren...${NC}"
@@ -741,6 +815,10 @@ extract_local_audio() {
     fi
 
     local output_file="$OUTPUT_DIR/$output_name"
+    output_file=$(resolve_filename_conflict "$output_file")
+    if [ -z "$output_file" ]; then
+        return
+    fi
 
     echo -e "\n${CYAN}🎵 Audio extraheren...${NC}"
     if [ -n "$start_time" ]; then
