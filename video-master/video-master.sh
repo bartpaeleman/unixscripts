@@ -342,6 +342,7 @@ execute_download() {
     local clip_start="$5"   # leeg of "00:01:00"
     local clip_end="$6"     # leeg of "00:02:00"
     local subtitles="$7"    # leeg of "nl", "en", etc
+    local platform="${8:-standaard}" # "standaard", "x_com", "linkedin"
 
     configure_output_dir
 
@@ -357,8 +358,13 @@ execute_download() {
         echo -e "\n${CYAN}🎵 Audio ($format) downloaden...${NC}"
     else
         # Default is video
-        args+=("-f" "bestvideo+bestaudio/best" "--merge-output-format" "$format")
-        echo -e "\n${CYAN}⬇️ Video ($format) downloaden...${NC}"
+        if [ "$platform" = "x_com" ] || [ "$platform" = "linkedin" ]; then
+            args+=("-f" "bv+ba/b" "--merge-output-format" "$format" "--no-mtime")
+            echo -e "\n${CYAN}⬇️ Video ($format) downloaden voor platform: $platform...${NC}"
+        else
+            args+=("-f" "bestvideo+bestaudio/best" "--merge-output-format" "$format")
+            echo -e "\n${CYAN}⬇️ Video ($format) downloaden...${NC}"
+        fi
     fi
 
     # Subtitles (alleen nuttig voor video, maar we laten yt-dlp beslissen indien gevraagd)
@@ -389,10 +395,16 @@ execute_download() {
         args+=("-o" "$OUTPUT_DIR/%(title)s.%(ext)s" "-a" "$target")
         echo -e "📦 Batch modus geactiveerd voor: $target"
     else
+        # Gebruik een veiligere template voor social media platforms om lange titels af te kappen
+        local title_template="%(title)s"
+        if [ "$platform" = "x_com" ] || [ "$platform" = "linkedin" ]; then
+            title_template="%(title).200s [%(id)s]"
+        fi
+
         if [ -n "$clip_start" ]; then
-            args+=("-o" "$OUTPUT_DIR/%(title)s_clip.%(ext)s" "$target")
+            args+=("-o" "$OUTPUT_DIR/${title_template}_clip.%(ext)s" "$target")
         else
-            args+=("-o" "$OUTPUT_DIR/%(title)s.%(ext)s" "$target")
+            args+=("-o" "$OUTPUT_DIR/${title_template}.%(ext)s" "$target")
         fi
 
         # Voor individuele downloads kunnen we proberen een verwachte bestandsnaam op te halen om conflicten te controleren
@@ -413,9 +425,9 @@ execute_download() {
                 unset 'args[${#args[@]}-1]' # Remove -o
 
                 if [ -n "$clip_start" ]; then
-                    args+=("-o" "$OUTPUT_DIR/%(title)s_clip-%(autonumber)02d.%(ext)s" "$target_arg")
+                    args+=("-o" "$OUTPUT_DIR/${title_template}_clip-%(autonumber)02d.%(ext)s" "$target_arg")
                 else
-                    args+=("-o" "$OUTPUT_DIR/%(title)s-%(autonumber)02d.%(ext)s" "$target_arg")
+                    args+=("-o" "$OUTPUT_DIR/${title_template}-%(autonumber)02d.%(ext)s" "$target_arg")
                 fi
                 echo -e "${GREEN}Volgnummer template geactiveerd.${NC}"
             else
@@ -443,6 +455,8 @@ download_menu() {
     local m_clip_start=""
     local m_clip_end=""
     local m_subtitles=""
+    local m_platform="standaard"
+    local m_platform_display="Standaard (YouTube etc.)"
 
     while true; do
         clear
@@ -484,6 +498,8 @@ download_menu() {
         else
              echo -e " 5) Ondertitels : ${YELLOW}N.v.t. ($m_media_type)${NC}"
         fi
+
+        echo -e " 6) Platform    : ${GREEN}$m_platform_display${NC}"
 
         echo -e "-----------------------------------"
         echo -e " ${GREEN}S) START DOWNLOAD${NC}"
@@ -572,11 +588,39 @@ download_menu() {
                     echo "Ondertitels zijn alleen beschikbaar voor video downloads." ; sleep 2
                 fi
                 ;;
+            6)
+                echo -e "\nKies Platform:"
+                echo "1) Standaard (YouTube etc.)"
+                echo "2) X.com (Twitter)"
+                echo "3) LinkedIn"
+                read -p "Keuze [1-3]: " plat_choice
+                case $plat_choice in
+                    2)
+                        m_platform="x_com"
+                        m_platform_display="X.com (Twitter)"
+                        # X.com video's werken vaak het best als mp4
+                        if [ "$m_media_type" = "video" ]; then
+                            m_format="mp4"
+                        fi
+                        ;;
+                    3)
+                        m_platform="linkedin"
+                        m_platform_display="LinkedIn"
+                        if [ "$m_media_type" = "video" ]; then
+                            m_format="mp4"
+                        fi
+                        ;;
+                    *)
+                        m_platform="standaard"
+                        m_platform_display="Standaard (YouTube etc.)"
+                        ;;
+                esac
+                ;;
             [sS])
                 if [ -z "$m_target" ]; then
                     echo -e "${RED}❌ Geen bron URL of bestand opgegeven!${NC}" ; sleep 2
                 else
-                    execute_download "$m_target_type" "$m_target" "$m_media_type" "$m_format" "$m_clip_start" "$m_clip_end" "$m_subtitles"
+                    execute_download "$m_target_type" "$m_target" "$m_media_type" "$m_format" "$m_clip_start" "$m_clip_end" "$m_subtitles" "$m_platform"
                 fi
                 ;;
             [bB])
