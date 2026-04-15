@@ -355,12 +355,17 @@ execute_download() {
         echo -e "\n${CYAN}🖼️ Thumbnail downloaden...${NC}"
     elif [ "$media_type" = "audio" ]; then
         args+=("-f" "bestaudio/best" "-x" "--audio-format" "$format")
-        echo -e "\n${CYAN}🎵 Audio ($format) downloaden...${NC}"
+        if [ "$platform" = "music" ]; then
+            args+=("--add-metadata" "--embed-thumbnail")
+            echo -e "\n${CYAN}🎵 Muziek ($format) downloaden met metadata...${NC}"
+        else
+            echo -e "\n${CYAN}🎵 Audio ($format) downloaden...${NC}"
+        fi
     else
         # Default is video
-        if [ "$platform" = "x_com" ] || [ "$platform" = "linkedin" ]; then
+        if [ "$platform" = "social" ] || [ "$platform" = "x_com" ] || [ "$platform" = "linkedin" ]; then
             args+=("-f" "bv+ba/b" "--merge-output-format" "$format" "--no-mtime")
-            echo -e "\n${CYAN}⬇️ Video ($format) downloaden voor platform: $platform...${NC}"
+            echo -e "\n${CYAN}⬇️ Video ($format) downloaden voor Social Media platform...${NC}"
         else
             args+=("-f" "bestvideo+bestaudio/best" "--merge-output-format" "$format")
             echo -e "\n${CYAN}⬇️ Video ($format) downloaden...${NC}"
@@ -390,17 +395,19 @@ execute_download() {
         args+=("${archive_args[@]}")
     fi
 
+    # Gebruik een veiligere template voor social media platforms om lange titels af te kappen
+    local title_template="%(title)s"
+    if [ "$platform" = "social" ] || [ "$platform" = "x_com" ] || [ "$platform" = "linkedin" ]; then
+        title_template="%(title).200s [%(id)s]"
+    elif [ "$platform" = "music" ]; then
+        title_template="%(artist,uploader)s - %(title)s"
+    fi
+
     # Bepaal Target (URL of Batch) en Output template
     if [ "$target_type" = "batch" ]; then
-        args+=("-o" "$OUTPUT_DIR/%(title)s.%(ext)s" "-a" "$target")
+        args+=("-o" "$OUTPUT_DIR/${title_template}.%(ext)s" "-a" "$target")
         echo -e "📦 Batch modus geactiveerd voor: $target"
     else
-        # Gebruik een veiligere template voor social media platforms om lange titels af te kappen
-        local title_template="%(title)s"
-        if [ "$platform" = "x_com" ] || [ "$platform" = "linkedin" ]; then
-            title_template="%(title).200s [%(id)s]"
-        fi
-
         if [ -n "$clip_start" ]; then
             args+=("-o" "$OUTPUT_DIR/${title_template}_clip.%(ext)s" "$target")
         else
@@ -456,7 +463,7 @@ download_menu() {
     local m_clip_end=""
     local m_subtitles=""
     local m_platform="standaard"
-    local m_platform_display="Standaard (YouTube etc.)"
+    local m_platform_display="Generiek / Standaard (YouTube, Dailymotion, etc.)"
 
     while true; do
         clear
@@ -589,30 +596,33 @@ download_menu() {
                 fi
                 ;;
             6)
-                echo -e "\nKies Platform:"
-                echo "1) Standaard (YouTube etc.)"
-                echo "2) X.com (Twitter)"
-                echo "3) LinkedIn"
+                echo -e "\nKies Platform Profiel:"
+                echo "1) Generiek / Standaard (YouTube, Dailymotion, Vimeo, web video's)"
+                echo "2) Social Media Video (X.com, LinkedIn, Facebook, Instagram, TikTok)"
+                echo "3) Audio / Muziek Platform (Spotify, Soundcloud, etc.)"
                 read -p "Keuze [1-3]: " plat_choice
                 case $plat_choice in
                     2)
-                        m_platform="x_com"
-                        m_platform_display="X.com (Twitter)"
-                        # X.com video's werken vaak het best als mp4
+                        m_platform="social"
+                        m_platform_display="Social Media Video (X.com, Insta, TikTok, etc.)"
+                        # Social video's werken vaak het best als mp4
                         if [ "$m_media_type" = "video" ]; then
                             m_format="mp4"
                         fi
                         ;;
                     3)
-                        m_platform="linkedin"
-                        m_platform_display="LinkedIn"
-                        if [ "$m_media_type" = "video" ]; then
-                            m_format="mp4"
+                        m_platform="music"
+                        m_platform_display="Audio / Muziek Platform (Spotify, Soundcloud, etc.)"
+                        # Geforceerd naar audio
+                        if [ "$m_media_type" != "audio" ]; then
+                            m_media_type="audio"
+                            m_format="${DEFAULT_AUDIO_FORMAT:-mp3}"
+                            echo -e "\n${YELLOW}Media type automatisch omgezet naar Audio voor muziek platform.${NC}" ; sleep 2
                         fi
                         ;;
                     *)
                         m_platform="standaard"
-                        m_platform_display="Standaard (YouTube etc.)"
+                        m_platform_display="Generiek / Standaard (YouTube, Dailymotion, etc.)"
                         ;;
                 esac
                 ;;
