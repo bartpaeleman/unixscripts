@@ -27,13 +27,13 @@
     "iPone"
   ],
   "inclusions": [
+    "vulnerability",
+    "CVE",
     "Zero-day",
     "RCE",
     "Critical update"
   ],
   "exclusions": [
-    "vulnerability",
-    "CVE",
     "patch Tuesday",
     "low severity"
   ],
