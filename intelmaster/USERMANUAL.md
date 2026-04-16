@@ -38,8 +38,19 @@ Keywords are case-insensitive. Add the technologies your company uses so the ana
 ]
 ```
 
+### Adding Inclusions (Overrides Exclusions)
+You can define case-insensitive inclusion words. These are high-priority terms (e.g., "Zero-day", "RCE"). If an item contains an inclusion word, it will **always** be included in the report, overriding any exclusions or lack of keyword matches.
+
+```json
+"inclusions": [
+  "Zero-day",
+  "RCE",
+  "Critical update"
+]
+```
+
 ### Adding Exclusions
-You can define case-insensitive exclusion words. If an item contains any of these words, it will be skipped entirely—even if it matches a keyword. This helps reduce noise from irrelevant categories (e.g., general CVE announcements or low severity notes).
+You can define case-insensitive exclusion words. If an item contains any of these words, it will be skipped entirely—unless it matches an inclusion word. This helps reduce noise from irrelevant categories (e.g., general CVE announcements or low severity notes).
 
 ```json
 "exclusions": [

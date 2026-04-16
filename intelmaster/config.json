@@ -26,6 +26,11 @@
     "Android",
     "iPone"
   ],
+  "inclusions": [
+    "Zero-day",
+    "RCE",
+    "Critical update"
+  ],
   "exclusions": [
     "vulnerability",
     "CVE",
