@@ -17,15 +17,14 @@
     }
   ],
   "keywords": [
-    "Kubernetes",
-    "Nginx",
+    "Fortinet",
     "Fortigate",
-    "Cisco",
-    "Palo Alto",
-    "AWS",
+    "Microsoft",
+    "Apple",
+    "Azure",
     "Windows",
-    "Linux",
-    "Docker"
+    "Android",
+    "iPone"
   ],
   "exclusions": [
     "vulnerability",
