@@ -1,11 +1,6 @@
 {
   "sources": [
     {
-      "name": "BleepingComputer",
-      "url": "https://www.bleepingcomputer.com/feed/",
-      "type": "rss"
-    },
-    {
       "name": "The Hacker News",
       "url": "https://feeds.feedburner.com/TheHackersNews",
       "type": "rss"
@@ -14,6 +9,11 @@
       "name": "CISA KEV",
       "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
       "type": "cisa_kev"
+    },
+    {
+      "name": "example.com",
+      "url": "https://example.com/feed.xml",
+      "type": "rss"
     }
   ],
   "keywords": [

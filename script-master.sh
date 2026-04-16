@@ -124,21 +124,44 @@ intelmaster_menu() {
         echo -e "${CYAN}===================================${NC}"
         echo -e "          ${CYAN}INTEL MASTER${NC}"
         echo -e "${CYAN}===================================${NC}"
-        echo "1) Run Threat Intel Aggregator"
-        echo "2) Edit Config (config.json)"
-        echo "3) Add New Source to Config"
+        echo "1) Run Threat Intel Aggregator (All/Default)"
+        echo "2) Run Threat Intel Aggregator (General Security Info)"
+        echo "3) Run Threat Intel Aggregator (Patches & Vulnerabilities)"
+        echo "4) Run Threat Intel Aggregator (Other Cyber Sec Topics)"
+        echo "5) Edit Config (config.json)"
+        echo "6) Add New Source to Config"
+        echo "7) Manage Feeds from List (Text File)"
         echo -e "-----------------------------------"
         echo "B) Back to Main Menu"
 
         read -p "Select Option: " choice
         case $choice in
-            1) launch_intel ;;
-            2) edit_intel_config ;;
-            3) add_intel_source ;;
+            1) export INTEL_FILTER="default"; launch_intel ;;
+            2) export INTEL_FILTER="general"; launch_intel ;;
+            3) export INTEL_FILTER="patches"; launch_intel ;;
+            4) export INTEL_FILTER="other"; launch_intel ;;
+            5) edit_intel_config ;;
+            6) add_intel_source ;;
+            7) manage_feeds_list ;;
             [bB]) break ;;
             *) echo "Invalid option." ; pause ;;
         esac
     done
+}
+
+manage_feeds_list() {
+    echo -e "\n${CYAN}Manage Feeds from List${NC}"
+    echo "Please provide the path to a text file containing feed URLs."
+    echo "Lines starting with '#' or '-' will be deactivated."
+    echo "Plain URLs will be activated/added."
+    read -e -p "File Path: " list_path
+
+    if [[ -f "$list_path" ]]; then
+        python3 "$SCRIPT_DIR/intelmaster/manage_feeds.py" "$SCRIPT_DIR/intelmaster/config.json" "$list_path"
+    else
+        echo -e "${RED}Error: File not found: $list_path${NC}"
+    fi
+    pause
 }
 
 setup_env() {
