@@ -153,12 +153,26 @@ intelmaster_menu() {
 
 install_intel_deps() {
     echo -e "\n${CYAN}Installing Intel Master Dependencies...${NC}"
-    echo "This will use pip3 to install missing Python packages like 'python-dateutil'."
-    if command -v pip3 &> /dev/null; then
+    echo "This will try to install missing Python packages like 'python-dateutil'."
+
+    if command -v python3 &> /dev/null; then
+        echo "Attempting installation via python3 -m pip..."
+        if python3 -m pip install --user python-dateutil; then
+            echo -e "${GREEN}Dependencies installed successfully.${NC}"
+        else
+            echo -e "${YELLOW}pip not found. Attempting to bootstrap pip...${NC}"
+            if python3 -m ensurepip; then
+                python3 -m pip install --user python-dateutil
+                echo -e "${GREEN}Dependencies installed successfully.${NC}"
+            else
+                echo -e "${RED}Error: Failed to install pip or dependencies.${NC}"
+            fi
+        fi
+    elif command -v pip3 &> /dev/null; then
         pip3 install --user python-dateutil
         echo -e "${GREEN}Dependencies installed successfully.${NC}"
     else
-        echo -e "${RED}Error: pip3 is not installed or not in your PATH.${NC}"
+        echo -e "${RED}Error: Neither python3 nor pip3 is available in your PATH.${NC}"
     fi
     pause
 }
