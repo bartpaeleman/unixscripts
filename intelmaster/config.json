@@ -27,6 +27,11 @@
     "Linux",
     "Docker"
   ],
+  "inclusions": [
+    "Zero-day",
+    "RCE",
+    "Critical update"
+  ],
   "exclusions": [
     "vulnerability",
     "CVE",

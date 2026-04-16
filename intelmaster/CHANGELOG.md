@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - Add Inclusions Feature
+
+### Added
+- Feature to force-include threat items based on `inclusions` words in `config.json`, which overrides `exclusions` and `keywords`.
+
 ## [1.1.0] - Add Exclusions Feature
 
 ### Added

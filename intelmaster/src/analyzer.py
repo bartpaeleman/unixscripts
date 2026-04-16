@@ -34,6 +34,7 @@ class IntelAnalyzer:
         self.config = self._load_config()
         self.keywords = [k.lower() for k in self.config.get('keywords', [])]
         self.exclusions = [e.lower() for e in self.config.get('exclusions', [])]
+        self.inclusions = [i.lower() for i in self.config.get('inclusions', [])]
         self.lookback_days = self.config.get('parameters', {}).get('lookback_days', 7)
         self.cutoff_date = datetime.now() - timedelta(days=self.lookback_days)
         self.findings = []
@@ -59,6 +60,13 @@ class IntelAnalyzer:
             return []
         text_lower = text.lower()
         return [kw for kw in self.config.get('keywords', []) if kw.lower() in text_lower]
+
+    def _find_inclusions(self, text):
+        """Returns list of matched inclusions in text."""
+        if not text:
+            return []
+        text_lower = text.lower()
+        return [inc for inc in self.config.get('inclusions', []) if inc.lower() in text_lower]
 
     def _has_exclusions(self, text):
         """Returns True if any exclusion words are found in the text."""
@@ -106,13 +114,19 @@ class IntelAnalyzer:
 
                 content = f"{title} {desc}"
                 matches = self._find_keywords(content)
+                inclusions_matches = self._find_inclusions(content)
 
-                if matches and not self._has_exclusions(content):
+                # Inclusions override exclusions.
+                # Keep if there are inclusions OR (matches exist AND no exclusions).
+                if inclusions_matches or (matches and not self._has_exclusions(content)):
+                    # Use inclusions if they exist, otherwise use matched keywords
+                    tags = inclusions_matches if inclusions_matches else matches
+
                     dt = self._parse_date(pub_date)
                     if dt >= self.cutoff_date:
                         self.findings.append(ThreatItem(
                             title=title, link=link, date_str=pub_date,
-                            summary=desc, source_name=source_name, keywords_found=matches
+                            summary=desc, source_name=source_name, keywords_found=tags
                         ))
         except Exception as e:
             print(f"Error parsing RSS {file_path}: {e}", file=sys.stderr)
@@ -131,8 +145,12 @@ class IntelAnalyzer:
 
                 content = f"{title} {desc}"
                 matches = self._find_keywords(content)
+                inclusions_matches = self._find_inclusions(content)
 
-                if matches and not self._has_exclusions(content):
+                # Inclusions override exclusions.
+                if inclusions_matches or (matches and not self._has_exclusions(content)):
+                    tags = inclusions_matches if inclusions_matches else matches
+
                     try:
                         dt = datetime.strptime(date_added, '%Y-%m-%d')
                     except ValueError:
@@ -141,7 +159,7 @@ class IntelAnalyzer:
                     if dt >= self.cutoff_date:
                         self.findings.append(ThreatItem(
                             title=title, link=link, date_str=date_added,
-                            summary=desc, source_name=source_name, keywords_found=matches
+                            summary=desc, source_name=source_name, keywords_found=tags
                         ))
         except Exception as e:
             print(f"Error parsing JSON {file_path}: {e}", file=sys.stderr)
