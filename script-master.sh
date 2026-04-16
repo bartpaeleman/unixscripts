@@ -59,6 +59,7 @@ launch_video() {
 
 launch_intel() {
     bash "$SCRIPT_DIR/intelmaster/threat-intel.sh"
+    pause
 }
 
 edit_intel_config() {
@@ -69,6 +70,75 @@ edit_intel_config() {
         echo -e "${RED}Error: $config_file not found.${NC}"
         pause
     fi
+}
+
+add_intel_source() {
+    local config_file="$SCRIPT_DIR/intelmaster/config.json"
+    if [ ! -f "$config_file" ]; then
+        echo -e "${RED}Error: $config_file not found.${NC}"
+        pause
+        return
+    fi
+
+    echo -e "\n${CYAN}Add New Threat Intel Source${NC}"
+    read -p "Name (e.g. My RSS Feed): " src_name
+    read -p "URL: " src_url
+    read -p "Type (e.g. rss, json, cisa_kev): " src_type
+
+    if [[ -z "$src_name" || -z "$src_url" || -z "$src_type" ]]; then
+        echo -e "${RED}All fields are required. Aborting.${NC}"
+        pause
+        return
+    fi
+
+    # Append to JSON using python3 to ensure syntax validity
+    SRC_NAME="$src_name" SRC_URL="$src_url" SRC_TYPE="$src_type" python3 -c "
+import json, sys, os
+config_path = '$config_file'
+try:
+    with open(config_path, 'r') as f:
+        data = json.load(f)
+
+    if 'sources' not in data:
+        data['sources'] = []
+
+    data['sources'].append({
+        'name': os.environ.get('SRC_NAME', ''),
+        'url': os.environ.get('SRC_URL', ''),
+        'type': os.environ.get('SRC_TYPE', '')
+    })
+
+    with open(config_path, 'w') as f:
+        json.dump(data, f, indent=2)
+    print('Successfully added source.')
+except Exception as e:
+    print(f'Error updating config: {e}')
+    sys.exit(1)
+"
+    pause
+}
+
+intelmaster_menu() {
+    while true; do
+        clear
+        echo -e "${CYAN}===================================${NC}"
+        echo -e "          ${CYAN}INTEL MASTER${NC}"
+        echo -e "${CYAN}===================================${NC}"
+        echo "1) Run Threat Intel Aggregator"
+        echo "2) Edit Config (config.json)"
+        echo "3) Add New Source to Config"
+        echo -e "-----------------------------------"
+        echo "B) Back to Main Menu"
+
+        read -p "Select Option: " choice
+        case $choice in
+            1) launch_intel ;;
+            2) edit_intel_config ;;
+            3) add_intel_source ;;
+            [bB]) break ;;
+            *) echo "Invalid option." ; pause ;;
+        esac
+    done
 }
 
 setup_env() {
@@ -90,9 +160,8 @@ while true; do
     echo "7) File Master      (Rename, Archive, Cleanup)"
     echo "8) Text Master      (Stats, Diff, Merge)"
     echo "9) Video Master     (Download & Clip Videos)"
-    echo "10) Intel Master    (Threat Intelligence)"
+    echo "10) Intel Master    (Threat Intelligence Menu)"
     echo -e "-----------------------------------"
-    echo "C) Config Intel Master (Edit config.json)"
     echo "S) Setup Environment (Permissions & Aliases)"
     echo "X) Exit"
 
@@ -107,8 +176,7 @@ while true; do
         7) launch_file ;;
         8) launch_text ;;
         9) launch_video ;;
-        10) launch_intel ;;
-        [cC]) edit_intel_config ;;
+        10) intelmaster_menu ;;
         [sS]) setup_env ;;
         [xX]) exit 0 ;;
         *) echo "Invalid option." ; pause ;;
