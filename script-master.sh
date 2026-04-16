@@ -57,6 +57,20 @@ launch_video() {
     bash "$SCRIPT_DIR/video-master/video-master.sh"
 }
 
+launch_intel() {
+    bash "$SCRIPT_DIR/intelmaster/threat-intel.sh"
+}
+
+edit_intel_config() {
+    local config_file="$SCRIPT_DIR/intelmaster/config.json"
+    if [ -f "$config_file" ]; then
+        ${EDITOR:-vi} "$config_file"
+    else
+        echo -e "${RED}Error: $config_file not found.${NC}"
+        pause
+    fi
+}
+
 setup_env() {
     bash "$SCRIPT_DIR/dev-tools.sh"
 }
@@ -76,7 +90,9 @@ while true; do
     echo "7) File Master      (Rename, Archive, Cleanup)"
     echo "8) Text Master      (Stats, Diff, Merge)"
     echo "9) Video Master     (Download & Clip Videos)"
+    echo "10) Intel Master    (Threat Intelligence)"
     echo -e "-----------------------------------"
+    echo "C) Config Intel Master (Edit config.json)"
     echo "S) Setup Environment (Permissions & Aliases)"
     echo "X) Exit"
 
@@ -91,6 +107,8 @@ while true; do
         7) launch_file ;;
         8) launch_text ;;
         9) launch_video ;;
+        10) launch_intel ;;
+        [cC]) edit_intel_config ;;
         [sS]) setup_env ;;
         [xX]) exit 0 ;;
         *) echo "Invalid option." ; pause ;;
