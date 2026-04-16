@@ -87,42 +87,6 @@ alias persis='"${REPO_DIR}/setup-persistence.sh"'
 EOF
 )
 
-# --- 3. NAVIGATION ALIASES ---
-# (Paths already loaded in step 1)
-
-# Fallback prompts if paths are missing (reuse from Step 1 or prompt new if needed)
-if [[ -z "$PATH_PROD" ]]; then
-    echo -e "${YELLOW}Could not detect PATH_PROD automatically.${NC}"
-    read -p "Enter path for PROD (leave empty to skip alias): " PATH_PROD
-fi
-# PATH_DEV is likely set in Step 1, but check anyway
-if [[ -z "$PATH_DEV" ]]; then
-    read -p "Enter path for DEV (leave empty to skip alias): " PATH_DEV
-fi
-if [[ -z "$PATH_TEST" ]]; then
-    read -p "Enter path for TEST (leave empty to skip alias): " PATH_TEST
-fi
-
-ALIAS_BLOCK_NAV="# --- NAVIGATION ALIASES ---"
-if [[ -n "$PATH_PROD" ]]; then
-    ALIAS_BLOCK_NAV="${ALIAS_BLOCK_NAV}
-alias prd='cd \"${PATH_PROD}\"'"
-    echo -e "  Adding alias: ${GREEN}prd -> ${PATH_PROD}${NC}"
-fi
-if [[ -n "$PATH_DEV" ]]; then
-    ALIAS_BLOCK_NAV="${ALIAS_BLOCK_NAV}
-alias dev='cd \"${PATH_DEV}\"'"
-    echo -e "  Adding alias: ${GREEN}dev -> ${PATH_DEV}${NC}"
-fi
-if [[ -n "$PATH_TEST" ]]; then
-    ALIAS_BLOCK_NAV="${ALIAS_BLOCK_NAV}
-alias tst='cd \"${PATH_TEST}\"'"
-    echo -e "  Adding alias: ${GREEN}tst -> ${PATH_TEST}${NC}"
-fi
-ALIAS_BLOCK_NAV="${ALIAS_BLOCK_NAV}
-# ----------------------------"
-
-
 # --- 3. PROFILE DETECTION ---
 PROFILES=()
 [[ -f "$HOME/.bashrc" ]] && PROFILES+=("$HOME/.bashrc")
@@ -168,7 +132,66 @@ if [[ ${#PROFILES[@]} -eq 0 ]]; then
     fi
 fi
 
-# --- 4. INSTALLATION ---
+# --- 4. NAVIGATION ALIASES ---
+# Check existing profiles for any already configured paths
+EXISTING_PROD=""
+EXISTING_DEV=""
+EXISTING_TEST=""
+
+if [[ ${#PROFILES[@]} -gt 0 ]]; then
+    for prof in "${PROFILES[@]}"; do
+        # Extract existing alias paths if they exist
+        if grep -q "alias prd=" "$prof"; then
+            FOUND_PROD=$(grep "alias prd=" "$prof" | tail -1 | cut -d'"' -f2 | cut -d"'" -f2)
+            [[ -n "$FOUND_PROD" ]] && EXISTING_PROD="$FOUND_PROD"
+        fi
+        if grep -q "alias dev=" "$prof"; then
+            FOUND_DEV=$(grep "alias dev=" "$prof" | tail -1 | cut -d'"' -f2 | cut -d"'" -f2)
+            [[ -n "$FOUND_DEV" ]] && EXISTING_DEV="$FOUND_DEV"
+        fi
+        if grep -q "alias tst=" "$prof"; then
+            FOUND_TEST=$(grep "alias tst=" "$prof" | tail -1 | cut -d'"' -f2 | cut -d"'" -f2)
+            [[ -n "$FOUND_TEST" ]] && EXISTING_TEST="$FOUND_TEST"
+        fi
+    done
+fi
+
+# Override with existing profile values if not found in .env, or use existing profile values as fallback
+[[ -z "$PATH_PROD" && -n "$EXISTING_PROD" ]] && PATH_PROD="$EXISTING_PROD"
+[[ -z "$PATH_DEV" && -n "$EXISTING_DEV" ]] && PATH_DEV="$EXISTING_DEV"
+[[ -z "$PATH_TEST" && -n "$EXISTING_TEST" ]] && PATH_TEST="$EXISTING_TEST"
+
+echo -e "\n${CYAN}Configuring Navigation Aliases...${NC}"
+read -p "Enter path for PROD [${PATH_PROD}]: " INPUT_PROD
+PATH_PROD="${INPUT_PROD:-$PATH_PROD}"
+
+read -p "Enter path for DEV [${PATH_DEV}]: " INPUT_DEV
+PATH_DEV="${INPUT_DEV:-$PATH_DEV}"
+
+read -p "Enter path for TEST [${PATH_TEST}]: " INPUT_TEST
+PATH_TEST="${INPUT_TEST:-$PATH_TEST}"
+
+
+ALIAS_BLOCK_NAV="# --- NAVIGATION ALIASES ---"
+if [[ -n "$PATH_PROD" ]]; then
+    ALIAS_BLOCK_NAV="${ALIAS_BLOCK_NAV}
+alias prd='cd \"${PATH_PROD}\"'"
+    echo -e "  Adding alias: ${GREEN}prd -> ${PATH_PROD}${NC}"
+fi
+if [[ -n "$PATH_DEV" ]]; then
+    ALIAS_BLOCK_NAV="${ALIAS_BLOCK_NAV}
+alias dev='cd \"${PATH_DEV}\"'"
+    echo -e "  Adding alias: ${GREEN}dev -> ${PATH_DEV}${NC}"
+fi
+if [[ -n "$PATH_TEST" ]]; then
+    ALIAS_BLOCK_NAV="${ALIAS_BLOCK_NAV}
+alias tst='cd \"${PATH_TEST}\"'"
+    echo -e "  Adding alias: ${GREEN}tst -> ${PATH_TEST}${NC}"
+fi
+ALIAS_BLOCK_NAV="${ALIAS_BLOCK_NAV}
+# ----------------------------"
+
+# --- 5. INSTALLATION ---
 if [[ ${#PROFILES[@]} -gt 0 ]]; then
     echo -e "\n${CYAN}Detected Profiles:${NC}"
     for prof in "${PROFILES[@]}"; do
