@@ -38,6 +38,18 @@ Keywords are case-insensitive. Add the technologies your company uses so the ana
 ]
 ```
 
+### Adding Exclusions
+You can define case-insensitive exclusion words. If an item contains any of these words, it will be skipped entirely—even if it matches a keyword. This helps reduce noise from irrelevant categories (e.g., general CVE announcements or low severity notes).
+
+```json
+"exclusions": [
+  "vulnerability",
+  "CVE",
+  "patch Tuesday",
+  "low severity"
+]
+```
+
 ### Filtering Parameters
 Adjust the `lookback_days` parameter to define how far back the analyzer should look for threats.
 *Example: Setting to `7` will only show matches published in the last 7 days.*
