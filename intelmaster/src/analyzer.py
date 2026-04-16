@@ -10,9 +10,23 @@ import json
 import sys
 import os
 import re
-import html
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
+
+# Fallback for missing 'html' module on QNAP
+try:
+    import html
+    def escape_html(text): return html.escape(text)
+    def unescape_html(text): return html.unescape(text)
+except ImportError:
+    def escape_html(text):
+        if not text: return ""
+        return str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;").replace("'", "&#x27;")
+
+    def unescape_html(text):
+        if not text: return ""
+        return str(text).replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", '"').replace("&#x27;", "'").replace("&#39;", "'")
+
 
 class ThreatItem:
     """Represents a single threat intelligence finding."""
@@ -64,7 +78,7 @@ class IntelAnalyzer:
         if not text:
             return ""
         clean = re.sub('<.*?>', '', text)
-        return html.unescape(clean).strip()
+        return unescape_html(clean).strip()
 
     def _find_keywords(self, text):
         """Returns list of matched keywords in text."""
@@ -333,18 +347,18 @@ class IntelAnalyzer:
         else:
             for source_name, items in grouped_findings.items():
                 html_out.append(f"<details class='source-section' open>")
-                html_out.append(f"<summary class='source-header'><h2>{html.escape(source_name)}</h2></summary>")
+                html_out.append(f"<summary class='source-header'><h2>{escape_html(source_name)}</h2></summary>")
                 html_out.append("<div class='threat-grid'>")
 
                 for item in items:
                     html_out.append("<div class='threat-card'>")
-                    html_out.append(f"<h3 class='threat-title'><a href='{html.escape(item.link)}' target='_blank' rel='noopener noreferrer'>{html.escape(item.title)}</a></h3>")
-                    html_out.append(f"<div class='threat-date'>{html.escape(str(item.date_str))}</div>")
-                    html_out.append(f"<div class='threat-summary'>{html.escape(item.summary)}</div>")
+                    html_out.append(f"<h3 class='threat-title'><a href='{escape_html(item.link)}' target='_blank' rel='noopener noreferrer'>{escape_html(item.title)}</a></h3>")
+                    html_out.append(f"<div class='threat-date'>{escape_html(str(item.date_str))}</div>")
+                    html_out.append(f"<div class='threat-summary'>{escape_html(item.summary)}</div>")
 
                     html_out.append("<div class='threat-keywords'>")
                     for kw in item.keywords_found:
-                        html_out.append(f"<span class='keyword-tag'>{html.escape(kw)}</span>")
+                        html_out.append(f"<span class='keyword-tag'>{escape_html(kw)}</span>")
                     html_out.append("</div>")
 
                     html_out.append("</div>") # Close threat-card
