@@ -131,6 +131,7 @@ intelmaster_menu() {
         echo "5) Edit Config (config.json)"
         echo "6) Add New Source to Config"
         echo "7) Manage Feeds from List (Text File)"
+        echo "8) Install Dependencies (Python)"
         echo -e "-----------------------------------"
         echo "B) Back to Main Menu"
 
@@ -143,10 +144,23 @@ intelmaster_menu() {
             5) edit_intel_config ;;
             6) add_intel_source ;;
             7) manage_feeds_list ;;
+            8) install_intel_deps ;;
             [bB]) break ;;
             *) echo "Invalid option." ; pause ;;
         esac
     done
+}
+
+install_intel_deps() {
+    echo -e "\n${CYAN}Installing Intel Master Dependencies...${NC}"
+    echo "This will use pip3 to install missing Python packages like 'python-dateutil'."
+    if command -v pip3 &> /dev/null; then
+        pip3 install --user python-dateutil
+        echo -e "${GREEN}Dependencies installed successfully.${NC}"
+    else
+        echo -e "${RED}Error: pip3 is not installed or not in your PATH.${NC}"
+    fi
+    pause
 }
 
 manage_feeds_list() {
