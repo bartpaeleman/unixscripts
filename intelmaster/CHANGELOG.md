@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - Add Exclusions Feature
+
+### Added
+- Feature to omit threat items based on `exclusions` words defined in `config.json`.
+
 ## [1.0.0] - Initial Release
 
 ### Added

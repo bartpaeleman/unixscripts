@@ -27,6 +27,12 @@
     "Linux",
     "Docker"
   ],
+  "exclusions": [
+    "vulnerability",
+    "CVE",
+    "patch Tuesday",
+    "low severity"
+  ],
   "parameters": {
     "minimum_severity": "High",
     "lookback_days": 7

@@ -33,6 +33,7 @@ class IntelAnalyzer:
         self.css_path = css_path
         self.config = self._load_config()
         self.keywords = [k.lower() for k in self.config.get('keywords', [])]
+        self.exclusions = [e.lower() for e in self.config.get('exclusions', [])]
         self.lookback_days = self.config.get('parameters', {}).get('lookback_days', 7)
         self.cutoff_date = datetime.now() - timedelta(days=self.lookback_days)
         self.findings = []
@@ -58,6 +59,13 @@ class IntelAnalyzer:
             return []
         text_lower = text.lower()
         return [kw for kw in self.config.get('keywords', []) if kw.lower() in text_lower]
+
+    def _has_exclusions(self, text):
+        """Returns True if any exclusion words are found in the text."""
+        if not text or not self.exclusions:
+            return False
+        text_lower = text.lower()
+        return any(ex in text_lower for ex in self.exclusions)
 
     def _parse_date(self, date_str):
         """Attempts to parse standard date formats."""
@@ -99,7 +107,7 @@ class IntelAnalyzer:
                 content = f"{title} {desc}"
                 matches = self._find_keywords(content)
 
-                if matches:
+                if matches and not self._has_exclusions(content):
                     dt = self._parse_date(pub_date)
                     if dt >= self.cutoff_date:
                         self.findings.append(ThreatItem(
@@ -124,7 +132,7 @@ class IntelAnalyzer:
                 content = f"{title} {desc}"
                 matches = self._find_keywords(content)
 
-                if matches:
+                if matches and not self._has_exclusions(content):
                     try:
                         dt = datetime.strptime(date_added, '%Y-%m-%d')
                     except ValueError:
