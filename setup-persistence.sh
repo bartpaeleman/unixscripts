@@ -142,15 +142,15 @@ if [[ ${#PROFILES[@]} -gt 0 ]]; then
     for prof in "${PROFILES[@]}"; do
         # Extract existing alias paths if they exist
         if grep -q "alias prd=" "$prof"; then
-            FOUND_PROD=$(grep "alias prd=" "$prof" | tail -1 | cut -d'"' -f2 | cut -d"'" -f2)
+            FOUND_PROD=$(grep "alias prd=" "$prof" | tail -n 1 | cut -d'"' -f2 | cut -d"'" -f2)
             [[ -n "$FOUND_PROD" ]] && EXISTING_PROD="$FOUND_PROD"
         fi
         if grep -q "alias dev=" "$prof"; then
-            FOUND_DEV=$(grep "alias dev=" "$prof" | tail -1 | cut -d'"' -f2 | cut -d"'" -f2)
+            FOUND_DEV=$(grep "alias dev=" "$prof" | tail -n 1 | cut -d'"' -f2 | cut -d"'" -f2)
             [[ -n "$FOUND_DEV" ]] && EXISTING_DEV="$FOUND_DEV"
         fi
         if grep -q "alias tst=" "$prof"; then
-            FOUND_TEST=$(grep "alias tst=" "$prof" | tail -1 | cut -d'"' -f2 | cut -d"'" -f2)
+            FOUND_TEST=$(grep "alias tst=" "$prof" | tail -n 1 | cut -d'"' -f2 | cut -d"'" -f2)
             [[ -n "$FOUND_TEST" ]] && EXISTING_TEST="$FOUND_TEST"
         fi
     done
