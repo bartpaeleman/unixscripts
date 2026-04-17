@@ -91,10 +91,11 @@ When running the aggregator from the menu, you can choose specific topic filters
 These options dynamically override your inclusions/exclusions for that specific run to categorize the resulting report.
 
 ## 4. Reading the Interactive Reports
-- Reports are saved in the `/public` directory.
+- Reports are saved in your configured `output_dir` (defaults to the `/public` directory).
 - The filenames include timestamps (e.g., `intel_report_YYYYMMDD_HHMMSS.html`).
 - Open the HTML file in any modern web browser to view the dashboard.
-- **Search:** Use the search bar at the top to filter cards in real-time.
-- **Quick Filters:** Click on the "Active Sources" or "Monitored Keywords" stat boxes at the top to instantly apply a `source:` or `keyword:` prefix to the search bar.
+- **Advanced Search & Filtering:** Use the search bar at the top to filter cards in real-time. The search is case-insensitive and supports **comma-separated multi-filtering**. For example: `source:The Hacker News, keyword:chrome, inclusions:vulnerability`.
+- **Fuzzy Match:** Toggle the "Fuzzy Match" checkbox next to the search bar to find approximate matches (useful for misspellings).
+- **Quick Filters:** Click on the "Active Sources" or "Monitored Keywords" stat boxes at the top to instantly append a `source:` or `keyword:` prefix to your current search filter.
 - **Dynamic Details:** The threat cards are displayed in a condensed view. Click on any threat card to expand its full summary and hyperlink in a fixed detail pane at the bottom of your screen.
-- **View Configuration:** Use the "View Config" button in the top right to see a popup modal of your actively applied keywords, inclusions, and exclusions used to generate the report.
+- **View Configuration:** Use the "View Config" button in the top right to see a popup modal of your actively applied keywords, inclusions, exclusions, and parameters (`minimum_severity`, `lookback_days`) used to generate the report.

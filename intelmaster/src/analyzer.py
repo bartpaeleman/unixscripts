@@ -325,17 +325,11 @@ class IntelAnalyzer:
 <script>
 function filterReport() {
     let input = document.getElementById('searchFilter').value.toLowerCase();
+    let isFuzzy = document.getElementById('fuzzyToggle').checked;
     let cards = document.getElementsByClassName('threat-card');
 
-    let isSourceFilter = input.startsWith('source:');
-    let isKeywordFilter = input.startsWith('keyword:');
-    let searchTerm = input;
-
-    if (isSourceFilter) {
-        searchTerm = input.replace('source:', '').trim();
-    } else if (isKeywordFilter) {
-        searchTerm = input.replace('keyword:', '').trim();
-    }
+    // Split by commas for multiple filters
+    let rawFilters = input.split(',');
 
     for (let i = 0; i < cards.length; i++) {
         let card = cards[i];
@@ -344,22 +338,67 @@ function filterReport() {
         let sourceName = card.getAttribute('data-source').toLowerCase();
         let keywords = card.getAttribute('data-keywords').toLowerCase();
 
-        let match = false;
+        let matchesAll = true;
 
-        if (isSourceFilter) {
-            match = sourceName.includes(searchTerm);
-        } else if (isKeywordFilter) {
-            match = keywords.includes(searchTerm);
-        } else {
-            match = text.includes(searchTerm) || summary.includes(searchTerm);
+        for (let j = 0; j < rawFilters.length; j++) {
+            let filterText = rawFilters[j].trim();
+            if (!filterText) continue;
+
+            let isSourceFilter = filterText.startsWith('source:');
+            let isKeywordFilter = filterText.startsWith('keyword:') || filterText.startsWith('keywords:');
+            let isInclusionFilter = filterText.startsWith('inclusion:') || filterText.startsWith('inclusions:');
+            let searchTerm = filterText;
+
+            if (isSourceFilter) searchTerm = filterText.replace('source:', '').trim();
+            else if (isKeywordFilter) searchTerm = filterText.replace(/keywords?:/, '').trim();
+            else if (isInclusionFilter) searchTerm = filterText.replace(/inclusions?:/, '').trim();
+
+            if (!searchTerm) continue;
+
+            let match = false;
+            let targetText = "";
+
+            if (isSourceFilter) {
+                targetText = sourceName;
+            } else if (isKeywordFilter || isInclusionFilter) {
+                targetText = keywords; // Inclusions and keywords are merged in the output tag string
+            } else {
+                targetText = text + " " + summary;
+            }
+
+            if (isFuzzy) {
+                match = fuzzyMatch(searchTerm, targetText);
+            } else {
+                match = targetText.includes(searchTerm);
+            }
+
+            if (!match) {
+                matchesAll = false;
+                break;
+            }
         }
 
-        if (match) {
+        if (matchesAll || input.trim() === '') {
             card.style.display = '';
         } else {
             card.style.display = 'none';
         }
     }
+}
+
+function fuzzyMatch(pattern, str) {
+    let patternIdx = 0;
+    let strIdx = 0;
+    let patternLength = pattern.length;
+    let strLength = str.length;
+
+    while (patternIdx !== patternLength && strIdx !== strLength) {
+        if (pattern[patternIdx] === str[strIdx]) {
+            ++patternIdx;
+        }
+        ++strIdx;
+    }
+    return patternLength !== 0 && patternLength === patternIdx;
 }
 
 function showDetails(element) {
@@ -390,11 +429,23 @@ function showDetails(element) {
 
 function filterByStat(type) {
     let input = document.getElementById('searchFilter');
+    let current = input.value.trim();
+    let newFilter = '';
+
     if(type === 'sources') {
-        input.value = 'source:';
+        newFilter = 'source:';
     } else if(type === 'keywords') {
-        input.value = 'keyword:';
+        newFilter = 'keyword:';
+    } else if(type === 'inclusions') {
+        newFilter = 'inclusion:';
     }
+
+    if (current.length > 0 && !current.endsWith(',')) {
+        input.value = current + ', ' + newFilter;
+    } else {
+        input.value = current + newFilter;
+    }
+
     input.focus();
     filterReport();
 }
@@ -404,6 +455,9 @@ function filterByStat(type) {
         safe_keywords = escape_html(", ".join(self.keywords)) if self.keywords else "None"
         safe_inclusions = escape_html(", ".join(self.inclusions)) if self.inclusions else "None"
         safe_exclusions = escape_html(", ".join(self.exclusions)) if self.exclusions else "None"
+        params = self.config.get('parameters', {})
+        min_sev = escape_html(str(params.get('minimum_severity', 'High')))
+        lookback = escape_html(str(params.get('lookback_days', 7)))
 
         html_out = [
             "<!DOCTYPE html>",
@@ -426,8 +480,9 @@ function filterByStat(type) {
             "</div>",
             "</header>",
 
-            "<div class='search-bar' style='margin-bottom: 20px;'>",
-            "<input type='text' id='searchFilter' onkeyup='filterReport()' placeholder='Search report contents...' style='width: 100%; padding: 10px; font-size: 1.1em; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-card); color: var(--text-main);'>",
+            "<div class='search-bar' style='margin-bottom: 20px; display:flex; gap: 10px; align-items: center;'>",
+            "<input type='text' id='searchFilter' onkeyup='filterReport()' placeholder='Search report contents (e.g. source:The Hacker News, keyword:chrome)' style='flex-grow: 1; padding: 10px; font-size: 1.1em; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-card); color: var(--text-main);'>",
+            "<label style='display:flex; align-items:center; gap:5px; cursor:pointer;'><input type='checkbox' id='fuzzyToggle' onchange='filterReport()'> Fuzzy Match</label>",
             "</div>",
 
             "<div class='dashboard-stats'>",
@@ -443,6 +498,7 @@ function filterByStat(type) {
             "<h2 style='margin:0;'>Active Configuration</h2>",
             "<button onclick='document.getElementById(\"configModal\").style.display=\"none\";' style='background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.5em;'>&times;</button>",
             "</div>",
+            f"<div><strong>Parameters:</strong><p style='color:var(--text-muted);'>Minimum Severity: {min_sev} | Lookback Days: {lookback}</p></div>",
             f"<div><strong>Keywords:</strong><p style='color:var(--accent-blue); word-wrap:break-word;'>{safe_keywords}</p></div>",
             f"<div><strong>Inclusions:</strong><p style='color:var(--accent-green); word-wrap:break-word;'>{safe_inclusions}</p></div>",
             f"<div><strong>Exclusions:</strong><p style='color:var(--accent-red); word-wrap:break-word;'>{safe_exclusions}</p></div>",

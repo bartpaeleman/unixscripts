@@ -10,13 +10,29 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 CONFIG_FILE="$SCRIPT_DIR/config.json"
 SRC_DIR="$SCRIPT_DIR/src"
 ASSETS_DIR="$SCRIPT_DIR/assets"
-PUBLIC_DIR="$SCRIPT_DIR/public"
 ANALYZER_SCRIPT="$SRC_DIR/analyzer.py"
 CSS_FILE="$ASSETS_DIR/style.css"
 
 # Temporary directory for raw downloads
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
+
+# Get output dir from config
+PUBLIC_DIR=$(python3 -c "
+import json, sys
+try:
+    with open('$CONFIG_FILE', 'r') as f:
+        data = json.load(f)
+        out = data.get('parameters', {}).get('output_dir', 'public')
+        print(out)
+except:
+    print('public')
+")
+
+# If it's relative, anchor it to SCRIPT_DIR
+if [[ "$PUBLIC_DIR" != /* ]]; then
+    PUBLIC_DIR="$SCRIPT_DIR/$PUBLIC_DIR"
+fi
 
 # Ensure public directory exists
 mkdir -p "$PUBLIC_DIR"
@@ -175,6 +191,11 @@ manage_list_option() {
     pause
 }
 
+manage_parameters() {
+    python3 "$SCRIPT_DIR/manage_params.py" "$CONFIG_FILE"
+    pause
+}
+
 install_intel_deps() {
     echo -e "\n${CYAN}Installing Intel Master Dependencies...${NC}"
     echo "This will try to install missing Python packages like 'python-dateutil'."
@@ -219,6 +240,7 @@ intelmaster_menu() {
         echo -e "${CYAN} 8) Manage Keywords${NC}"
         echo -e "${CYAN} 9) Manage Inclusions${NC}"
         echo -e "${CYAN}10) Manage Exclusions${NC}"
+        echo -e "${CYAN}11) Manage Settings (Output Dir, Severity, Lookback)${NC}"
         echo -e "${CYAN}--- SYSTEM ---${NC}"
         echo -e "${CYAN} D) Install Dependencies (Python)${NC}"
         echo -e "-----------------------------------"
@@ -236,6 +258,7 @@ intelmaster_menu() {
             8) manage_list_option "keywords" ;;
             9) manage_list_option "inclusions" ;;
             10) manage_list_option "exclusions" ;;
+            11) manage_parameters ;;
             [dD]) install_intel_deps ;;
             [xX]) break ;;
             *) echo "Invalid option." ; pause ;;
