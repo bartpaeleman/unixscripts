@@ -283,6 +283,10 @@ class IntelAnalyzer:
         """Iterates through downloaded files and delegates to specific parsers."""
         sources = self.config.get('sources', [])
         for i, source in enumerate(sources):
+            # Skip inactive sources
+            if not source.get('active', True):
+                continue
+
             # The shell script saves files as source_0.raw, source_1.raw, etc.
             raw_file = os.path.join(self.data_dir, f"source_{i}.raw")
             if not os.path.exists(raw_file):

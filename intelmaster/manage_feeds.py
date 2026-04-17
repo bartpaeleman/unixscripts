@@ -20,43 +20,57 @@ def toggle_feeds(config_path, list_path):
     with open(list_path, 'r', encoding='utf-8') as f:
         lines = [line.strip() for line in f if line.strip()]
 
-    # We will build a set of enabled URLs from the text file.
-    # Lines starting with '#' are considered deactivated/ignored by the user
-    # but let's assume the user just provides a clean list of URLs to activate.
-    # We will only keep URLs in the config if they are in the list.
-    # Alternatively, the prompt was "activate or deactivate from a file where I place the links".
-    # Let's say any URL in the file will be active. URLs in config NOT in file will be removed (or we just add missing ones).
-    # "activate or deactivate feeds from a list". A simple approach:
-    # Read the text file. Lines starting with '#' or '-' are deactivated (removed).
-    # Lines with plain URLs are activated (added).
-
     sources = config.get('sources', [])
     current_urls = {s.get('url'): s for s in sources if s.get('url')}
 
+    import csv
+    # Check if CSV format
+    is_csv = False
+    if len(lines) > 0 and 'Hyperlink' in lines[0]:
+        is_csv = True
+        lines = lines[1:] # Skip header
+
     for line in lines:
-        if line.startswith('#') or line.startswith('-'):
-            url = line.lstrip('#-').strip()
-            if url in current_urls:
-                print(f"Deactivating: {url}")
-                del current_urls[url]
+        url = line
+        name = ""
+
+        if is_csv:
+            parts = line.split(',', 1)
+            if len(parts) == 2:
+                name = parts[0].strip()
+                url = parts[1].strip()
+            else:
+                url = parts[0].strip()
+
+        if url.startswith('#') or url.startswith('-'):
+            clean_url = url.lstrip('#-').strip()
+            if clean_url in current_urls:
+                print(f"Deactivating (removing): {clean_url}")
+                del current_urls[clean_url]
         else:
-            url = line
-            if url not in current_urls:
-                # Basic guess for type based on extension
+            clean_url = url.strip()
+            if not clean_url: continue
+
+            if clean_url not in current_urls:
                 feed_type = 'rss'
-                if '.json' in url:
+                if '.json' in clean_url:
                     feed_type = 'json'
-                elif 'atom' in url:
+                elif 'atom' in clean_url:
                     feed_type = 'atom'
 
-                print(f"Activating new source: {url}")
-                current_urls[url] = {
-                    "name": url.split('//')[-1].split('/')[0],
-                    "url": url,
-                    "type": feed_type
+                if not name:
+                    name = clean_url.split('//')[-1].split('/')[0]
+
+                print(f"Activating new source: {name} - {clean_url}")
+                current_urls[clean_url] = {
+                    "name": name,
+                    "url": clean_url,
+                    "type": feed_type,
+                    "active": True
                 }
             else:
-                print(f"Already active: {url}")
+                print(f"Already active: {clean_url}")
+                current_urls[clean_url]['active'] = True
 
     config['sources'] = list(current_urls.values())
 

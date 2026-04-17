@@ -3,7 +3,8 @@
     {
       "name": "The Hacker News",
       "url": "https://feeds.feedburner.com/TheHackersNews",
-      "type": "rss"
+      "type": "rss",
+      "active": true
     },
     {
       "name": "CISA KEV",
@@ -14,6 +15,858 @@
       "name": "example.com",
       "url": "https://example.com/feed.xml",
       "type": "rss"
+    },
+    {
+      "name": "ANY.RUN Blog",
+      "url": "https://any.run/cybersecurity-blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Acunetix Blog",
+      "url": "https://www.acunetix.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Adam Levin",
+      "url": "https://adamlevin.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Aghiath Chbib",
+      "url": "https://aghiathchbib.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Alias Robotics News",
+      "url": "https://aliasrobotics.com/blog/rss/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Anomali Blog",
+      "url": "https://www.anomali.com/blog/rss",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Application and Cybersecurity Blog | Security Innovation",
+      "url": "https://blog.securityinnovation.com/rss.xml",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Be4Sec",
+      "url": "https://be4sec.com/feed",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Between The Hacks",
+      "url": "https://feeds.feedburner.com/ckdiii",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Black Swan Security",
+      "url": "https://blog.blackswansecurity.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "BlackFog",
+      "url": "https://www.blackfog.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "BlackFog Blog",
+      "url": "https://www.blackfog.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "BleepingComputer",
+      "url": "https://bleepingcomputer.com/feed",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Bsecure Blog",
+      "url": "https://go2bsecure.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "CISA",
+      "url": "https://www.cisa.gov/news-events/news/rss",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "CSO Online",
+      "url": "https://csoonline.com/feed",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "CVETodo Blog",
+      "url": "https://cvetodo.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Canary Trap",
+      "url": "https://canarytrap.com/feed",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Cheap SSL Shop",
+      "url": "https://www.cheapsslshop.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Cisco Security Blog",
+      "url": "https://blogs.cisco.com/security/feed",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Claroty Blog",
+      "url": "https://www.claroty.com/blog/rss.xml",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "ClearNetwork Blog",
+      "url": "https://www.clearnetwork.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Cloudbric",
+      "url": "https://www.cloudbric.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "CrowdStrike Blog",
+      "url": "https://www.crowdstrike.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Cyber Crimes Watch",
+      "url": "https://cybercrimeswatch.com/feed",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Cyber Defense Magazine",
+      "url": "https://www.cyberdefensemagazine.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Cyber Management Alliance",
+      "url": "https://www.cm-alliance.com/cybersecurity-blog/rss.xml",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Cyber NewsRoom Vulnerability Feed",
+      "url": "https://cvefeed.io/rss/cyber-news",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Cyber Security News",
+      "url": "https://cybersecuritynews.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Cyber Tec Security",
+      "url": "https://cybertecsecurity.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "CyberCX Blog",
+      "url": "https://cybercx.com.au/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "CyberHoot",
+      "url": "https://cyberhoot.com/category/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "CyberInsider",
+      "url": "https://cyberinsider.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "CyberPilot",
+      "url": "https://www.cyberpilot.io/cyberpilot-blog/rss.xml",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "CyberPilot Blog",
+      "url": "https://www.cyberpilot.io/cyber-wisdom/rss.xml",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "CyberScoop",
+      "url": "https://cyberscoop.com/feed",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "CyberSiARA Blog",
+      "url": "https://www.cybersiara.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "CyberWire",
+      "url": "https://thecyberwire.com/feeds/rss.xml",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Cybersecurity Dive",
+      "url": "https://www.cybersecuritydive.com/feeds/news/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Cyble Blog",
+      "url": "https://cyble.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Da Vinci Cybersecurity",
+      "url": "https://davinciforensics.co.za/cybersecurity/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Dark Reading",
+      "url": "https://darkreading.com/rss.xml",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Data Privacy Manager",
+      "url": "https://dataprivacymanager.net/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Dr. Erdal Ozkaya",
+      "url": "https://www.erdalozkaya.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Entersoft Security Blog",
+      "url": "https://blog.entersoftsecurity.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Exploit One",
+      "url": "https://www.exploitone.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Eye Security Blog",
+      "url": "https://www.eye.security/blog/rss.xml",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Fidelis Security",
+      "url": "https://fidelissecurity.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Flying Penguin",
+      "url": "https://www.flyingpenguin.com/?feed=rss2",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Foreign Affairs Cybersecurity",
+      "url": "https://www.foreignaffairs.com/rss.xml",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "GBHackers on Security",
+      "url": "https://gbhackers.com/feed",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Google Online Security Blog",
+      "url": "https://feeds.feedburner.com/GoogleOnlineSecurityBlog",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Graham Cluley",
+      "url": "https://grahamcluley.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Hack The Box Blog",
+      "url": "https://www.hackthebox.com/blog/rss",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Hacker Combat",
+      "url": "https://hackercombat.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Heimdal Security Blog",
+      "url": "https://heimdalsecurity.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Help Net Security",
+      "url": "https://www.helpnetsecurity.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Heroic Technologies Blog",
+      "url": "https://heroictech.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Huntress Blog",
+      "url": "https://www.huntress.com/blog/rss.xml",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "IS Decisions Blog",
+      "url": "https://www.isdecisions.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "IT Security Expert",
+      "url": "http://blog.itsecurityexpert.co.uk/feeds/posts/default",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Identity Defined Security Alliance",
+      "url": "https://www.idsalliance.org/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "IdentityIQ",
+      "url": "https://www.identityiq.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Imperva Blog",
+      "url": "https://www.imperva.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "InfoSec Digest",
+      "url": "https://www.tsfactory.com/forums/blogs/category/infosec-digest/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Information Trust Exchange Governing Association",
+      "url": "https://itega.org/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Infosecurity Magazine",
+      "url": "https://www.infosecurity-magazine.com/rss/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Invicti Blog",
+      "url": "https://www.invicti.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Ivan Novikov",
+      "url": "https://medium.com/feed/@d0znpp",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "K7 Computing Blog",
+      "url": "https://www.k7computing.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Krebs on Security",
+      "url": "https://krebsonsecurity.com/feed",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Latest CVE Feed",
+      "url": "https://cvefeed.io/rss/latest",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Latest High and Critical Severity CVE Feed",
+      "url": "https://cvefeed.io/rss/high-critical",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "LogPoint Blog",
+      "url": "https://www.logpoint.com/en/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Lohrmann on Cybersecurity",
+      "url": "https://www.govtech.com/blogs/lohrmann-on-cybersecurity?rss=true",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "MIT News Cybersecurity",
+      "url": "https://news.mit.edu/rss/topic/cybersecurity",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Marco Ramilli's Blog",
+      "url": "https://marcoramilli.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Mashable Cybersecurity",
+      "url": "https://mashable.com/category/cybersecurity.xml",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "MazeBolt Security Blog",
+      "url": "https://mazebolt.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "McAfee Antivirus",
+      "url": "https://www.mcafee.com/blogs/rss",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Mitnick Security Blog",
+      "url": "https://www.mitnicksecurity.com/blog/rss.xml",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "NIST Cybersecurity Insights",
+      "url": "https://www.nist.gov/blogs/cybersecurity-insights/rss",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "NYT Cybersecurity",
+      "url": "https://rss.nytimes.com/services/xml/rss/nyt/Cybersecurity.xml",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "NoticeBored",
+      "url": "https://feeds.feedburner.com/NoticeBored",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "PC Matic TechTalk",
+      "url": "https://www.pcmatic.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "PCI SSC Blog",
+      "url": "https://blog.pcisecuritystandards.org/rss.xml",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Palmer on Cyber",
+      "url": "https://mattpalmer.net/palmeroncyber?format=rss",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Palo Alto Networks Blog",
+      "url": "https://unit42.paloaltonetworks.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Pivot Point Security Blog",
+      "url": "https://www.pivotpointsecurity.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "PrivacySavvy",
+      "url": "https://privacysavvy.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Proofpoint Blog",
+      "url": "https://www.proofpoint.com/us/rss.xml",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Protegent Blog",
+      "url": "https://protegent360.com/blog/feed",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Quick Heal Antivirus Blog",
+      "url": "https://blogs.quickheal.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Rapid7 Blog",
+      "url": "https://blog.rapid7.com/rss/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Real Secure Blog",
+      "url": "https://realsecure.ae/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "RevBits",
+      "url": "https://www.revbits.com/blog/rss",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "SANS Blog",
+      "url": "https://www.sans.org/blog/rss/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "SC Media",
+      "url": "https://www.scworld.com/rss/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "SCMP Cybersecurity",
+      "url": "https://www.scmp.com/rss/318206/feed.xml",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "SOC Prime Blog",
+      "url": "https://socprime.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "SafeAeon Blog",
+      "url": "https://www.safeaeon.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Schneier on Security",
+      "url": "https://schneier.com/feed",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "ScienceSoft Blog",
+      "url": "https://www.scnsoft.com/blog/information-security/feed",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "SecPod Blog",
+      "url": "https://secpod.com/blog/feed",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "SecureBlitz",
+      "url": "https://secureblitz.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Secureblink Blog",
+      "url": "https://secureblink.com/rss-feeds/the-cyber-security-hub.xml",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Security Affairs",
+      "url": "https://securityaffairs.co/wordpress/feed",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Security on TechRepublic",
+      "url": "https://www.techrepublic.com/rssfeeds/topic/security/?feedType=rssfeeds",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Seqrite Blog",
+      "url": "https://www.seqrite.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Sophos News",
+      "url": "https://news.sophos.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "TAC Security",
+      "url": "https://tacsecurity.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Tao Security",
+      "url": "https://taosecurity.blogspot.com/feeds/posts/default",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "TechCrunch Cybersecurity",
+      "url": "https://techcrunch.com/category/security/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Teri Radichel",
+      "url": "https://medium.com/feed/@2ndsightlab",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "The Cyber Express",
+      "url": "https://thecyberexpress.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "The HIPAA Journal",
+      "url": "https://www.hipaajournal.com/category/healthcare-cybersecurity/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "The Last Watchdog",
+      "url": "https://www.lastwatchdog.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "The Verge Cyber Security",
+      "url": "https://www.theverge.com/cyber-security/rss/index.xml",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Threatpost",
+      "url": "https://threatpost.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Trend Micro Simply Security",
+      "url": "https://blog.trendmicro.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Troy Hunt",
+      "url": "https://www.troyhunt.com/rss/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Twingate Blog",
+      "url": "https://www.twingate.com/blog/feed.xml",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "U.S. News Cybersecurity",
+      "url": "https://www.usnews.com/rss/news/cybersecurity",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "UpGuard Blog",
+      "url": "https://www.upguard.com/blog/rss.xml",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Upstream Blog",
+      "url": "https://upstream.auto/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "VISTA InfoSec Blog",
+      "url": "https://www.vistainfosec.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Venture in Security",
+      "url": "https://ventureinsecurity.net/feed",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Veracode Security Blog",
+      "url": "https://www.veracode.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Vicente Aceituno Canal",
+      "url": "https://medium.com/feed/@vaceituno",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Virtru Blog",
+      "url": "https://www.virtru.com/blog/rss.xml",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Virtualattacks",
+      "url": "https://virtualattacks.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "WIRED Security",
+      "url": "https://www.wired.com/feed/category/security/latest/rss",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Wallarm Blog",
+      "url": "https://www.wallarm.com/blog/feed",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "We Live Security",
+      "url": "https://www.welivesecurity.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "WeSecureApp Blog",
+      "url": "https://wesecureapp.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "WebARX",
+      "url": "https://www.patchstack.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "WebOrion Blog",
+      "url": "https://www.weborion.io/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "Webroot Blog",
+      "url": "https://www.webroot.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "ZENOSEC",
+      "url": "https://zeno-sec.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "ZoneAlarm Blog",
+      "url": "https://www.zonealarm.com/blog/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "eSecurity Planet",
+      "url": "https://www.esecurityplanet.com/feed/",
+      "type": "rss",
+      "active": true
+    },
+    {
+      "name": "emPower eLearning Blog",
+      "url": "https://www.empowerelearning.com/blog/feed/",
+      "type": "rss",
+      "active": true
     }
   ],
   "keywords": [

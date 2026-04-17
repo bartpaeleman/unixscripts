@@ -118,80 +118,6 @@ except Exception as e:
     pause
 }
 
-intelmaster_menu() {
-    while true; do
-        clear
-        echo -e "${CYAN}===================================${NC}"
-        echo -e "          ${CYAN}INTEL MASTER${NC}"
-        echo -e "${CYAN}===================================${NC}"
-        echo "1) Run Threat Intel Aggregator (All/Default)"
-        echo "2) Run Threat Intel Aggregator (General Security Info)"
-        echo "3) Run Threat Intel Aggregator (Patches & Vulnerabilities)"
-        echo "4) Run Threat Intel Aggregator (Other Cyber Sec Topics)"
-        echo "5) Edit Config (config.json)"
-        echo "6) Add New Source to Config"
-        echo "7) Manage Feeds from List (Text File)"
-        echo "8) Install Dependencies (Python)"
-        echo -e "-----------------------------------"
-        echo "B) Back to Main Menu"
-
-        read -p "Select Option: " choice
-        case $choice in
-            1) export INTEL_FILTER="default"; launch_intel ;;
-            2) export INTEL_FILTER="general"; launch_intel ;;
-            3) export INTEL_FILTER="patches"; launch_intel ;;
-            4) export INTEL_FILTER="other"; launch_intel ;;
-            5) edit_intel_config ;;
-            6) add_intel_source ;;
-            7) manage_feeds_list ;;
-            8) install_intel_deps ;;
-            [bB]) break ;;
-            *) echo "Invalid option." ; pause ;;
-        esac
-    done
-}
-
-install_intel_deps() {
-    echo -e "\n${CYAN}Installing Intel Master Dependencies...${NC}"
-    echo "This will try to install missing Python packages like 'python-dateutil'."
-
-    if command -v python3 &> /dev/null; then
-        echo "Attempting installation via python3 -m pip..."
-        if python3 -m pip install --user python-dateutil; then
-            echo -e "${GREEN}Dependencies installed successfully.${NC}"
-        else
-            echo -e "${YELLOW}pip not found. Attempting to bootstrap pip...${NC}"
-            if python3 -m ensurepip; then
-                python3 -m pip install --user python-dateutil
-                echo -e "${GREEN}Dependencies installed successfully.${NC}"
-            else
-                echo -e "${RED}Error: Failed to install pip or dependencies.${NC}"
-            fi
-        fi
-    elif command -v pip3 &> /dev/null; then
-        pip3 install --user python-dateutil
-        echo -e "${GREEN}Dependencies installed successfully.${NC}"
-    else
-        echo -e "${RED}Error: Neither python3 nor pip3 is available in your PATH.${NC}"
-    fi
-    pause
-}
-
-manage_feeds_list() {
-    echo -e "\n${CYAN}Manage Feeds from List${NC}"
-    echo "Please provide the path to a text file containing feed URLs."
-    echo "Lines starting with '#' or '-' will be deactivated."
-    echo "Plain URLs will be activated/added."
-    read -e -p "File Path: " list_path
-
-    if [[ -f "$list_path" ]]; then
-        python3 "$SCRIPT_DIR/intelmaster/manage_feeds.py" "$SCRIPT_DIR/intelmaster/config.json" "$list_path"
-    else
-        echo -e "${RED}Error: File not found: $list_path${NC}"
-    fi
-    pause
-}
-
 setup_env() {
     bash "$SCRIPT_DIR/dev-tools.sh"
 }
@@ -227,7 +153,7 @@ while true; do
         7) launch_file ;;
         8) launch_text ;;
         9) launch_video ;;
-        10) intelmaster_menu ;;
+        10) launch_intel ;;
         [sS]) setup_env ;;
         [xX]) exit 0 ;;
         *) echo "Invalid option." ; pause ;;
