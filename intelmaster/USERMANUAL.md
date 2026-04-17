@@ -94,8 +94,9 @@ These options dynamically override your inclusions/exclusions for that specific 
 - Reports are saved in your configured `output_dir` (defaults to the `/public` directory).
 - The filenames include timestamps (e.g., `intel_report_YYYYMMDD_HHMMSS.html`).
 - Open the HTML file in any modern web browser to view the dashboard.
-- **Advanced Search & Filtering:** Use the search bar at the top to filter cards in real-time. The search is case-insensitive and supports **comma-separated multi-filtering**. For example: `source:The Hacker News, keyword:chrome, inclusions:vulnerability`.
+- **Advanced Search & Filtering:** Use the search bar at the top to filter cards in real-time. The search is case-insensitive and supports **comma-separated multi-filtering**. For example: `source:The Hacker News, keyword:chrome, inclusion:vulnerability`. By default, this applies **AND** logic (a card must match all filters). Check the **OR Mode** checkbox to match cards that hit *any* of the filters.
 - **Fuzzy Match:** Toggle the "Fuzzy Match" checkbox next to the search bar to find approximate matches (useful for misspellings).
-- **Quick Filters:** Click on the "Active Sources" or "Monitored Keywords" stat boxes at the top to instantly append a `source:` or `keyword:` prefix to your current search filter.
-- **Dynamic Details:** The threat cards are displayed in a condensed view. Click on any threat card to expand its full summary and hyperlink in a fixed detail pane at the bottom of your screen.
+- **Auto-Expand Details:** When a search or filter is active, any parent source section (`<details>`) containing matching threat cards will automatically uncollapse to reveal its contents.
+- **Interactive Filter Modals:** Click on the "Active Sources", "Monitored Keywords", or "Inclusions" stat boxes at the top to open a modal window. Clicking any value inside the modal automatically appends the correct prefix (e.g., `keyword:XXXX`) into the search filter and updates the view.
+- **Dynamic Details:** The threat cards are displayed in a condensed view. Click on any threat card to dynamically load its full summary and hyperlink into a fixed detail pane at the bottom of your screen.
 - **View Configuration:** Use the "View Config" button in the top right to see a popup modal of your actively applied keywords, inclusions, exclusions, and parameters (`minimum_severity`, `lookback_days`) used to generate the report.
