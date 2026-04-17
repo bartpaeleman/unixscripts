@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - Interactive UI, Feed Management, and Cross-Platform Fixes
+
+### Added
+- **Atom and HTML Feed Parsing:** Added support for extracting threat intelligence from Atom XML feeds and raw HTML pages via naive regex lexing in `analyzer.py`.
+- **Interactive HTML Dashboard:** The generated report now features real-time search filtering, clickable stat cards for categorization, and a master-detail view where clicking a condensed threat card displays full details in a fixed bottom pane.
+- **Standalone Interactive Menu:** The `intelmaster_menu` is now housed directly within `threat-intel.sh` for native interactive execution, offering topic-based run options (e.g., General Security, Patches).
+- **Bulk Feed Management:** Introduced `manage_feeds.py` to activate/deactivate feeds via plain text lists or CSV files (`Name,Hyperlink`), accessible from the new main menu.
+- **Interactive Feed Toggling:** Added `interactive_toggle.py` for a paginated CLI menu to quickly turn feeds ON/OFF.
+- **Auto-Deactivation:** Failing feeds during the `curl` phase are now automatically deactivated in `config.json` to prevent repeated timeouts.
+- **Cross-Platform Compatibility:** Added a manual string replacement fallback for HTML escaping to support QNAP NAS environments lacking the standard Python `html` module.
+- **Dependency Installer:** Added an interactive menu option to install missing Python dependencies (`python-dateutil`) via `pip`.
+- **Safe Updater Script:** Added a root-level `update.sh` script to pull suite updates safely without overwriting user `config.json` or `.env` credentials.
+
 ## [1.2.0] - Add Inclusions Feature
 
 ### Added

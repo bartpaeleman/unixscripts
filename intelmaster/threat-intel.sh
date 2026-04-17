@@ -164,23 +164,14 @@ except Exception as e:
     pause
 }
 
-manage_feeds_list() {
-    echo -e "\n${CYAN}Manage Feeds from List${NC}"
-    echo "Please provide the path to a text file or CSV containing feed URLs."
-    echo "Lines starting with '#' or '-' will be deactivated."
-    echo "Plain URLs will be activated/added."
-    read -e -p "File Path: " list_path
-
-    if [[ -f "$list_path" ]]; then
-        python3 "$SCRIPT_DIR/manage_feeds.py" "$CONFIG_FILE" "$list_path"
-    else
-        echo -e "${RED}Error: File not found: $list_path${NC}"
-    fi
+interactive_toggle() {
+    python3 "$SCRIPT_DIR/interactive_toggle.py" "$CONFIG_FILE"
     pause
 }
 
-interactive_toggle() {
-    python3 "$SCRIPT_DIR/interactive_toggle.py" "$CONFIG_FILE"
+manage_list_option() {
+    local list_key="$1"
+    python3 "$SCRIPT_DIR/manage_lists.py" "$CONFIG_FILE" "$list_key"
     pause
 }
 
@@ -216,17 +207,22 @@ intelmaster_menu() {
         echo -e "${CYAN}===================================${NC}"
         echo -e "          ${CYAN}INTEL MASTER${NC}"
         echo -e "${CYAN}===================================${NC}"
-        echo "1) Run Threat Intel Aggregator (All/Default)"
-        echo "2) Run Threat Intel Aggregator (General Security Info)"
-        echo "3) Run Threat Intel Aggregator (Patches & Vulnerabilities)"
-        echo "4) Run Threat Intel Aggregator (Other Cyber Sec Topics)"
-        echo "5) Edit Config (config.json)"
-        echo "6) Add New Source to Config"
-        echo "7a) Manage Feeds from List (Text File/CSV)"
-        echo "7b) Toggle Feeds Interactively"
-        echo "8) Install Dependencies (Python)"
+        echo -e "${GREEN}--- RUN OPTIONS ---${NC}"
+        echo -e "${GREEN} 1) Run Threat Intel Aggregator (All/Default)${NC}"
+        echo -e "${GREEN} 2) Run Threat Intel Aggregator (General Security Info)${NC}"
+        echo -e "${GREEN} 3) Run Threat Intel Aggregator (Patches & Vulnerabilities)${NC}"
+        echo -e "${GREEN} 4) Run Threat Intel Aggregator (Other Cyber Sec Topics)${NC}"
+        echo -e "${CYAN}--- CONFIGURATION ---${NC}"
+        echo -e "${CYAN} 5) Edit Raw Config (config.json)${NC}"
+        echo -e "${CYAN} 6) Add New Source to Config${NC}"
+        echo -e "${CYAN} 7) Manage Active Feeds (Interactive Toggle)${NC}"
+        echo -e "${CYAN} 8) Manage Keywords${NC}"
+        echo -e "${CYAN} 9) Manage Inclusions${NC}"
+        echo -e "${CYAN}10) Manage Exclusions${NC}"
+        echo -e "${CYAN}--- SYSTEM ---${NC}"
+        echo -e "${CYAN}11) Install Dependencies (Python)${NC}"
         echo -e "-----------------------------------"
-        echo "X) Exit"
+        echo " X) Exit"
 
         read -p "Select Option: " choice
         case $choice in
@@ -236,9 +232,11 @@ intelmaster_menu() {
             4) export INTEL_FILTER="other"; run_aggregator ;;
             5) edit_intel_config ;;
             6) add_intel_source ;;
-            7a) manage_feeds_list ;;
-            7b) interactive_toggle ;;
-            8) install_intel_deps ;;
+            7) interactive_toggle ;;
+            8) manage_list_option "keywords" ;;
+            9) manage_list_option "inclusions" ;;
+            10) manage_list_option "exclusions" ;;
+            11) install_intel_deps ;;
             [xX]) break ;;
             *) echo "Invalid option." ; pause ;;
         esac
