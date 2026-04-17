@@ -453,7 +453,7 @@ function filterByStat(type) {
             html_out.append("<div class='no-data'>No active threats found matching your keywords in the configured timeframe.</div>")
         else:
             for source_name, items in grouped_findings.items():
-                html_out.append(f"<details class='source-section' open>")
+                html_out.append(f"<details class='source-section'>")
                 html_out.append(f"<summary class='source-header'><h2>{escape_html(source_name)}</h2></summary>")
                 html_out.append("<div class='threat-grid'>")
 
