@@ -79,8 +79,11 @@ class IntelAnalyzer:
         """Removes HTML tags and converts entities."""
         if not text:
             return ""
-        clean = re.sub('<.*?>', '', text)
-        return unescape_html(clean).strip()
+        # Unescape entities first to expose hidden tags
+        text = unescape_html(text)
+        # Then strip all tags
+        clean = re.sub(r'<.*?>', '', text)
+        return clean.strip()
 
     def _find_technologies(self, text):
         """Returns list of matched technologies in text."""
@@ -396,6 +399,7 @@ function filterReport() {
 
     // Split by commas for multiple filters
     let rawFilters = input.split(',').map(s => s.trim()).filter(s => s.length > 0);
+    let visibleCount = 0;
 
     for (let i = 0; i < cards.length; i++) {
         let card = cards[i];
@@ -463,6 +467,7 @@ function filterReport() {
         if (isVisible) {
             card.style.display = '';
             card.classList.add('visible-card');
+            visibleCount++;
             // Auto-expand the parent details element if a filter is actively matching it
             if (input.trim() !== '') {
                 let parentDetails = card.closest('details');
@@ -475,6 +480,10 @@ function filterReport() {
             card.classList.remove('visible-card');
         }
     }
+
+    // Update Total Matches stat
+    let matchStat = document.getElementById('totalMatchesStat');
+    if (matchStat) matchStat.innerText = visibleCount;
 
     // Hide empty details blocks
     let detailsBlocks = document.getElementsByClassName('source-section');
@@ -560,16 +569,27 @@ function showDetails(element) {
     let detailContent = document.getElementById('detailContent');
     detailView.style.display = 'block';
 
-    // Prevent XSS by using TextNodes for user-generated content where appropriate
-    detailContent.innerHTML = '<h3><a href="' + link + '" target="_blank" id="detailTitle"></a></h3>' +
-                              '<div class="threat-date" id="detailDate"></div>' +
-                              '<div class="threat-summary" id="detailSummary"></div>';
+    // Prevent XSS by securely setting attributes and text content using DOM APIs
+    detailContent.innerHTML = ''; // Clear previous
 
-    document.getElementById('detailTitle').innerText = title;
-    document.getElementById('detailDate').innerText = date;
+    let h3 = document.createElement('h3');
+    let a = document.createElement('a');
+    a.href = link; // Browser securely assigns href attribute
+    a.target = '_blank';
+    a.innerText = title;
+    h3.appendChild(a);
+    detailContent.appendChild(h3);
 
+    let dateDiv = document.createElement('div');
+    dateDiv.className = 'threat-date';
+    dateDiv.innerText = date;
+    detailContent.appendChild(dateDiv);
+
+    let summaryDiv = document.createElement('div');
+    summaryDiv.className = 'threat-summary';
     // We already sanitized the summary text on the python side and we want our highlight spans to render, so we use innerHTML
-    document.getElementById('detailSummary').innerHTML = summary;
+    summaryDiv.innerHTML = summary;
+    detailContent.appendChild(summaryDiv);
 
     // Smooth scroll to bottom
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
@@ -652,7 +672,7 @@ function selectFilterOption(type, element) {
             "</div>",
 
             "<div class='dashboard-stats'>",
-            f"<div class='stat-card' style='cursor:pointer;' onclick=\"document.getElementById('searchFilter').value=''; filterReport();\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(self.findings)}</a></div><div class='stat-label'>Total Matches</div></div>",
+            f"<div class='stat-card' style='cursor:pointer;' onclick=\"document.getElementById('searchFilter').value=''; filterReport();\"><div class='stat-value'><a href='#' id='totalMatchesStat' style='color:inherit;text-decoration:none;'>{len(self.findings)}</a></div><div class='stat-label'>Total Matches</div></div>",
             f"<div class='stat-card' style='cursor:pointer;' onclick=\"showFilterModal('sources')\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(grouped_findings)}</a></div><div class='stat-label'>Active Sources</div></div>",
             f"<div class='stat-card' style='cursor:pointer;' onclick=\"showFilterModal('technologies')\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(self.technologies)}</a></div><div class='stat-label'>Monitored Tech</div></div>",
             f"<div class='stat-card' style='cursor:pointer;' onclick=\"showFilterModal('inclusions')\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(self.inclusions)}</a></div><div class='stat-label'>Inclusions</div></div>",
