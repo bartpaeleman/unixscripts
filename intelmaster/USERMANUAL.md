@@ -73,13 +73,13 @@ Adjust the `lookback_days` parameter to define how far back the analyzer should 
 ```
 *(Note: `minimum_severity` is a placeholder for future feature expansion such as mapping CVSS scores.)*
 
-## 2. Managing Feeds
-IntelMaster includes a built-in menu to manage a large number of feeds.
+## 2. Managing Feeds & Configuration
+IntelMaster includes a built-in menu to manage feeds and filter parameters interactively.
 Run `./threat-intel.sh` to open the interactive menu.
 
 - **Add New Source:** Manually type in a name, URL, and type (`rss`, `atom`, `html`, or `cisa_kev`).
-- **Manage Feeds from List:** Provide the path to a text file or CSV (with `Name,Hyperlink` headers). IntelMaster will automatically ingest and activate these feeds. Lines starting with `-` or `#` will be deactivated.
-- **Toggle Feeds Interactively:** Opens a paginated CLI menu where you can quickly turn feeds ON or OFF using their assigned numbers. You can also use `a` to activate all or `o` to deactivate all.
+- **Manage Active Feeds (Interactive Toggle):** Opens a paginated CLI menu where you can quickly turn feeds ON or OFF using their assigned numbers. You can also use `a` to activate all or `o` to deactivate all.
+- **Manage Keywords / Inclusions / Exclusions:** Interactive CLI menus to add or delete strings from your configuration file without having to edit the JSON manually.
 - **Auto-Deactivation:** If a feed URL fails to download (e.g., HTTP 404 or timeout), IntelMaster will automatically toggle its `"active"` state to `false` in `config.json` to prevent future hang-ups.
 
 ## 3. Topic Filtering
@@ -97,3 +97,4 @@ These options dynamically override your inclusions/exclusions for that specific 
 - **Search:** Use the search bar at the top to filter cards in real-time.
 - **Quick Filters:** Click on the "Active Sources" or "Monitored Keywords" stat boxes at the top to instantly apply a `source:` or `keyword:` prefix to the search bar.
 - **Dynamic Details:** The threat cards are displayed in a condensed view. Click on any threat card to expand its full summary and hyperlink in a fixed detail pane at the bottom of your screen.
+- **View Configuration:** Use the "View Config" button in the top right to see a popup modal of your actively applied keywords, inclusions, and exclusions used to generate the report.

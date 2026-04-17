@@ -36,9 +36,11 @@ IntelMaster includes a standalone interactive menu. Run the script manually to a
 4. **Run Threat Intel Aggregator (Other Cyber Sec Topics)**
 5. **Edit Config (config.json)**
 6. **Add New Source to Config**
-7a. **Manage Feeds from List (Text File/CSV)**
-7b. **Toggle Feeds Interactively**
-8. **Install Dependencies (Python)**
+7. **Manage Active Feeds (Interactive Toggle)**
+8. **Manage Keywords**
+9. **Manage Inclusions**
+10. **Manage Exclusions**
+11. **Install Dependencies (Python)**
 
 Reports are generated and saved in the `/public` directory.
 

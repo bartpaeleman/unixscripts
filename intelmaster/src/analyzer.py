@@ -60,7 +60,7 @@ class IntelAnalyzer:
             self.exclusions.extend(['patch', 'update', 'cve', 'vulnerability', 'flaw'])
         elif filter_mode == 'patches':
             self.inclusions.extend(['patch', 'update', 'cve', 'vulnerability', 'flaw', 'zero-day', 'exploit', 'rce'])
-            self.keywords = [] # Prioritize only patch/vuln inclusions
+            # Do NOT clear keywords, append user's keywords so they still filter patches by tech stack
         elif filter_mode == 'other':
             self.inclusions.extend(['malware', 'ransomware', 'phishing', 'apt', 'botnet', 'ddos'])
             self.exclusions.extend(['patch', 'update'])
@@ -401,6 +401,10 @@ function filterByStat(type) {
 </script>
         """
 
+        safe_keywords = escape_html(", ".join(self.keywords)) if self.keywords else "None"
+        safe_inclusions = escape_html(", ".join(self.inclusions)) if self.inclusions else "None"
+        safe_exclusions = escape_html(", ".join(self.exclusions)) if self.exclusions else "None"
+
         html_out = [
             "<!DOCTYPE html>",
             "<html lang='en'>",
@@ -417,6 +421,9 @@ function filterByStat(type) {
             "<h1>Threat Intelligence Report</h1>",
             f"<div class='timestamp'>Generated: {timestamp}</div>",
             "</div>",
+            "<div>",
+            "<button onclick='document.getElementById(\"configModal\").style.display=\"block\";' style='padding: 8px 16px; background-color: var(--accent-blue); color: #fff; border: none; border-radius: 4px; cursor: pointer;'>View Config</button>",
+            "</div>",
             "</header>",
 
             "<div class='search-bar' style='margin-bottom: 20px;'>",
@@ -427,7 +434,19 @@ function filterByStat(type) {
             f"<div class='stat-card' style='cursor:pointer;' onclick=\"document.getElementById('searchFilter').value=''; filterReport();\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(self.findings)}</a></div><div class='stat-label'>Total Matches</div></div>",
             f"<div class='stat-card' style='cursor:pointer;' onclick=\"filterByStat('sources')\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(grouped_findings)}</a></div><div class='stat-label'>Active Sources</div></div>",
             f"<div class='stat-card' style='cursor:pointer;' onclick=\"filterByStat('keywords')\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(self.keywords)}</a></div><div class='stat-label'>Monitored Keywords</div></div>",
-            "</div>"
+            "</div>",
+
+            "<!-- Config Modal -->",
+            "<div id='configModal' style='display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000;'>",
+            "<div style='position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:var(--bg-card); padding:30px; border-radius:8px; border:1px solid var(--border-color); min-width:400px; max-width:80%; max-height:80%; overflow-y:auto;'>",
+            "<div style='display:flex; justify-content:space-between; border-bottom:1px solid var(--border-color); padding-bottom:10px; margin-bottom:20px;'>",
+            "<h2 style='margin:0;'>Active Configuration</h2>",
+            "<button onclick='document.getElementById(\"configModal\").style.display=\"none\";' style='background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.5em;'>&times;</button>",
+            "</div>",
+            f"<div><strong>Keywords:</strong><p style='color:var(--accent-blue); word-wrap:break-word;'>{safe_keywords}</p></div>",
+            f"<div><strong>Inclusions:</strong><p style='color:var(--accent-green); word-wrap:break-word;'>{safe_inclusions}</p></div>",
+            f"<div><strong>Exclusions:</strong><p style='color:var(--accent-red); word-wrap:break-word;'>{safe_exclusions}</p></div>",
+            "</div></div>"
         ]
 
         if not grouped_findings:
