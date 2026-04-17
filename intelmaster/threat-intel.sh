@@ -237,7 +237,7 @@ intelmaster_menu() {
         echo -e "${CYAN} 5) Edit Raw Config (config.json)${NC}"
         echo -e "${CYAN} 6) Add New Source to Config${NC}"
         echo -e "${CYAN} 7) Manage Active Feeds (Interactive Toggle)${NC}"
-        echo -e "${CYAN} 8) Manage Keywords${NC}"
+        echo -e "${CYAN} 8) Manage Technologies${NC}"
         echo -e "${CYAN} 9) Manage Inclusions${NC}"
         echo -e "${CYAN}10) Manage Exclusions${NC}"
         echo -e "${CYAN}11) Manage Settings (Output Dir, Severity, Lookback)${NC}"
@@ -255,7 +255,7 @@ intelmaster_menu() {
             5) edit_intel_config ;;
             6) add_intel_source ;;
             7) interactive_toggle ;;
-            8) manage_list_option "keywords" ;;
+            8) manage_list_option "technologies" ;;
             9) manage_list_option "inclusions" ;;
             10) manage_list_option "exclusions" ;;
             11) manage_parameters ;;

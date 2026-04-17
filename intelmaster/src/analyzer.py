@@ -46,7 +46,8 @@ class IntelAnalyzer:
         self.output_dir = output_dir
         self.css_path = css_path
         self.config = self._load_config()
-        self.keywords = [k.lower() for k in self.config.get('keywords', [])]
+        # Handle transition from 'keywords' to 'technologies'
+        self.technologies = [k.lower() for k in self.config.get('technologies', self.config.get('keywords', []))]
         self.exclusions = [e.lower() for e in self.config.get('exclusions', [])]
         self.inclusions = [i.lower() for i in self.config.get('inclusions', [])]
         self.lookback_days = self.config.get('parameters', {}).get('lookback_days', 7)
@@ -406,7 +407,8 @@ function filterReport() {
         let text = card.innerText.toLowerCase();
         let summary = card.getAttribute('data-summary').toLowerCase();
         let sourceName = card.getAttribute('data-source').toLowerCase();
-        let keywords = card.getAttribute('data-keywords').toLowerCase();
+        let technologies = card.getAttribute('data-technologies').toLowerCase();
+        let inclusions = card.getAttribute('data-inclusions').toLowerCase();
 
         let hasMatch = false;
         let matchesAll = true;
@@ -418,13 +420,13 @@ function filterReport() {
                 let filterText = rawFilters[j];
 
                 let isSourceFilter = filterText.startsWith('source:');
-                let isKeywordFilter = filterText.startsWith('keyword:') || filterText.startsWith('keywords:');
+                let isKeywordFilter = filterText.startsWith('technology:') || filterText.startsWith('technologies:') || filterText.startsWith('keyword:') || filterText.startsWith('keywords:');
                 let isInclusionFilter = filterText.startsWith('inclusion:') || filterText.startsWith('inclusions:');
                 let searchTerm = filterText;
 
                 if (isSourceFilter) searchTerm = filterText.replace('source:', '').trim();
-                else if (isKeywordFilter) searchTerm = filterText.replace(/keywords?:/, '').trim();
-                else if (isInclusionFilter) searchTerm = filterText.replace(/inclusions?:/, '').trim();
+                else if (isKeywordFilter) searchTerm = filterText.replace(/(technology|technologies|keyword|keywords):/, '').trim();
+                else if (isInclusionFilter) searchTerm = filterText.replace(/(inclusion|inclusions):/, '').trim();
 
                 if (!searchTerm) {
                     // Empty specific filter string acts like a match to not break AND logic randomly
@@ -437,8 +439,10 @@ function filterReport() {
 
                 if (isSourceFilter) {
                     targetText = sourceName;
-                } else if (isKeywordFilter || isInclusionFilter) {
-                    targetText = keywords; // Inclusions and keywords are merged in the output tag string
+                } else if (isKeywordFilter) {
+                    targetText = technologies;
+                } else if (isInclusionFilter) {
+                    targetText = inclusions;
                 } else {
                     targetText = text + " " + summary;
                 }
@@ -554,9 +558,8 @@ function showDetails(element) {
     document.getElementById('detailTitle').innerText = title;
     document.getElementById('detailDate').innerText = date;
 
-    // We already sanitized the summary text on the python side, so we can inject the text safely or use innerText if we want pure raw text.
-    // The prompt was just to escape quotes for the attribute to prevent syntax errors. Using innerText is safest.
-    document.getElementById('detailSummary').innerText = summary;
+    // We already sanitized the summary text on the python side and we want our highlight spans to render, so we use innerHTML
+    document.getElementById('detailSummary').innerHTML = summary;
 
     // Smooth scroll to bottom
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
@@ -566,14 +569,14 @@ function showFilterModal(type) {
     document.getElementById('filterModal').style.display = 'block';
 
     document.getElementById('modal-sources').style.display = 'none';
-    document.getElementById('modal-keywords').style.display = 'none';
+    document.getElementById('modal-technologies').style.display = 'none';
     document.getElementById('modal-inclusions').style.display = 'none';
 
     document.getElementById('modal-' + type).style.display = 'block';
 
     let title = "Select a Filter";
     if (type === 'sources') title = "Select Source";
-    if (type === 'keywords') title = "Select Keyword";
+    if (type === 'technologies') title = "Select Technology";
     if (type === 'inclusions') title = "Select Inclusion";
 
     document.getElementById('filterModalTitle').innerText = title;
@@ -584,7 +587,7 @@ function selectFilterOption(type, element) {
     let prefix = '';
 
     if(type === 'sources') prefix = 'source:';
-    if(type === 'keywords') prefix = 'keyword:';
+    if(type === 'technologies') prefix = 'technology:';
     if(type === 'inclusions') prefix = 'inclusion:';
 
     let input = document.getElementById('searchFilter');
@@ -604,7 +607,7 @@ function selectFilterOption(type, element) {
 </script>
         """
 
-        safe_keywords = escape_html(", ".join(self.keywords)) if self.keywords else "None"
+        safe_technologies = escape_html(", ".join(self.technologies)) if self.technologies else "None"
         safe_inclusions = escape_html(", ".join(self.inclusions)) if self.inclusions else "None"
         safe_exclusions = escape_html(", ".join(self.exclusions)) if self.exclusions else "None"
         params = self.config.get('parameters', {})
@@ -641,7 +644,7 @@ function selectFilterOption(type, element) {
             "<div class='dashboard-stats'>",
             f"<div class='stat-card' style='cursor:pointer;' onclick=\"document.getElementById('searchFilter').value=''; filterReport();\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(self.findings)}</a></div><div class='stat-label'>Total Matches</div></div>",
             f"<div class='stat-card' style='cursor:pointer;' onclick=\"showFilterModal('sources')\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(grouped_findings)}</a></div><div class='stat-label'>Active Sources</div></div>",
-            f"<div class='stat-card' style='cursor:pointer;' onclick=\"showFilterModal('keywords')\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(self.keywords)}</a></div><div class='stat-label'>Monitored Keywords</div></div>",
+            f"<div class='stat-card' style='cursor:pointer;' onclick=\"showFilterModal('technologies')\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(self.technologies)}</a></div><div class='stat-label'>Monitored Tech</div></div>",
             f"<div class='stat-card' style='cursor:pointer;' onclick=\"showFilterModal('inclusions')\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(self.inclusions)}</a></div><div class='stat-label'>Inclusions</div></div>",
             "</div>",
 
@@ -653,7 +656,7 @@ function selectFilterOption(type, element) {
             "<button onclick='document.getElementById(\"configModal\").style.display=\"none\";' style='background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.5em;'>&times;</button>",
             "</div>",
             f"<div><strong>Parameters:</strong><p style='color:var(--text-muted);'>Minimum Severity: {min_sev} | Lookback Days: {lookback}</p></div>",
-            f"<div><strong>Keywords:</strong><p style='color:var(--accent-blue); word-wrap:break-word;'>{safe_keywords}</p></div>",
+            f"<div><strong>Technologies:</strong><p style='color:var(--accent-blue); word-wrap:break-word;'>{safe_technologies}</p></div>",
             f"<div><strong>Inclusions:</strong><p style='color:var(--accent-green); word-wrap:break-word;'>{safe_inclusions}</p></div>",
             f"<div><strong>Exclusions:</strong><p style='color:var(--accent-red); word-wrap:break-word;'>{safe_exclusions}</p></div>",
             "</div></div>"
@@ -673,16 +676,38 @@ function selectFilterOption(type, element) {
                     safe_summary = escape_html(item.summary)
                     safe_link = escape_html(item.link)
                     safe_source = escape_html(source_name)
-                    safe_keywords = escape_html(",".join(item.keywords_found))
+                    safe_technologies = escape_html(",".join(item.technologies_found))
+                    safe_inclusions = escape_html(",".join(item.inclusions_found))
+
+                    # Highlight occurrences in title and summary
+                    display_title = safe_title
+                    display_summary = safe_summary
+
+                    # Simple text replacement for highlighting
+                    for tech in item.technologies_found:
+                        safe_tech = escape_html(tech)
+                        display_title = re.sub(f"(?i)({re.escape(safe_tech)})", r"<span class='highlight-tech'>\1</span>", display_title)
+                        display_summary = re.sub(f"(?i)({re.escape(safe_tech)})", r"<span class='highlight-tech'>\1</span>", display_summary)
+
+                    for inc in item.inclusions_found:
+                        safe_inc = escape_html(inc)
+                        display_title = re.sub(f"(?i)({re.escape(safe_inc)})", r"<span class='highlight-inc'>\1</span>", display_title)
+                        display_summary = re.sub(f"(?i)({re.escape(safe_inc)})", r"<span class='highlight-inc'>\1</span>", display_summary)
+
+                    # Add span back safely so that details pane can render it
+                    # Overwrite summary attribute so details pane gets the highlighted HTML
+                    safe_summary_html = display_summary
 
                     # Store data in attributes, render condensed view
-                    html_out.append(f"<div class='threat-card' style='cursor:pointer;' data-title='{safe_title}' data-date='{safe_date}' data-summary='{safe_summary}' data-link='{safe_link}' data-source='{safe_source}' data-keywords='{safe_keywords}' onclick='showDetails(this)'>")
-                    html_out.append(f"<h3 class='threat-title'>{safe_title}</h3>")
+                    html_out.append(f"<div class='threat-card' style='cursor:pointer;' data-title='{safe_title}' data-date='{safe_date}' data-summary='{safe_summary_html}' data-link='{safe_link}' data-source='{safe_source}' data-technologies='{safe_technologies}' data-inclusions='{safe_inclusions}' onclick='showDetails(this)'>")
+                    html_out.append(f"<h3 class='threat-title'>{display_title}</h3>")
                     html_out.append(f"<div class='threat-date'>{safe_date}</div>")
 
                     html_out.append("<div class='threat-keywords'>")
-                    for kw in item.keywords_found:
-                        html_out.append(f"<span class='keyword-tag'>{escape_html(kw)}</span>")
+                    for tech in item.technologies_found:
+                        html_out.append(f"<span class='technology-tag'>{escape_html(tech)}</span>")
+                    for inc in item.inclusions_found:
+                        html_out.append(f"<span class='inclusion-tag'>{escape_html(inc)}</span>")
                     html_out.append("</div>")
 
                     html_out.append("</div>") # Close threat-card
@@ -718,11 +743,11 @@ function selectFilterOption(type, element) {
             html_out.append(f"<button onclick='selectFilterOption(\"sources\", this)' data-val='{safe_src}' style='padding:10px; text-align:left; background:var(--bg-main); color:var(--accent-blue); border:1px solid var(--border-color); border-radius:4px; cursor:pointer;'>{safe_src}</button>")
         html_out.append("</div>")
 
-        # Keywords list
-        html_out.append("<div id='modal-keywords' style='display:none; display:flex; flex-direction:column; gap:10px;'>")
-        for kw in self.keywords:
-            safe_kw = escape_html(kw)
-            html_out.append(f"<button onclick='selectFilterOption(\"keywords\", this)' data-val='{safe_kw}' style='padding:10px; text-align:left; background:var(--bg-main); color:var(--accent-blue); border:1px solid var(--border-color); border-radius:4px; cursor:pointer;'>{safe_kw}</button>")
+        # Technologies list
+        html_out.append("<div id='modal-technologies' style='display:none; display:flex; flex-direction:column; gap:10px;'>")
+        for tech in self.technologies:
+            safe_tech = escape_html(tech)
+            html_out.append(f"<button onclick='selectFilterOption(\"technologies\", this)' data-val='{safe_tech}' style='padding:10px; text-align:left; background:var(--bg-main); color:var(--accent-blue); border:1px solid var(--border-color); border-radius:4px; cursor:pointer;'>{safe_tech}</button>")
         html_out.append("</div>")
 
         # Inclusions list

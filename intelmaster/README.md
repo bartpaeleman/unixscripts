@@ -37,7 +37,7 @@ IntelMaster includes a standalone interactive menu. Run the script manually to a
 5. **Edit Config (config.json)**
 6. **Add New Source to Config**
 7. **Manage Active Feeds (Interactive Toggle)**
-8. **Manage Keywords**
+8. **Manage Technologies**
 9. **Manage Inclusions**
 10. **Manage Exclusions**
 11. **Manage Settings (Output Dir, Severity, Lookback)**
