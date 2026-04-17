@@ -420,8 +420,8 @@ function filterReport() {
                 let searchTerm = filterText;
 
                 if (isSourceFilter) searchTerm = filterText.replace('source:', '').trim();
-                else if (isKeywordFilter) searchTerm = filterText.replace(/(technology|technologies|keyword|keywords):/, '').trim();
-                else if (isInclusionFilter) searchTerm = filterText.replace(/(inclusion|inclusions):/, '').trim();
+                else if (isKeywordFilter) searchTerm = filterText.replace(/^(technology|technologies|keyword|keywords):/, '').trim();
+                else if (isInclusionFilter) searchTerm = filterText.replace(/^(inclusion|inclusions):/, '').trim();
 
                 if (!searchTerm) {
                     // Empty specific filter string acts like a match to not break AND logic randomly
@@ -439,12 +439,13 @@ function filterReport() {
                 } else if (isInclusionFilter) {
                     targetText = inclusions;
                 } else {
-                    targetText = text + " " + summary;
+                    targetText = text + " " + summary + " " + technologies + " " + inclusions;
                 }
 
-                if (isFuzzy) {
+                if (isFuzzy && !isSourceFilter && !isKeywordFilter && !isInclusionFilter) {
                     match = fuzzyMatch(searchTerm, targetText);
                 } else {
+                    // Strict check for prefix filters, loose check for general text
                     match = targetText.includes(searchTerm);
                 }
 
@@ -461,6 +462,7 @@ function filterReport() {
 
         if (isVisible) {
             card.style.display = '';
+            card.classList.add('visible-card');
             // Auto-expand the parent details element if a filter is actively matching it
             if (input.trim() !== '') {
                 let parentDetails = card.closest('details');
@@ -470,6 +472,19 @@ function filterReport() {
             }
         } else {
             card.style.display = 'none';
+            card.classList.remove('visible-card');
+        }
+    }
+
+    // Hide empty details blocks
+    let detailsBlocks = document.getElementsByClassName('source-section');
+    for (let i = 0; i < detailsBlocks.length; i++) {
+        let details = detailsBlocks[i];
+        let visibleCards = details.querySelectorAll('.visible-card');
+        if (visibleCards.length === 0) {
+            details.style.display = 'none';
+        } else {
+            details.style.display = '';
         }
     }
 }
@@ -681,13 +696,13 @@ function selectFilterOption(type, element) {
                     # Simple text replacement for highlighting
                     for tech in item.technologies_found:
                         safe_tech = escape_html(tech)
-                        display_title = re.sub(f"(?i)({re.escape(safe_tech)})", r"<span class='highlight-tech'>\1</span>", display_title)
-                        display_summary = re.sub(f"(?i)({re.escape(safe_tech)})", r"<span class='highlight-tech'>\1</span>", display_summary)
+                        display_title = re.sub(f"(?i)({re.escape(safe_tech)})", r'<span class="highlight-tech">\1</span>', display_title)
+                        display_summary = re.sub(f"(?i)({re.escape(safe_tech)})", r'<span class="highlight-tech">\1</span>', display_summary)
 
                     for inc in item.inclusions_found:
                         safe_inc = escape_html(inc)
-                        display_title = re.sub(f"(?i)({re.escape(safe_inc)})", r"<span class='highlight-inc'>\1</span>", display_title)
-                        display_summary = re.sub(f"(?i)({re.escape(safe_inc)})", r"<span class='highlight-inc'>\1</span>", display_summary)
+                        display_title = re.sub(f"(?i)({re.escape(safe_inc)})", r'<span class="highlight-inc">\1</span>', display_title)
+                        display_summary = re.sub(f"(?i)({re.escape(safe_inc)})", r'<span class="highlight-inc">\1</span>', display_summary)
 
                     # Add span back safely so that details pane can render it
                     # Overwrite summary attribute so details pane gets the highlighted HTML
