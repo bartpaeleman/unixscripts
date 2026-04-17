@@ -49,6 +49,7 @@ if command -v rsync &> /dev/null; then
         --exclude='update.sh' \
         --exclude='.DS_Store' \
         --exclude='git-master/config/.env' \
+        --exclude='intelmaster/config.json' \
         "$SCRIPT_DIR/" "$TARGET_DIR/"
 else
     # Fallback to tar to preserve structure and exclude easily
@@ -59,6 +60,7 @@ else
         --exclude='update.sh' \
         --exclude='.DS_Store' \
         --exclude='git-master/config/.env' \
+        --exclude='intelmaster/config.json' \
         . ) | (cd "$TARGET_DIR" && tar xvf -)
 fi
 

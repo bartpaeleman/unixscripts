@@ -327,12 +327,34 @@ function filterReport() {
     let input = document.getElementById('searchFilter').value.toLowerCase();
     let cards = document.getElementsByClassName('threat-card');
 
+    let isSourceFilter = input.startsWith('source:');
+    let isKeywordFilter = input.startsWith('keyword:');
+    let searchTerm = input;
+
+    if (isSourceFilter) {
+        searchTerm = input.replace('source:', '').trim();
+    } else if (isKeywordFilter) {
+        searchTerm = input.replace('keyword:', '').trim();
+    }
+
     for (let i = 0; i < cards.length; i++) {
         let card = cards[i];
         let text = card.innerText.toLowerCase();
         let summary = card.getAttribute('data-summary').toLowerCase();
+        let sourceName = card.getAttribute('data-source').toLowerCase();
+        let keywords = card.getAttribute('data-keywords').toLowerCase();
 
-        if (text.includes(input) || summary.includes(input)) {
+        let match = false;
+
+        if (isSourceFilter) {
+            match = sourceName.includes(searchTerm);
+        } else if (isKeywordFilter) {
+            match = keywords.includes(searchTerm);
+        } else {
+            match = text.includes(searchTerm) || summary.includes(searchTerm);
+        }
+
+        if (match) {
             card.style.display = '';
         } else {
             card.style.display = 'none';
@@ -340,13 +362,27 @@ function filterReport() {
     }
 }
 
-function showDetails(title, date, summary, link) {
+function showDetails(element) {
+    let title = element.getAttribute('data-title');
+    let date = element.getAttribute('data-date');
+    let summary = element.getAttribute('data-summary');
+    let link = element.getAttribute('data-link');
+
     let detailView = document.getElementById('dynamicDetail');
     let detailContent = document.getElementById('detailContent');
     detailView.style.display = 'block';
-    detailContent.innerHTML = '<h3><a href="' + link + '" target="_blank">' + title + '</a></h3>' +
-                              '<div class="threat-date">' + date + '</div>' +
-                              '<div class="threat-summary">' + summary + '</div>';
+
+    // Prevent XSS by using TextNodes for user-generated content where appropriate
+    detailContent.innerHTML = '<h3><a href="' + link + '" target="_blank" id="detailTitle"></a></h3>' +
+                              '<div class="threat-date" id="detailDate"></div>' +
+                              '<div class="threat-summary" id="detailSummary"></div>';
+
+    document.getElementById('detailTitle').innerText = title;
+    document.getElementById('detailDate').innerText = date;
+
+    // We already sanitized the summary text on the python side, so we can inject the text safely or use innerText if we want pure raw text.
+    // The prompt was just to escape quotes for the attribute to prevent syntax errors. Using innerText is safest.
+    document.getElementById('detailSummary').innerText = summary;
 
     // Smooth scroll to bottom
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
@@ -355,12 +391,12 @@ function showDetails(title, date, summary, link) {
 function filterByStat(type) {
     let input = document.getElementById('searchFilter');
     if(type === 'sources') {
-        input.value = 'source:'; // Example placeholder logic for advanced filtering
-        input.focus();
+        input.value = 'source:';
     } else if(type === 'keywords') {
         input.value = 'keyword:';
-        input.focus();
     }
+    input.focus();
+    filterReport();
 }
 </script>
         """
@@ -407,9 +443,11 @@ function filterByStat(type) {
                     safe_date = escape_html(str(item.date_str))
                     safe_summary = escape_html(item.summary)
                     safe_link = escape_html(item.link)
+                    safe_source = escape_html(source_name)
+                    safe_keywords = escape_html(",".join(item.keywords_found))
 
                     # Store data in attributes, render condensed view
-                    html_out.append(f"<div class='threat-card' style='cursor:pointer;' data-summary='{safe_summary}' onclick='showDetails(\"{safe_title}\", \"{safe_date}\", this.getAttribute(\"data-summary\"), \"{safe_link}\")'>")
+                    html_out.append(f"<div class='threat-card' style='cursor:pointer;' data-title='{safe_title}' data-date='{safe_date}' data-summary='{safe_summary}' data-link='{safe_link}' data-source='{safe_source}' data-keywords='{safe_keywords}' onclick='showDetails(this)'>")
                     html_out.append(f"<h3 class='threat-title'>{safe_title}</h3>")
                     html_out.append(f"<div class='threat-date'>{safe_date}</div>")
 
