@@ -30,13 +30,14 @@ except ImportError:
 
 class ThreatItem:
     """Represents a single threat intelligence finding."""
-    def __init__(self, title, link, date_str, summary, source_name, keywords_found):
+    def __init__(self, title, link, date_str, summary, source_name, technologies_found, inclusions_found):
         self.title = title
         self.link = link
         self.date_str = date_str
         self.summary = summary
         self.source_name = source_name
-        self.keywords_found = keywords_found
+        self.technologies_found = technologies_found
+        self.inclusions_found = inclusions_found
 
 class IntelAnalyzer:
     """Core logic to parse sources and generate reports."""
@@ -81,12 +82,12 @@ class IntelAnalyzer:
         clean = re.sub('<.*?>', '', text)
         return unescape_html(clean).strip()
 
-    def _find_keywords(self, text):
-        """Returns list of matched keywords in text."""
+    def _find_technologies(self, text):
+        """Returns list of matched technologies in text."""
         if not text:
             return []
         text_lower = text.lower()
-        return [kw for kw in self.keywords if kw.lower() in text_lower]
+        return [tech for tech in self.technologies if tech.lower() in text_lower]
 
     def _find_inclusions(self, text):
         """Returns list of matched inclusions in text."""
@@ -140,20 +141,17 @@ class IntelAnalyzer:
                 desc = self._sanitize_html(item.findtext('description', ''))
 
                 content = f"{title} {desc}"
-                matches = self._find_keywords(content)
-                inclusions_matches = self._find_inclusions(content)
+                tech_matches = self._find_technologies(content)
+                inc_matches = self._find_inclusions(content)
 
-                # Inclusions override exclusions.
-                # Keep if there are inclusions OR (matches exist AND no exclusions).
-                if inclusions_matches or (matches and not self._has_exclusions(content)):
-                    # Use inclusions if they exist, otherwise use matched keywords
-                    tags = inclusions_matches if inclusions_matches else matches
-
+                # Keep if there are inclusions OR (tech matches exist AND no exclusions).
+                if inc_matches or (tech_matches and not self._has_exclusions(content)):
                     dt = self._parse_date(pub_date)
                     if dt >= self.cutoff_date:
                         self.findings.append(ThreatItem(
                             title=title, link=link, date_str=pub_date,
-                            summary=desc, source_name=source_name, keywords_found=tags
+                            summary=desc, source_name=source_name,
+                            technologies_found=tech_matches, inclusions_found=inc_matches
                         ))
         except Exception as e:
             print(f"Warning: XML parsing failed for {file_path} ({e}). Attempting naive regex fallback...", file=sys.stderr)
@@ -178,16 +176,16 @@ class IntelAnalyzer:
                     desc = re.sub(r'<!\[CDATA\[(.*?)\]\]>', r'\1', desc)
 
                     content = f"{title} {desc}"
-                    matches = self._find_keywords(content)
-                    inclusions_matches = self._find_inclusions(content)
+                    tech_matches = self._find_technologies(content)
+                    inc_matches = self._find_inclusions(content)
 
-                    if inclusions_matches or (matches and not self._has_exclusions(content)):
-                        tags = inclusions_matches if inclusions_matches else matches
+                    if inc_matches or (tech_matches and not self._has_exclusions(content)):
                         dt = self._parse_date(pub_date)
                         if dt >= self.cutoff_date:
                             self.findings.append(ThreatItem(
                                 title=title, link=link, date_str=pub_date,
-                                summary=desc, source_name=source_name, keywords_found=tags
+                                summary=desc, source_name=source_name,
+                                technologies_found=tech_matches, inclusions_found=inc_matches
                             ))
             except Exception as fallback_e:
                 print(f"Error: Regex fallback also failed for {file_path}: {fallback_e}", file=sys.stderr)
@@ -205,13 +203,10 @@ class IntelAnalyzer:
                 link = f"https://nvd.nist.gov/vuln/detail/{cve}"
 
                 content = f"{title} {desc}"
-                matches = self._find_keywords(content)
-                inclusions_matches = self._find_inclusions(content)
+                tech_matches = self._find_technologies(content)
+                inc_matches = self._find_inclusions(content)
 
-                # Inclusions override exclusions.
-                if inclusions_matches or (matches and not self._has_exclusions(content)):
-                    tags = inclusions_matches if inclusions_matches else matches
-
+                if inc_matches or (tech_matches and not self._has_exclusions(content)):
                     try:
                         dt = datetime.strptime(date_added, '%Y-%m-%d')
                     except ValueError:
@@ -220,7 +215,8 @@ class IntelAnalyzer:
                     if dt >= self.cutoff_date:
                         self.findings.append(ThreatItem(
                             title=title, link=link, date_str=date_added,
-                            summary=desc, source_name=source_name, keywords_found=tags
+                            summary=desc, source_name=source_name,
+                            technologies_found=tech_matches, inclusions_found=inc_matches
                         ))
         except Exception as e:
             print(f"Error parsing JSON {file_path}: {e}", file=sys.stderr)
@@ -262,16 +258,16 @@ class IntelAnalyzer:
                     desc = self._sanitize_html(summary_elem.text if summary_elem is not None else '')
 
                 content = f"{title} {desc}"
-                matches = self._find_keywords(content)
-                inclusions_matches = self._find_inclusions(content)
+                tech_matches = self._find_technologies(content)
+                inc_matches = self._find_inclusions(content)
 
-                if inclusions_matches or (matches and not self._has_exclusions(content)):
-                    tags = inclusions_matches if inclusions_matches else matches
+                if inc_matches or (tech_matches and not self._has_exclusions(content)):
                     dt = self._parse_date(pub_date)
                     if dt >= self.cutoff_date:
                         self.findings.append(ThreatItem(
                             title=title, link=link, date_str=pub_date,
-                            summary=desc, source_name=source_name, keywords_found=tags
+                            summary=desc, source_name=source_name,
+                            technologies_found=tech_matches, inclusions_found=inc_matches
                         ))
         except Exception as e:
             print(f"Warning: XML parsing failed for {file_path} ({e}). Attempting naive regex fallback...", file=sys.stderr)
@@ -297,16 +293,16 @@ class IntelAnalyzer:
                     desc = re.sub(r'<!\[CDATA\[(.*?)\]\]>', r'\1', desc)
 
                     content_eval = f"{title} {desc}"
-                    matches = self._find_keywords(content_eval)
-                    inclusions_matches = self._find_inclusions(content_eval)
+                    tech_matches = self._find_technologies(content_eval)
+                    inc_matches = self._find_inclusions(content_eval)
 
-                    if inclusions_matches or (matches and not self._has_exclusions(content_eval)):
-                        tags = inclusions_matches if inclusions_matches else matches
+                    if inc_matches or (tech_matches and not self._has_exclusions(content_eval)):
                         dt = self._parse_date(pub_date)
                         if dt >= self.cutoff_date:
                             self.findings.append(ThreatItem(
                                 title=title, link=link, date_str=pub_date,
-                                summary=desc, source_name=source_name, keywords_found=tags
+                                summary=desc, source_name=source_name,
+                                technologies_found=tech_matches, inclusions_found=inc_matches
                             ))
             except Exception as fallback_e:
                 print(f"Error: Regex fallback also failed for {file_path}: {fallback_e}", file=sys.stderr)
@@ -336,15 +332,14 @@ class IntelAnalyzer:
                     pass
 
                 full_content = f"{title}"
-                matches = self._find_keywords(full_content)
-                inclusions_matches = self._find_inclusions(full_content)
+                tech_matches = self._find_technologies(full_content)
+                inc_matches = self._find_inclusions(full_content)
 
-                if inclusions_matches or (matches and not self._has_exclusions(full_content)):
-                    tags = inclusions_matches if inclusions_matches else matches
-
+                if inc_matches or (tech_matches and not self._has_exclusions(full_content)):
                     self.findings.append(ThreatItem(
                         title=title, link=link, date_str=datetime.now().strftime("%Y-%m-%d"),
-                        summary="Parsed from HTML feed", source_name=source_name, keywords_found=tags
+                        summary="Parsed from HTML feed", source_name=source_name,
+                        technologies_found=tech_matches, inclusions_found=inc_matches
                     ))
         except Exception as e:
             print(f"Error parsing HTML {file_path}: {e}", file=sys.stderr)
