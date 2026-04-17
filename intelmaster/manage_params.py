@@ -23,11 +23,13 @@ def manage_params(config_path):
         current_out = params.get('output_dir', 'public')
         current_sev = params.get('minimum_severity', 'High')
         current_lookback = params.get('lookback_days', 7)
+        current_strict = params.get('strict_filtering', True)
 
         print("\n=== Manage Configuration Parameters ===")
         print(f"1) Output Directory: {current_out}")
         print(f"2) Minimum Severity: {current_sev}")
         print(f"3) Lookback Days:    {current_lookback}")
+        print(f"4) Strict Filtering: {current_strict}")
         print("---------------------------------------")
         print("q) Save and Exit")
 
@@ -48,6 +50,12 @@ def manage_params(config_path):
                     params['lookback_days'] = int(new_val)
                 except ValueError:
                     print("Error: Lookback Days must be an integer.")
+        elif choice == '4':
+            new_val = input(f"Strict Filtering (true/false) [{current_strict}]: ").strip().lower()
+            if new_val in ['true', 't', 'yes', 'y', '1']:
+                params['strict_filtering'] = True
+            elif new_val in ['false', 'f', 'no', 'n', '0']:
+                params['strict_filtering'] = False
         else:
             print("Invalid choice.")
 

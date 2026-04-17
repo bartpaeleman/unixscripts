@@ -2,9 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.5.0] - Technology Highlights and UI Refresh
+## [1.5.0] - Dynamic Detail Panels and Strict Filtering Control
 
 ### Added
+- **Inline Details Panel:** Removed the fixed bottom detail pane in favor of an inline expanding panel that pushes content down and spans the full width of the threat grid, appearing directly below the clicked threat card.
+- **Strict Filtering Parameter:** Added a `strict_filtering` toggle (defaults to true). If turned off, all threat items from active feeds are ingested into the HTML report regardless of whether they match a technology or inclusion, allowing you to use the HTML report as a full feed reader and filter items purely via the frontend JS UI.
 - **Keywords to Technologies:** Renamed "keywords" to "technologies" throughout the application to better reflect its purpose (tracking tech stacks).
 - **Dual-Badge UI:** Threat cards now display matching technologies (blue badges) and inclusions (bright green badges) simultaneously, rather than inclusions overriding technologies.
 - **In-Text Highlighting:** Matches are now visibly highlighted directly within the threat titles and summaries in the HTML report (using the respective blue or green highlight colors).

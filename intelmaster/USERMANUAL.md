@@ -80,6 +80,7 @@ Run `./threat-intel.sh` to open the interactive menu.
 - **Add New Source:** Manually type in a name, URL, and type (`rss`, `atom`, `html`, or `cisa_kev`).
 - **Manage Active Feeds (Interactive Toggle):** Opens a paginated CLI menu where you can quickly turn feeds ON or OFF using their assigned numbers. You can also use `a` to activate all or `o` to deactivate all.
 - **Manage Technologies / Inclusions / Exclusions:** Interactive CLI menus to add or delete strings from your configuration file without having to edit the JSON manually.
+- **Manage Settings:** Interactively update the `output_dir`, `strict_filtering`, `minimum_severity`, and `lookback_days` parameters directly from the menu.
 - **Auto-Deactivation:** If a feed URL fails to download (e.g., HTTP 404 or timeout), IntelMaster will automatically toggle its `"active"` state to `false` in `config.json` to prevent future hang-ups.
 
 ## 3. Topic Filtering
@@ -99,5 +100,5 @@ These options dynamically override your inclusions/exclusions for that specific 
 - **Auto-Expand Details:** When a search or filter is active, any parent source section (`<details>`) containing matching threat cards will automatically uncollapse to reveal its contents.
 - **Interactive Filter Modals:** Click on the "Active Sources", "Monitored Tech", or "Inclusions" stat boxes at the top to open a modal window. Clicking any value inside the modal automatically appends the correct prefix (e.g., `technology:XXXX`) into the search filter and updates the view.
 - **In-Text Highlighting:** Any matched technology or inclusion words will be visibly highlighted directly within the threat titles and summaries.
-- **Dynamic Details:** The threat cards are displayed in a condensed view. Click on any threat card to dynamically load its full summary and hyperlink into a fixed detail pane at the bottom of your screen.
+- **Dynamic Details:** The threat cards are displayed in a condensed view. Click on any threat card to dynamically load its full summary and hyperlink in a full-width pane directly below the clicked item.
 - **View Configuration:** Use the "View Config" button in the top right to see a popup modal of your actively applied technologies, inclusions, exclusions, and parameters (`minimum_severity`, `lookback_days`) used to generate the report.
