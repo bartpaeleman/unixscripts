@@ -542,18 +542,34 @@ function showDetails(element) {
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 }
 
-function filterByStat(type) {
+function showFilterModal(type) {
+    document.getElementById('filterModal').style.display = 'block';
+
+    document.getElementById('modal-sources').style.display = 'none';
+    document.getElementById('modal-keywords').style.display = 'none';
+    document.getElementById('modal-inclusions').style.display = 'none';
+
+    document.getElementById('modal-' + type).style.display = 'block';
+
+    let title = "Select a Filter";
+    if (type === 'sources') title = "Select Source";
+    if (type === 'keywords') title = "Select Keyword";
+    if (type === 'inclusions') title = "Select Inclusion";
+
+    document.getElementById('filterModalTitle').innerText = title;
+}
+
+function selectFilterOption(type, element) {
+    let value = element.getAttribute('data-val');
+    let prefix = '';
+
+    if(type === 'sources') prefix = 'source:';
+    if(type === 'keywords') prefix = 'keyword:';
+    if(type === 'inclusions') prefix = 'inclusion:';
+
     let input = document.getElementById('searchFilter');
     let current = input.value.trim();
-    let newFilter = '';
-
-    if(type === 'sources') {
-        newFilter = 'source:';
-    } else if(type === 'keywords') {
-        newFilter = 'keyword:';
-    } else if(type === 'inclusions') {
-        newFilter = 'inclusion:';
-    }
+    let newFilter = prefix + value;
 
     if (current.length > 0 && !current.endsWith(',')) {
         input.value = current + ', ' + newFilter;
@@ -561,6 +577,7 @@ function filterByStat(type) {
         input.value = current + newFilter;
     }
 
+    document.getElementById('filterModal').style.display = 'none';
     input.focus();
     filterReport();
 }
@@ -602,9 +619,9 @@ function filterByStat(type) {
 
             "<div class='dashboard-stats'>",
             f"<div class='stat-card' style='cursor:pointer;' onclick=\"document.getElementById('searchFilter').value=''; filterReport();\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(self.findings)}</a></div><div class='stat-label'>Total Matches</div></div>",
-            f"<div class='stat-card' style='cursor:pointer;' onclick=\"filterByStat('sources')\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(grouped_findings)}</a></div><div class='stat-label'>Active Sources</div></div>",
-            f"<div class='stat-card' style='cursor:pointer;' onclick=\"filterByStat('keywords')\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(self.keywords)}</a></div><div class='stat-label'>Monitored Keywords</div></div>",
-            f"<div class='stat-card' style='cursor:pointer;' onclick=\"filterByStat('inclusions')\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(self.inclusions)}</a></div><div class='stat-label'>Inclusions</div></div>",
+            f"<div class='stat-card' style='cursor:pointer;' onclick=\"showFilterModal('sources')\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(grouped_findings)}</a></div><div class='stat-label'>Active Sources</div></div>",
+            f"<div class='stat-card' style='cursor:pointer;' onclick=\"showFilterModal('keywords')\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(self.keywords)}</a></div><div class='stat-label'>Monitored Keywords</div></div>",
+            f"<div class='stat-card' style='cursor:pointer;' onclick=\"showFilterModal('inclusions')\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(self.inclusions)}</a></div><div class='stat-label'>Inclusions</div></div>",
             "</div>",
 
             "<!-- Config Modal -->",
@@ -663,6 +680,39 @@ function filterByStat(type) {
 
         html_out.append("</div>")
         html_out.append(js_logic)
+        # Build selection lists for the filter modal
+        html_out.append("<!-- Filter Selection Modal -->")
+        html_out.append("<div id='filterModal' style='display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000;'>")
+        html_out.append("<div style='position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:var(--bg-card); padding:30px; border-radius:8px; border:1px solid var(--border-color); min-width:400px; max-width:80%; max-height:80%; overflow-y:auto;'>")
+
+        html_out.append("<div style='display:flex; justify-content:space-between; border-bottom:1px solid var(--border-color); padding-bottom:10px; margin-bottom:20px;'>")
+        html_out.append("<h2 id='filterModalTitle' style='margin:0;'>Select Filter</h2>")
+        html_out.append("<button onclick='document.getElementById(\"filterModal\").style.display=\"none\";' style='background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.5em;'>&times;</button>")
+        html_out.append("</div>")
+
+        # Sources list
+        html_out.append("<div id='modal-sources' style='display:none; display:flex; flex-direction:column; gap:10px;'>")
+        for src in grouped_findings.keys():
+            safe_src = escape_html(src)
+            html_out.append(f"<button onclick='selectFilterOption(\"sources\", this)' data-val='{safe_src}' style='padding:10px; text-align:left; background:var(--bg-main); color:var(--accent-blue); border:1px solid var(--border-color); border-radius:4px; cursor:pointer;'>{safe_src}</button>")
+        html_out.append("</div>")
+
+        # Keywords list
+        html_out.append("<div id='modal-keywords' style='display:none; display:flex; flex-direction:column; gap:10px;'>")
+        for kw in self.keywords:
+            safe_kw = escape_html(kw)
+            html_out.append(f"<button onclick='selectFilterOption(\"keywords\", this)' data-val='{safe_kw}' style='padding:10px; text-align:left; background:var(--bg-main); color:var(--accent-blue); border:1px solid var(--border-color); border-radius:4px; cursor:pointer;'>{safe_kw}</button>")
+        html_out.append("</div>")
+
+        # Inclusions list
+        html_out.append("<div id='modal-inclusions' style='display:none; display:flex; flex-direction:column; gap:10px;'>")
+        for inc in self.inclusions:
+            safe_inc = escape_html(inc)
+            html_out.append(f"<button onclick='selectFilterOption(\"inclusions\", this)' data-val='{safe_inc}' style='padding:10px; text-align:left; background:var(--bg-main); color:var(--accent-green); border:1px solid var(--border-color); border-radius:4px; cursor:pointer;'>{safe_inc}</button>")
+        html_out.append("</div>")
+
+        html_out.append("</div></div>")
+
         html_out.append("</body></html>")
 
         with open(report_path, 'w', encoding='utf-8') as f:
