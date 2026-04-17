@@ -220,7 +220,7 @@ intelmaster_menu() {
         echo -e "${CYAN} 9) Manage Inclusions${NC}"
         echo -e "${CYAN}10) Manage Exclusions${NC}"
         echo -e "${CYAN}--- SYSTEM ---${NC}"
-        echo -e "${CYAN}11) Install Dependencies (Python)${NC}"
+        echo -e "${CYAN} D) Install Dependencies (Python)${NC}"
         echo -e "-----------------------------------"
         echo " X) Exit"
 
@@ -236,7 +236,7 @@ intelmaster_menu() {
             8) manage_list_option "keywords" ;;
             9) manage_list_option "inclusions" ;;
             10) manage_list_option "exclusions" ;;
-            11) install_intel_deps ;;
+            [dD]) install_intel_deps ;;
             [xX]) break ;;
             *) echo "Invalid option." ; pause ;;
         esac

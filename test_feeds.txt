@@ -1,2 +1,0 @@
-https://example.com/feed.xml
--https://www.bleepingcomputer.com/feed/

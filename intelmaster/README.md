@@ -40,7 +40,7 @@ IntelMaster includes a standalone interactive menu. Run the script manually to a
 8. **Manage Keywords**
 9. **Manage Inclusions**
 10. **Manage Exclusions**
-11. **Install Dependencies (Python)**
+D. **Install Dependencies (Python)**
 
 Reports are generated and saved in the `/public` directory.
 
