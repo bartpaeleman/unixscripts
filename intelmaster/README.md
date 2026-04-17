@@ -6,7 +6,7 @@ IntelMaster is a Threat Intelligence Aggregator designed for macOS and QNAP NAS 
 - **Lightweight & Cross-Platform**: Written in Bash and Python 3. Supports QNAP NAS environments out of the box with custom `html` escaping fallbacks and POSIX-compliant bash logic. No heavy external dependencies.
 - **Customizable**: Add any RSS, Atom, HTML, or JSON source via the interactive menu or a text/CSV list.
 - **Interactive UI**: The generated single-page HTML report features real-time search filtering (with AND/OR logic), clickable stat cards that open filter selection modals, auto-expanding parent details, and dynamic panes for displaying full threat summaries.
-- **Filtering**: Native support for filtering threat streams by General Security Info, Patches & Vulnerabilities, or other cyber topics via `INTEL_FILTER` environment variables.
+- **Filtering**: Native support for filtering threat streams by General Security Info, Patches & Vulnerabilities, or other cyber topics via `INTEL_FILTER` environment variables. A configurable `strict_filtering` toggle allows users to optionally fetch raw feeds completely unfiltered and rely solely on the HTML JS UI for sorting.
 - **Feed Management**: Contains robust tools to auto-deactivate failing feeds, paginate through existing feeds to toggle them on/off, and import bulk feeds via CSV (`Name,Hyperlink`).
 - **Secure**: Implements proper file permissions and strict input sanitation to prevent Cross-Site Scripting (XSS) in generated reports.
 - **Offline Output**: Generates standalone HTML files with embedded CSS and JavaScript logic.

@@ -52,6 +52,7 @@ class IntelAnalyzer:
         self.exclusions = [e.lower() for e in self.config.get('exclusions', [])]
         self.inclusions = [i.lower() for i in self.config.get('inclusions', [])]
         self.lookback_days = self.config.get('parameters', {}).get('lookback_days', 7)
+        self.strict_filtering = self.config.get('parameters', {}).get('strict_filtering', True)
         self.cutoff_date = datetime.now() - timedelta(days=self.lookback_days)
         self.findings = []
 
@@ -147,8 +148,8 @@ class IntelAnalyzer:
                 tech_matches = self._find_technologies(content)
                 inc_matches = self._find_inclusions(content)
 
-                # Keep if there are inclusions OR (tech matches exist AND no exclusions).
-                if inc_matches or (tech_matches and not self._has_exclusions(content)):
+                # Keep if not strict OR there are inclusions OR (tech matches exist AND no exclusions).
+                if not self.strict_filtering or inc_matches or (tech_matches and not self._has_exclusions(content)):
                     dt = self._parse_date(pub_date)
                     if dt >= self.cutoff_date:
                         self.findings.append(ThreatItem(
@@ -182,7 +183,7 @@ class IntelAnalyzer:
                     tech_matches = self._find_technologies(content)
                     inc_matches = self._find_inclusions(content)
 
-                    if inc_matches or (tech_matches and not self._has_exclusions(content)):
+                    if not self.strict_filtering or inc_matches or (tech_matches and not self._has_exclusions(content)):
                         dt = self._parse_date(pub_date)
                         if dt >= self.cutoff_date:
                             self.findings.append(ThreatItem(
@@ -210,7 +211,7 @@ class IntelAnalyzer:
                 tech_matches = self._find_technologies(content)
                 inc_matches = self._find_inclusions(content)
 
-                if inc_matches or (tech_matches and not self._has_exclusions(content)):
+                if not self.strict_filtering or inc_matches or (tech_matches and not self._has_exclusions(content)):
                     try:
                         dt = datetime.strptime(date_added, '%Y-%m-%d')
                     except ValueError:
@@ -300,7 +301,7 @@ class IntelAnalyzer:
                     tech_matches = self._find_technologies(content_eval)
                     inc_matches = self._find_inclusions(content_eval)
 
-                    if inc_matches or (tech_matches and not self._has_exclusions(content_eval)):
+                    if not self.strict_filtering or inc_matches or (tech_matches and not self._has_exclusions(content_eval)):
                         dt = self._parse_date(pub_date)
                         if dt >= self.cutoff_date:
                             self.findings.append(ThreatItem(
@@ -340,7 +341,7 @@ class IntelAnalyzer:
                 tech_matches = self._find_technologies(full_content)
                 inc_matches = self._find_inclusions(full_content)
 
-                if inc_matches or (tech_matches and not self._has_exclusions(full_content)):
+                if not self.strict_filtering or inc_matches or (tech_matches and not self._has_exclusions(full_content)):
                     self.findings.append(ThreatItem(
                         title=title, link=link, date_str=datetime.now().strftime("%Y-%m-%d"),
                         summary="Parsed from HTML feed", source_name=source_name,
@@ -569,7 +570,6 @@ function showDetails(element) {
 
     let detailView = document.getElementById('dynamicDetail');
     let detailContent = document.getElementById('detailContent');
-    detailView.style.display = 'block';
 
     // Prevent XSS by securely setting attributes and text content using DOM APIs
     detailContent.innerHTML = ''; // Clear previous
@@ -593,8 +593,12 @@ function showDetails(element) {
     summaryDiv.innerHTML = summary;
     detailContent.appendChild(summaryDiv);
 
-    // Smooth scroll to bottom
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    // Move the detail view directly after the clicked card in the DOM so it spans the grid
+    element.parentNode.insertBefore(detailView, element.nextSibling);
+    detailView.style.display = 'block';
+
+    // Smooth scroll to the expanded item
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 function showFilterModal(type) {
@@ -645,6 +649,7 @@ function selectFilterOption(type, element) {
         params = self.config.get('parameters', {})
         min_sev = escape_html(str(params.get('minimum_severity', 'High')))
         lookback = escape_html(str(params.get('lookback_days', 7)))
+        strict_val = escape_html(str(params.get('strict_filtering', True)))
 
         html_out = [
             "<!DOCTYPE html>",
@@ -687,7 +692,7 @@ function selectFilterOption(type, element) {
             "<h2 style='margin:0;'>Active Configuration</h2>",
             "<button onclick='document.getElementById(\"configModal\").style.display=\"none\";' style='background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.5em;'>&times;</button>",
             "</div>",
-            f"<div><strong>Parameters:</strong><p style='color:var(--text-muted);'>Minimum Severity: {min_sev} | Lookback Days: {lookback}</p></div>",
+            f"<div><strong>Parameters:</strong><p style='color:var(--text-muted);'>Strict Filtering: {strict_val} | Minimum Severity: {min_sev} | Lookback Days: {lookback}</p></div>",
             f"<div><strong>Technologies:</strong><p style='color:var(--accent-blue); word-wrap:break-word;'>{safe_technologies}</p></div>",
             f"<div><strong>Inclusions:</strong><p style='color:var(--accent-green); word-wrap:break-word;'>{safe_inclusions}</p></div>",
             f"<div><strong>Exclusions:</strong><p style='color:var(--accent-red); word-wrap:break-word;'>{safe_exclusions}</p></div>",
@@ -747,8 +752,8 @@ function selectFilterOption(type, element) {
                 html_out.append("</div>") # Close threat-grid
                 html_out.append("</details>") # Close source-section
 
-        # Add the dynamic detail view pane
-        html_out.append("<div id='dynamicDetail' style='display:none; margin-top:40px; padding:20px; border: 2px solid var(--accent-blue); background-color: var(--bg-card); border-radius: 8px;'>")
+        # Add the dynamic detail view pane (hidden by default, moved via JS)
+        html_out.append("<div id='dynamicDetail' style='display:none; grid-column: 1 / -1; width: 100%; padding:20px; border: 2px solid var(--accent-blue); background-color: var(--bg-card); border-radius: 8px; margin-top: 10px; margin-bottom: 20px;'>")
         html_out.append("<div style='display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom:15px;'>")
         html_out.append("<h2 style='margin:0; color:var(--text-main);'>Detailed View</h2>")
         html_out.append("<button onclick='document.getElementById(\"dynamicDetail\").style.display=\"none\";' style='background:none; border:1px solid var(--border-color); color:var(--text-muted); cursor:pointer; padding:5px 10px; border-radius:4px;'>Close</button>")
