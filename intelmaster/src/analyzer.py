@@ -395,10 +395,11 @@ class IntelAnalyzer:
 function filterReport() {
     let input = document.getElementById('searchFilter').value.toLowerCase();
     let isFuzzy = document.getElementById('fuzzyToggle').checked;
+    let isOrCondition = document.getElementById('orToggle').checked;
     let cards = document.getElementsByClassName('threat-card');
 
     // Split by commas for multiple filters
-    let rawFilters = input.split(',');
+    let rawFilters = input.split(',').map(s => s.trim()).filter(s => s.length > 0);
 
     for (let i = 0; i < cards.length; i++) {
         let card = cards[i];
@@ -407,48 +408,67 @@ function filterReport() {
         let sourceName = card.getAttribute('data-source').toLowerCase();
         let keywords = card.getAttribute('data-keywords').toLowerCase();
 
+        let hasMatch = false;
         let matchesAll = true;
 
-        for (let j = 0; j < rawFilters.length; j++) {
-            let filterText = rawFilters[j].trim();
-            if (!filterText) continue;
+        if (rawFilters.length === 0) {
+            hasMatch = true;
+        } else {
+            for (let j = 0; j < rawFilters.length; j++) {
+                let filterText = rawFilters[j];
 
-            let isSourceFilter = filterText.startsWith('source:');
-            let isKeywordFilter = filterText.startsWith('keyword:') || filterText.startsWith('keywords:');
-            let isInclusionFilter = filterText.startsWith('inclusion:') || filterText.startsWith('inclusions:');
-            let searchTerm = filterText;
+                let isSourceFilter = filterText.startsWith('source:');
+                let isKeywordFilter = filterText.startsWith('keyword:') || filterText.startsWith('keywords:');
+                let isInclusionFilter = filterText.startsWith('inclusion:') || filterText.startsWith('inclusions:');
+                let searchTerm = filterText;
 
-            if (isSourceFilter) searchTerm = filterText.replace('source:', '').trim();
-            else if (isKeywordFilter) searchTerm = filterText.replace(/keywords?:/, '').trim();
-            else if (isInclusionFilter) searchTerm = filterText.replace(/inclusions?:/, '').trim();
+                if (isSourceFilter) searchTerm = filterText.replace('source:', '').trim();
+                else if (isKeywordFilter) searchTerm = filterText.replace(/keywords?:/, '').trim();
+                else if (isInclusionFilter) searchTerm = filterText.replace(/inclusions?:/, '').trim();
 
-            if (!searchTerm) continue;
+                if (!searchTerm) {
+                    // Empty specific filter string acts like a match to not break AND logic randomly
+                    hasMatch = true;
+                    continue;
+                }
 
-            let match = false;
-            let targetText = "";
+                let match = false;
+                let targetText = "";
 
-            if (isSourceFilter) {
-                targetText = sourceName;
-            } else if (isKeywordFilter || isInclusionFilter) {
-                targetText = keywords; // Inclusions and keywords are merged in the output tag string
-            } else {
-                targetText = text + " " + summary;
-            }
+                if (isSourceFilter) {
+                    targetText = sourceName;
+                } else if (isKeywordFilter || isInclusionFilter) {
+                    targetText = keywords; // Inclusions and keywords are merged in the output tag string
+                } else {
+                    targetText = text + " " + summary;
+                }
 
-            if (isFuzzy) {
-                match = fuzzyMatch(searchTerm, targetText);
-            } else {
-                match = targetText.includes(searchTerm);
-            }
+                if (isFuzzy) {
+                    match = fuzzyMatch(searchTerm, targetText);
+                } else {
+                    match = targetText.includes(searchTerm);
+                }
 
-            if (!match) {
-                matchesAll = false;
-                break;
+                if (match) {
+                    hasMatch = true;
+                } else {
+                    matchesAll = false;
+                }
             }
         }
 
-        if (matchesAll || input.trim() === '') {
+        let isVisible = isOrCondition ? hasMatch : matchesAll;
+        if (input.trim() === '') isVisible = true;
+
+        if (isVisible) {
             card.style.display = '';
+            // Auto-expand the parent details element if a filter is actively matching it
+            if (input.trim() !== '') {
+                let parentDetails = card.closest('details');
+                if (parentDetails) {
+                    parentDetails.open = true;
+                }
+            }
         } else {
             card.style.display = 'none';
         }
@@ -615,6 +635,7 @@ function selectFilterOption(type, element) {
             "<div class='search-bar' style='margin-bottom: 20px; display:flex; gap: 10px; align-items: center;'>",
             "<input type='text' id='searchFilter' onkeyup='filterReport()' placeholder='Search report contents (e.g. source:The Hacker News, keyword:chrome, inclusion:vulnerability)' style='flex-grow: 1; padding: 10px; font-size: 1.1em; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-card); color: var(--text-main);'>",
             "<label style='display:flex; align-items:center; gap:5px; cursor:pointer;'><input type='checkbox' id='fuzzyToggle' onchange='filterReport()'> Fuzzy Match</label>",
+            "<label style='display:flex; align-items:center; gap:5px; cursor:pointer;' title='Match ANY filter instead of ALL filters'><input type='checkbox' id='orToggle' onchange='filterReport()'> OR Mode</label>",
             "</div>",
 
             "<div class='dashboard-stats'>",
