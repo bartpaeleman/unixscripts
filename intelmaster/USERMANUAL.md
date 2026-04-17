@@ -73,7 +73,27 @@ Adjust the `lookback_days` parameter to define how far back the analyzer should 
 ```
 *(Note: `minimum_severity` is a placeholder for future feature expansion such as mapping CVSS scores.)*
 
-## 2. Reading the Reports
+## 2. Managing Feeds
+IntelMaster includes a built-in menu to manage a large number of feeds.
+Run `./threat-intel.sh` to open the interactive menu.
+
+- **Add New Source:** Manually type in a name, URL, and type (`rss`, `atom`, `html`, or `cisa_kev`).
+- **Manage Feeds from List:** Provide the path to a text file or CSV (with `Name,Hyperlink` headers). IntelMaster will automatically ingest and activate these feeds. Lines starting with `-` or `#` will be deactivated.
+- **Toggle Feeds Interactively:** Opens a paginated CLI menu where you can quickly turn feeds ON or OFF using their assigned numbers. You can also use `a` to activate all or `o` to deactivate all.
+- **Auto-Deactivation:** If a feed URL fails to download (e.g., HTTP 404 or timeout), IntelMaster will automatically toggle its `"active"` state to `false` in `config.json` to prevent future hang-ups.
+
+## 3. Topic Filtering
+When running the aggregator from the menu, you can choose specific topic filters:
+- **General Security Info:** Focuses on breaches, hacks, and data leaks.
+- **Patches & Vulnerabilities:** Prioritizes CVEs, zero-days, and patch announcements.
+- **Other Cyber Sec Topics:** Focuses on malware, ransomware, phishing, and botnets.
+
+These options dynamically override your inclusions/exclusions for that specific run to categorize the resulting report.
+
+## 4. Reading the Interactive Reports
 - Reports are saved in the `/public` directory.
 - The filenames include timestamps (e.g., `intel_report_YYYYMMDD_HHMMSS.html`).
 - Open the HTML file in any modern web browser to view the dashboard.
+- **Search:** Use the search bar at the top to filter cards in real-time.
+- **Quick Filters:** Click on the "Active Sources" or "Monitored Keywords" stat boxes at the top to instantly apply a `source:` or `keyword:` prefix to the search bar.
+- **Dynamic Details:** The threat cards are displayed in a condensed view. Click on any threat card to expand its full summary and hyperlink in a fixed detail pane at the bottom of your screen.

@@ -1,31 +1,46 @@
 # Threat Intelligence Aggregator (IntelMaster)
 
-IntelMaster is a Threat Intelligence Aggregator designed for macOS. It automates the collection, parsing, and filtering of security advisories, CVE databases, and RSS feeds, producing a clean, professional, dark-mode HTML dashboard.
+IntelMaster is a Threat Intelligence Aggregator designed for macOS and QNAP NAS environments. It automates the collection, parsing, and filtering of security advisories, CVE databases, Atom feeds, and RSS feeds, producing an interactive, professional, dark-mode HTML dashboard.
 
 ## Features
-- **Lightweight**: Written in Bash and Python 3. No heavy external dependencies.
-- **Customizable**: Add any RSS or JSON source via a simple configuration file.
-- **Secure**: Uses `launchd` for native macOS scheduling, proper file permissions, and sanitizes input to avoid Cross-Site Scripting (XSS) in generated reports.
-- **Offline Output**: Generates standalone HTML files embedding CSS.
+- **Lightweight & Cross-Platform**: Written in Bash and Python 3. Supports QNAP NAS environments out of the box with custom `html` escaping fallbacks and POSIX-compliant bash logic. No heavy external dependencies.
+- **Customizable**: Add any RSS, Atom, HTML, or JSON source via the interactive menu or a text/CSV list.
+- **Interactive UI**: The generated single-page HTML report features real-time search filtering, clickable stat cards for quick data isolation, and dynamic detail panes for expanding threat cards.
+- **Filtering**: Native support for filtering threat streams by General Security Info, Patches & Vulnerabilities, or other cyber topics via `INTEL_FILTER` environment variables.
+- **Feed Management**: Contains robust tools to auto-deactivate failing feeds, paginate through existing feeds to toggle them on/off, and import bulk feeds via CSV (`Name,Hyperlink`).
+- **Secure**: Implements proper file permissions and strict input sanitation to prevent Cross-Site Scripting (XSS) in generated reports.
+- **Offline Output**: Generates standalone HTML files with embedded CSS and JavaScript logic.
 
 ## Installation
 
-1. **Clone or Download** the repository to your preferred location (e.g., `~/intelmaster`).
+1. **Clone or Download** the repository to your preferred location (e.g., `~/intelmaster`), or run the `install.sh` script at the root of the project to setup the full `dev-tools` suite.
 2. **Set Permissions**: Ensure the main script and config file are secure.
    ```bash
    cd ~/intelmaster
    chmod 700 threat-intel.sh
    chmod 600 config.json
    ```
-3. **Verify Python 3**: Ensure Python 3 is installed (`python3 --version`). macOS comes with Python 3 via developer tools or Homebrew.
+3. **Verify Python 3**: Ensure Python 3 is installed (`python3 --version`). If dependencies like `dateutil` are missing, use Option 8 in the main menu to install them.
 
 ## Usage
 
-Run the script manually:
+IntelMaster includes a standalone interactive menu. Run the script manually to access it:
 ```bash
 ./threat-intel.sh
 ```
-Check the `/public` directory for the generated HTML report.
+
+**Menu Options:**
+1. **Run Threat Intel Aggregator (All/Default)**
+2. **Run Threat Intel Aggregator (General Security Info)**
+3. **Run Threat Intel Aggregator (Patches & Vulnerabilities)**
+4. **Run Threat Intel Aggregator (Other Cyber Sec Topics)**
+5. **Edit Config (config.json)**
+6. **Add New Source to Config**
+7a. **Manage Feeds from List (Text File/CSV)**
+7b. **Toggle Feeds Interactively**
+8. **Install Dependencies (Python)**
+
+Reports are generated and saved in the `/public` directory.
 
 ## Scheduling with launchd (macOS)
 
