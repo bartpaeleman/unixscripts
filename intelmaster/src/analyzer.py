@@ -157,7 +157,7 @@ class IntelAnalyzer:
                             technologies_found=tech_matches, inclusions_found=inc_matches
                         ))
         except Exception as e:
-            print(f"Warning: XML parsing failed for {file_path} ({e}). Attempting naive regex fallback...", file=sys.stderr)
+            # Fallback for malformed XML: attempt naive regex parsing silently
             try:
                 with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                     xml_content = f.read()
@@ -190,8 +190,9 @@ class IntelAnalyzer:
                                 summary=desc, source_name=source_name,
                                 technologies_found=tech_matches, inclusions_found=inc_matches
                             ))
-            except Exception as fallback_e:
-                print(f"Error: Regex fallback also failed for {file_path}: {fallback_e}", file=sys.stderr)
+            except Exception:
+                # Silently ignore if fallback fails as well, to prevent console spam
+                pass
 
     def analyze_cisa_kev(self, file_path, source_name):
         try:
@@ -273,7 +274,7 @@ class IntelAnalyzer:
                             technologies_found=tech_matches, inclusions_found=inc_matches
                         ))
         except Exception as e:
-            print(f"Warning: XML parsing failed for {file_path} ({e}). Attempting naive regex fallback...", file=sys.stderr)
+            # Fallback for malformed XML: attempt naive regex parsing silently
             try:
                 with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                     xml_content = f.read()
@@ -307,8 +308,9 @@ class IntelAnalyzer:
                                 summary=desc, source_name=source_name,
                                 technologies_found=tech_matches, inclusions_found=inc_matches
                             ))
-            except Exception as fallback_e:
-                print(f"Error: Regex fallback also failed for {file_path}: {fallback_e}", file=sys.stderr)
+            except Exception:
+                # Silently ignore if fallback fails as well, to prevent console spam
+                pass
 
     def analyze_html(self, file_path, source_name):
         try:
