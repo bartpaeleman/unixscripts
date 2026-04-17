@@ -19,33 +19,60 @@ def interactive_toggle(config_path):
         print("No sources found in config.json.")
         sys.exit(0)
 
+    page_size = 20
+    current_page = 0
+    total_sources = len(sources)
+
     while True:
-        print("\n=== Threat Intel Feed Manager ===")
-        for i, s in enumerate(sources):
-            # Default to True if 'active' flag is missing
+        total_pages = (total_sources + page_size - 1) // page_size
+        start_idx = current_page * page_size
+        end_idx = min(start_idx + page_size, total_sources)
+
+        print(f"\n=== Threat Intel Feed Manager (Page {current_page + 1}/{total_pages}) ===")
+        for i in range(start_idx, end_idx):
+            s = sources[i]
             is_active = s.get('active', True)
             status = "[ON] " if is_active else "[OFF]"
             print(f"{i+1}) {status} {s.get('name', 'Unknown')}")
-        print("0) Save and Exit")
+
+        print("\nCommands:")
+        print("  [Number] Toggle feed")
+        print("  [n] Next Page | [p] Previous Page")
+        print("  [a] Toggle All ON | [o] Toggle All OFF")
+        print("  [q] Save and Exit")
 
         try:
-            choice = input("\nEnter number to toggle state (or 0 to exit): ")
-            if not choice.strip():
+            choice = input("\nEnter command: ").strip().lower()
+            if not choice:
                 continue
 
-            choice_idx = int(choice)
-            if choice_idx == 0:
+            if choice == 'q':
                 break
-
-            if 1 <= choice_idx <= len(sources):
-                src = sources[choice_idx - 1]
-                current_state = src.get('active', True)
-                src['active'] = not current_state
-                print(f"Toggled '{src.get('name')}' to {'ON' if not current_state else 'OFF'}")
+            elif choice == 'n':
+                if current_page < total_pages - 1:
+                    current_page += 1
+            elif choice == 'p':
+                if current_page > 0:
+                    current_page -= 1
+            elif choice == 'a':
+                for s in sources: s['active'] = True
+                print("All feeds toggled ON.")
+            elif choice == 'o':
+                for s in sources: s['active'] = False
+                print("All feeds toggled OFF.")
             else:
-                print("Invalid number.")
-        except ValueError:
-            print("Please enter a valid number.")
+                try:
+                    choice_idx = int(choice)
+                    if 1 <= choice_idx <= total_sources:
+                        src = sources[choice_idx - 1]
+                        current_state = src.get('active', True)
+                        src['active'] = not current_state
+                        print(f"Toggled '{src.get('name')}' to {'ON' if not current_state else 'OFF'}")
+                    else:
+                        print("Invalid number.")
+                except ValueError:
+                    print("Invalid command. Please use a number, 'n', 'p', 'a', 'o', or 'q'.")
+
         except KeyboardInterrupt:
             print("\nExiting without saving.")
             sys.exit(0)

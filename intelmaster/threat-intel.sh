@@ -60,6 +60,28 @@ run_aggregator() {
         if ! curl -s -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" \
              -m 30 "$url" -o "$raw_file"; then
             echo "    [!] Warning: Failed to download $url" >&2
+            echo "        -> Deactivating feed in config.json due to failure."
+
+            FAILED_URL="$url" python3 -c "
+import json, sys, os
+try:
+    with open('$CONFIG_FILE', 'r') as f:
+        config = json.load(f)
+
+    url_to_disable = os.environ.get('FAILED_URL')
+    changed = False
+    for src in config.get('sources', []):
+        if src.get('url') == url_to_disable:
+            src['active'] = False
+            changed = True
+            break
+
+    if changed:
+        with open('$CONFIG_FILE', 'w') as f:
+            json.dump(config, f, indent=2)
+except Exception as e:
+    print(f'Error auto-deactivating config: {e}', file=sys.stderr)
+"
         fi
     done < <(get_sources)
 

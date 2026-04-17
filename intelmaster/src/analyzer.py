@@ -321,6 +321,86 @@ class IntelAnalyzer:
                 grouped_findings[item.source_name] = []
             grouped_findings[item.source_name].append(item)
 
+        js_logic = """
+<script>
+function filterReport() {
+    let input = document.getElementById('searchFilter').value.toLowerCase();
+    let cards = document.getElementsByClassName('threat-card');
+
+    let isSourceFilter = input.startsWith('source:');
+    let isKeywordFilter = input.startsWith('keyword:');
+    let searchTerm = input;
+
+    if (isSourceFilter) {
+        searchTerm = input.replace('source:', '').trim();
+    } else if (isKeywordFilter) {
+        searchTerm = input.replace('keyword:', '').trim();
+    }
+
+    for (let i = 0; i < cards.length; i++) {
+        let card = cards[i];
+        let text = card.innerText.toLowerCase();
+        let summary = card.getAttribute('data-summary').toLowerCase();
+        let sourceName = card.getAttribute('data-source').toLowerCase();
+        let keywords = card.getAttribute('data-keywords').toLowerCase();
+
+        let match = false;
+
+        if (isSourceFilter) {
+            match = sourceName.includes(searchTerm);
+        } else if (isKeywordFilter) {
+            match = keywords.includes(searchTerm);
+        } else {
+            match = text.includes(searchTerm) || summary.includes(searchTerm);
+        }
+
+        if (match) {
+            card.style.display = '';
+        } else {
+            card.style.display = 'none';
+        }
+    }
+}
+
+function showDetails(element) {
+    let title = element.getAttribute('data-title');
+    let date = element.getAttribute('data-date');
+    let summary = element.getAttribute('data-summary');
+    let link = element.getAttribute('data-link');
+
+    let detailView = document.getElementById('dynamicDetail');
+    let detailContent = document.getElementById('detailContent');
+    detailView.style.display = 'block';
+
+    // Prevent XSS by using TextNodes for user-generated content where appropriate
+    detailContent.innerHTML = '<h3><a href="' + link + '" target="_blank" id="detailTitle"></a></h3>' +
+                              '<div class="threat-date" id="detailDate"></div>' +
+                              '<div class="threat-summary" id="detailSummary"></div>';
+
+    document.getElementById('detailTitle').innerText = title;
+    document.getElementById('detailDate').innerText = date;
+
+    // We already sanitized the summary text on the python side, so we can inject the text safely or use innerText if we want pure raw text.
+    // The prompt was just to escape quotes for the attribute to prevent syntax errors. Using innerText is safest.
+    document.getElementById('detailSummary').innerText = summary;
+
+    // Smooth scroll to bottom
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+}
+
+function filterByStat(type) {
+    let input = document.getElementById('searchFilter');
+    if(type === 'sources') {
+        input.value = 'source:';
+    } else if(type === 'keywords') {
+        input.value = 'keyword:';
+    }
+    input.focus();
+    filterReport();
+}
+</script>
+        """
+
         html_out = [
             "<!DOCTYPE html>",
             "<html lang='en'>",
@@ -339,10 +419,14 @@ class IntelAnalyzer:
             "</div>",
             "</header>",
 
+            "<div class='search-bar' style='margin-bottom: 20px;'>",
+            "<input type='text' id='searchFilter' onkeyup='filterReport()' placeholder='Search report contents...' style='width: 100%; padding: 10px; font-size: 1.1em; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-card); color: var(--text-main);'>",
+            "</div>",
+
             "<div class='dashboard-stats'>",
-            f"<div class='stat-card'><div class='stat-value'>{len(self.findings)}</div><div class='stat-label'>Total Matches</div></div>",
-            f"<div class='stat-card'><div class='stat-value'>{len(grouped_findings)}</div><div class='stat-label'>Active Sources</div></div>",
-            f"<div class='stat-card'><div class='stat-value'>{len(self.keywords)}</div><div class='stat-label'>Monitored Keywords</div></div>",
+            f"<div class='stat-card' style='cursor:pointer;' onclick=\"document.getElementById('searchFilter').value=''; filterReport();\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(self.findings)}</a></div><div class='stat-label'>Total Matches</div></div>",
+            f"<div class='stat-card' style='cursor:pointer;' onclick=\"filterByStat('sources')\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(grouped_findings)}</a></div><div class='stat-label'>Active Sources</div></div>",
+            f"<div class='stat-card' style='cursor:pointer;' onclick=\"filterByStat('keywords')\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(self.keywords)}</a></div><div class='stat-label'>Monitored Keywords</div></div>",
             "</div>"
         ]
 
@@ -355,10 +439,17 @@ class IntelAnalyzer:
                 html_out.append("<div class='threat-grid'>")
 
                 for item in items:
-                    html_out.append("<div class='threat-card'>")
-                    html_out.append(f"<h3 class='threat-title'><a href='{escape_html(item.link)}' target='_blank' rel='noopener noreferrer'>{escape_html(item.title)}</a></h3>")
-                    html_out.append(f"<div class='threat-date'>{escape_html(str(item.date_str))}</div>")
-                    html_out.append(f"<div class='threat-summary'>{escape_html(item.summary)}</div>")
+                    safe_title = escape_html(item.title)
+                    safe_date = escape_html(str(item.date_str))
+                    safe_summary = escape_html(item.summary)
+                    safe_link = escape_html(item.link)
+                    safe_source = escape_html(source_name)
+                    safe_keywords = escape_html(",".join(item.keywords_found))
+
+                    # Store data in attributes, render condensed view
+                    html_out.append(f"<div class='threat-card' style='cursor:pointer;' data-title='{safe_title}' data-date='{safe_date}' data-summary='{safe_summary}' data-link='{safe_link}' data-source='{safe_source}' data-keywords='{safe_keywords}' onclick='showDetails(this)'>")
+                    html_out.append(f"<h3 class='threat-title'>{safe_title}</h3>")
+                    html_out.append(f"<div class='threat-date'>{safe_date}</div>")
 
                     html_out.append("<div class='threat-keywords'>")
                     for kw in item.keywords_found:
@@ -370,7 +461,18 @@ class IntelAnalyzer:
                 html_out.append("</div>") # Close threat-grid
                 html_out.append("</details>") # Close source-section
 
-        html_out.append("</div></body></html>")
+        # Add the dynamic detail view pane
+        html_out.append("<div id='dynamicDetail' style='display:none; margin-top:40px; padding:20px; border: 2px solid var(--accent-blue); background-color: var(--bg-card); border-radius: 8px;'>")
+        html_out.append("<div style='display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom:15px;'>")
+        html_out.append("<h2 style='margin:0; color:var(--text-main);'>Detailed View</h2>")
+        html_out.append("<button onclick='document.getElementById(\"dynamicDetail\").style.display=\"none\";' style='background:none; border:1px solid var(--border-color); color:var(--text-muted); cursor:pointer; padding:5px 10px; border-radius:4px;'>Close</button>")
+        html_out.append("</div>")
+        html_out.append("<div id='detailContent'></div>")
+        html_out.append("</div>")
+
+        html_out.append("</div>")
+        html_out.append(js_logic)
+        html_out.append("</body></html>")
 
         with open(report_path, 'w', encoding='utf-8') as f:
             f.write("\n".join(html_out))
