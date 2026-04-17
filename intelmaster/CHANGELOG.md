@@ -2,13 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - Technology Highlights and UI Refresh
+
+### Added
+- **Keywords to Technologies:** Renamed "keywords" to "technologies" throughout the application to better reflect its purpose (tracking tech stacks).
+- **Dual-Badge UI:** Threat cards now display matching technologies (blue badges) and inclusions (bright green badges) simultaneously, rather than inclusions overriding technologies.
+- **In-Text Highlighting:** Matches are now visibly highlighted directly within the threat titles and summaries in the HTML report (using the respective blue or green highlight colors).
+
 ## [1.4.0] - Advanced UI Filtering, Auto-Expand, and Parameter Management
 
 ### Added
-- **Advanced Multi-Filtering (AND/OR):** The search bar in the generated HTML report now supports comma-separated filters (e.g., `source:CISA, keyword:windows`) to apply multiple filtering criteria simultaneously. Added an "OR Mode" checkbox to switch between AND and OR logic for multiple filters.
+- **Advanced Multi-Filtering (AND/OR):** The search bar in the generated HTML report now supports comma-separated filters (e.g., `source:CISA, technology:windows`) to apply multiple filtering criteria simultaneously. Added an "OR Mode" checkbox to switch between AND and OR logic for multiple filters.
 - **Fuzzy Matching:** Added a "Fuzzy Match" checkbox in the HTML report to enable approximate subsequence searching (Levenshtein distance).
 - **Auto-Expand Source Details:** Filtering the report now automatically expands (uncollapses) the relevant source `<details>` elements that contain matching threat cards.
-- **Interactive Stat Modals:** Clicking the dashboard stat boxes now opens a modal window displaying available filters, allowing you to click and auto-append specific sources, keywords, or inclusions directly into the search bar.
+- **Interactive Stat Modals:** Clicking the dashboard stat boxes now opens a modal window displaying available filters, allowing you to click and auto-append specific sources, technologies, or inclusions directly into the search bar.
 - **Configuration Viewer Enhancement:** The "View Config" modal in the HTML report now displays `minimum_severity` and `lookback_days` parameters.
 - **Parameter Management Menu:** Added an interactive CLI option to `threat-intel.sh` to seamlessly modify the output directory, minimum severity, and lookback days configurations.
 
