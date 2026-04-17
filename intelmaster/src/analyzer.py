@@ -155,7 +155,41 @@ class IntelAnalyzer:
                             summary=desc, source_name=source_name, keywords_found=tags
                         ))
         except Exception as e:
-            print(f"Error parsing RSS {file_path}: {e}", file=sys.stderr)
+            print(f"Warning: XML parsing failed for {file_path} ({e}). Attempting naive regex fallback...", file=sys.stderr)
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    xml_content = f.read()
+
+                items = re.findall(r'<item[^>]*>(.*?)</item>', xml_content, re.IGNORECASE | re.DOTALL)
+                for item in items:
+                    title_match = re.search(r'<title[^>]*>(.*?)</title>', item, re.IGNORECASE | re.DOTALL)
+                    link_match = re.search(r'<link[^>]*>(.*?)</link>', item, re.IGNORECASE | re.DOTALL)
+                    pub_date_match = re.search(r'<pubDate[^>]*>(.*?)</pubDate>', item, re.IGNORECASE | re.DOTALL)
+                    desc_match = re.search(r'<description[^>]*>(.*?)</description>', item, re.IGNORECASE | re.DOTALL)
+
+                    title = self._sanitize_html(title_match.group(1)) if title_match else ''
+                    link = link_match.group(1).strip() if link_match else ''
+                    pub_date = pub_date_match.group(1).strip() if pub_date_match else ''
+                    desc = self._sanitize_html(desc_match.group(1)) if desc_match else ''
+
+                    # Some CDATA sections might need extra sanitization
+                    title = re.sub(r'<!\[CDATA\[(.*?)\]\]>', r'\1', title)
+                    desc = re.sub(r'<!\[CDATA\[(.*?)\]\]>', r'\1', desc)
+
+                    content = f"{title} {desc}"
+                    matches = self._find_keywords(content)
+                    inclusions_matches = self._find_inclusions(content)
+
+                    if inclusions_matches or (matches and not self._has_exclusions(content)):
+                        tags = inclusions_matches if inclusions_matches else matches
+                        dt = self._parse_date(pub_date)
+                        if dt >= self.cutoff_date:
+                            self.findings.append(ThreatItem(
+                                title=title, link=link, date_str=pub_date,
+                                summary=desc, source_name=source_name, keywords_found=tags
+                            ))
+            except Exception as fallback_e:
+                print(f"Error: Regex fallback also failed for {file_path}: {fallback_e}", file=sys.stderr)
 
     def analyze_cisa_kev(self, file_path, source_name):
         try:
@@ -239,7 +273,42 @@ class IntelAnalyzer:
                             summary=desc, source_name=source_name, keywords_found=tags
                         ))
         except Exception as e:
-            print(f"Error parsing Atom {file_path}: {e}", file=sys.stderr)
+            print(f"Warning: XML parsing failed for {file_path} ({e}). Attempting naive regex fallback...", file=sys.stderr)
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    xml_content = f.read()
+
+                entries = re.findall(r'<entry[^>]*>(.*?)</entry>', xml_content, re.IGNORECASE | re.DOTALL)
+                for entry in entries:
+                    title_match = re.search(r'<title[^>]*>(.*?)</title>', entry, re.IGNORECASE | re.DOTALL)
+                    link_match = re.search(r'<link[^>]*href=[\"\'](.*?)[\"\'][^>]*>', entry, re.IGNORECASE)
+                    pub_date_match = re.search(r'<updated[^>]*>(.*?)</updated>', entry, re.IGNORECASE | re.DOTALL)
+                    content_match = re.search(r'<content[^>]*>(.*?)</content>', entry, re.IGNORECASE | re.DOTALL)
+                    if not content_match:
+                        content_match = re.search(r'<summary[^>]*>(.*?)</summary>', entry, re.IGNORECASE | re.DOTALL)
+
+                    title = self._sanitize_html(title_match.group(1)) if title_match else ''
+                    link = link_match.group(1).strip() if link_match else ''
+                    pub_date = pub_date_match.group(1).strip() if pub_date_match else ''
+                    desc = self._sanitize_html(content_match.group(1)) if content_match else ''
+
+                    title = re.sub(r'<!\[CDATA\[(.*?)\]\]>', r'\1', title)
+                    desc = re.sub(r'<!\[CDATA\[(.*?)\]\]>', r'\1', desc)
+
+                    content_eval = f"{title} {desc}"
+                    matches = self._find_keywords(content_eval)
+                    inclusions_matches = self._find_inclusions(content_eval)
+
+                    if inclusions_matches or (matches and not self._has_exclusions(content_eval)):
+                        tags = inclusions_matches if inclusions_matches else matches
+                        dt = self._parse_date(pub_date)
+                        if dt >= self.cutoff_date:
+                            self.findings.append(ThreatItem(
+                                title=title, link=link, date_str=pub_date,
+                                summary=desc, source_name=source_name, keywords_found=tags
+                            ))
+            except Exception as fallback_e:
+                print(f"Error: Regex fallback also failed for {file_path}: {fallback_e}", file=sys.stderr)
 
     def analyze_html(self, file_path, source_name):
         try:
@@ -321,7 +390,7 @@ class IntelAnalyzer:
                 grouped_findings[item.source_name] = []
             grouped_findings[item.source_name].append(item)
 
-        js_logic = """
+        js_logic = r"""
 <script>
 function filterReport() {
     let input = document.getElementById('searchFilter').value.toLowerCase();
@@ -387,18 +456,64 @@ function filterReport() {
 }
 
 function fuzzyMatch(pattern, str) {
-    let patternIdx = 0;
-    let strIdx = 0;
-    let patternLength = pattern.length;
-    let strLength = str.length;
+    // Splits the input into words and checks if any word in the string
+    // is a close match (Levenshtein distance <= 2) to the pattern.
+    // Simplification for fast client-side searching.
+    let strWords = str.split(/[\s,]+/);
+    let patternWords = pattern.split(/[\s,]+/);
 
-    while (patternIdx !== patternLength && strIdx !== strLength) {
-        if (pattern[patternIdx] === str[strIdx]) {
-            ++patternIdx;
+    // For each word in the pattern, there must be a word in the string that is close.
+    for (let i = 0; i < patternWords.length; i++) {
+        let pWord = patternWords[i];
+        if (pWord.length < 3) {
+            // For very short pattern words, require exact match
+            if (!str.includes(pWord)) return false;
+            continue;
         }
-        ++strIdx;
+
+        let foundMatch = false;
+        for (let j = 0; j < strWords.length; j++) {
+            let sWord = strWords[j];
+            if (Math.abs(pWord.length - sWord.length) > 2) continue;
+
+            let dist = levenshtein(pWord, sWord);
+            // Allow 1 typo for words up to 5 chars, 2 typos for longer words
+            let maxDist = pWord.length <= 5 ? 1 : 2;
+            if (dist <= maxDist) {
+                foundMatch = true;
+                break;
+            }
+        }
+
+        if (!foundMatch && !str.includes(pWord)) {
+            return false;
+        }
     }
-    return patternLength !== 0 && patternLength === patternIdx;
+    return true;
+}
+
+function levenshtein(a, b) {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+
+    let matrix = [];
+    for (let i = 0; i <= b.length; i++) {
+        matrix[i] = [i];
+    }
+    for (let j = 0; j <= a.length; j++) {
+        matrix[0][j] = j;
+    }
+
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i-1) == a.charAt(j-1)) {
+                matrix[i][j] = matrix[i-1][j-1];
+            } else {
+                matrix[i][j] = Math.min(matrix[i-1][j-1] + 1, Math.min(matrix[i][j-1] + 1, matrix[i-1][j] + 1));
+            }
+        }
+    }
+    return matrix[b.length][a.length];
 }
 
 function showDetails(element) {
@@ -481,7 +596,7 @@ function filterByStat(type) {
             "</header>",
 
             "<div class='search-bar' style='margin-bottom: 20px; display:flex; gap: 10px; align-items: center;'>",
-            "<input type='text' id='searchFilter' onkeyup='filterReport()' placeholder='Search report contents (e.g. source:The Hacker News, keyword:chrome)' style='flex-grow: 1; padding: 10px; font-size: 1.1em; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-card); color: var(--text-main);'>",
+            "<input type='text' id='searchFilter' onkeyup='filterReport()' placeholder='Search report contents (e.g. source:The Hacker News, keyword:chrome, inclusion:vulnerability)' style='flex-grow: 1; padding: 10px; font-size: 1.1em; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-card); color: var(--text-main);'>",
             "<label style='display:flex; align-items:center; gap:5px; cursor:pointer;'><input type='checkbox' id='fuzzyToggle' onchange='filterReport()'> Fuzzy Match</label>",
             "</div>",
 
@@ -489,6 +604,7 @@ function filterByStat(type) {
             f"<div class='stat-card' style='cursor:pointer;' onclick=\"document.getElementById('searchFilter').value=''; filterReport();\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(self.findings)}</a></div><div class='stat-label'>Total Matches</div></div>",
             f"<div class='stat-card' style='cursor:pointer;' onclick=\"filterByStat('sources')\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(grouped_findings)}</a></div><div class='stat-label'>Active Sources</div></div>",
             f"<div class='stat-card' style='cursor:pointer;' onclick=\"filterByStat('keywords')\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(self.keywords)}</a></div><div class='stat-label'>Monitored Keywords</div></div>",
+            f"<div class='stat-card' style='cursor:pointer;' onclick=\"filterByStat('inclusions')\"><div class='stat-value'><a href='#' style='color:inherit;text-decoration:none;'>{len(self.inclusions)}</a></div><div class='stat-label'>Inclusions</div></div>",
             "</div>",
 
             "<!-- Config Modal -->",
