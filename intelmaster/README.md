@@ -40,9 +40,10 @@ IntelMaster includes a standalone interactive menu. Run the script manually to a
 8. **Manage Keywords**
 9. **Manage Inclusions**
 10. **Manage Exclusions**
+11. **Manage Settings (Output Dir, Severity, Lookback)**
 D. **Install Dependencies (Python)**
 
-Reports are generated and saved in the `/public` directory.
+Reports are generated and saved in the `output_dir` specified in your settings (defaults to `/public`).
 
 ## Scheduling with launchd (macOS)
 

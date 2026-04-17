@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - Advanced UI Filtering and Parameter Management
+
+### Added
+- **Advanced Multi-Filtering:** The search bar in the generated HTML report now supports comma-separated filters (e.g., `source:CISA, keyword:windows`) to apply multiple filtering criteria simultaneously.
+- **Fuzzy Matching:** Added a "Fuzzy Match" checkbox in the HTML report to enable approximate subsequence searching.
+- **Configuration Viewer Enhancement:** The "View Config" modal in the HTML report now displays `minimum_severity` and `lookback_days` parameters.
+- **Parameter Management Menu:** Added an interactive CLI option to `threat-intel.sh` to seamlessly modify the output directory, minimum severity, and lookback days configurations.
+
 ## [1.3.0] - Interactive UI, Feed Management, and Cross-Platform Fixes
 
 ### Added
