@@ -271,45 +271,70 @@ while true; do
         printf -- " Auth     : $([ -n "$GITHUB_TOKEN" ] && echo -e "${GREEN}TOKEN ACTIVE${NC}" || echo -e "${RED}NO TOKEN FOUND${NC}")\n"
         printf -- "${GREEN}${BOLD}===============================================================${NC}\n"
 
-        # --- FASE 1: CONTEXT & DEVELOPMENT ---
-        printf "${YELLOW}${BOLD}[FASE 1] DEVELOPMENT CYCLE${NC}\n"
-        printf " 1) DASHBOARD        - Status & History Overview (Scrollable)\n"
-        printf " 2) CHECKOUT REPO    - Fetch & Switch to Repository (Branch)\n"
-        printf " 3) BRANCH EXPLORER  - Switch or Create new Feature Branch\n"
-        printf " 4) QUICK COMMIT     - Stage, Commit & Push active work\n"
-        printf " 5) SYNC FETCH       - Pull remote changes into active branch\n"
-        printf " 6) SYNC FORCE       - Overwrite Local or GitHub (Conflict fix)\n"
-        printf " 7) BACKUP POINT     - Create local snapshot branch\n"
-
-        # --- FASE 2: UAT & RELEASE ---
-        printf "\n${MAGENTA}${BOLD}[FASE 2] UAT & RELEASE${NC}\n"
-        printf " 8) PREPARE UAT      - Merge branch into TEST (Overwrite conflicts)\n"
-        printf " 9) STAGING PUSH     - Force sync current to DEV-STABLE\n"
-        printf " 10) MERGE FIXES     - Process external fixes (Jules)\n"
-        printf " 11) RELEASE TAG     - Mark current state (v1.x)\n"
-
-        # --- FASE 3: MAINTENANCE & SAFETY ---
-        printf "\n${RED}${BOLD}[FASE 3] MAINTENANCE & EMERGENCY${NC}\n"
-        printf " 12) CLEANUP PRUNE   - Delete branches gone on GitHub\n"
-        printf " 13) DELETE LOCAL    - Manually delete a local branch\n"
-        printf " 14) UNDO COMMIT     - Revert last commit (keep files)\n"
-        printf " 15) FORCE RESET     - Wipe local and reset to main (CAUTION)\n"
-        printf " 16) EMERGENCY       - Abort failed merges / Clear locks\n"
-        printf " 17) RESTORE COMMIT  - Checkout, Revert or Reset to a previous commit\n"
-
-        # --- FASE 4: ANALYSIS & TOOLS ---
-        printf "\n${BOLD}[FASE 4] ANALYSIS & TOOLS${NC}\n"
-        printf " 18) DIFF VIEWER     - Compare changes between branches\n"
-        printf " 19) FILE HISTORY    - Show all commits for a file\n"
-        printf " 20) SEARCH CODE     - Find text in all files (grep)\n"
-        printf " 21) COMMIT FINDER   - Search commits by message\n"
-        printf " 22) BRANCH COMPARE  - See differences between branches\n"
-
+        printf "${YELLOW}${BOLD}[MAIN MENU]${NC}\n"
+        printf " 1. INFO          (Status, History & Analysis)\n"
+        printf " 2. DEVELOPMENT   (Repo & Branch commands)\n"
+        printf " 3. FIX           (Errors)\n"
+        printf " 4. MAINTENANCE   (Backup & Restore)\n"
         printf -- "\n---------------------------------------------------------------\n"
         printf " S) SETUP PERSISTENCE- Fix QNAP login & Aliases\n"
         printf " Q) QUIT\n"
         printf -- "${BOLD}===============================================================${NC}\n"
-        read -p "Select action: " choice
+
+        read -p "Select action: " main_choice
+
+        case "$main_choice" in
+            1)
+                printf "\n${YELLOW}${BOLD}[INFO]${NC}\n"
+                printf " 1) DASHBOARD        - Status & History Overview (Scrollable)\n"
+                printf " 18) DIFF VIEWER     - Compare changes between branches\n"
+                printf " 19) FILE HISTORY    - Show all commits for a file\n"
+                printf " 20) SEARCH CODE     - Find text in all files (grep)\n"
+                printf " 21) COMMIT FINDER   - Search commits by message\n"
+                printf " 22) BRANCH COMPARE  - See differences between branches\n"
+                read -p "Select command (X to return): " choice
+                [[ "$choice" =~ ^[Xx]$ ]] && continue
+                ;;
+            2)
+                printf "\n${YELLOW}${BOLD}[DEVELOPMENT]${NC}\n"
+                printf " 2) CHECKOUT REPO    - Fetch & Switch to Repository (Branch)\n"
+                printf " 3) BRANCH EXPLORER  - Switch or Create new Feature Branch\n"
+                printf " 4) QUICK COMMIT     - Stage, Commit & Push active work\n"
+                printf " 5) SYNC FETCH       - Pull remote changes into active branch\n"
+                printf " 8) PREPARE UAT      - Merge branch into TEST (Overwrite conflicts)\n"
+                printf " 9) STAGING PUSH     - Force sync current to DEV-STABLE\n"
+                printf " 10) MERGE FIXES     - Process external fixes (Jules)\n"
+                printf " 11) RELEASE TAG     - Mark current state (v1.x)\n"
+                printf " 12) CLEANUP PRUNE   - Delete branches gone on GitHub\n"
+                printf " 13) DELETE LOCAL    - Manually delete a local branch\n"
+                read -p "Select command (X to return): " choice
+                [[ "$choice" =~ ^[Xx]$ ]] && continue
+                ;;
+            3)
+                printf "\n${YELLOW}${BOLD}[FIX]${NC}\n"
+                printf " 6) SYNC FORCE       - Overwrite Local or GitHub (Conflict fix)\n"
+                printf " 14) UNDO COMMIT     - Revert last commit (keep files)\n"
+                printf " 15) FORCE RESET     - Wipe local and reset to main (CAUTION)\n"
+                printf " 16) EMERGENCY       - Abort failed merges / Clear locks\n"
+                printf " 17) RESTORE COMMIT  - Checkout, Revert or Reset to a previous commit\n"
+                printf " 23) STASH PULL POP  - Stash local changes, pull and pop\n"
+                printf " 24) FORGET FILE     - Remove file from git cache\n"
+                read -p "Select command (X to return): " choice
+                [[ "$choice" =~ ^[Xx]$ ]] && continue
+                ;;
+            4)
+                printf "\n${YELLOW}${BOLD}[MAINTENANCE]${NC}\n"
+                printf " 7) BACKUP POINT     - Create local snapshot branch\n"
+                read -p "Select command (X to return): " choice
+                [[ "$choice" =~ ^[Xx]$ ]] && continue
+                ;;
+            [Ss]|[Qq])
+                choice="$main_choice"
+                ;;
+            *)
+                continue
+                ;;
+        esac
     else
         choice="$CMD_SWITCH"
     fi
@@ -772,6 +797,25 @@ while true; do
                 if [[ "$show_files" == "y" ]]; then
                     git diff "${base_br}"..."${cmp_br}" --stat | more
                 fi
+            fi
+            read -p "Enter..." junk ;;
+
+        23) # STASH PULL POP
+            [[ "$IN_GIT" = false ]] && continue
+            printf "${YELLOW}Stashing local changes...${NC}\n"
+            git stash
+            printf "${CYAN}Pulling from origin ${CURRENT_BRANCH}...${NC}\n"
+            git pull origin "$CURRENT_BRANCH"
+            printf "${YELLOW}Popping stash...${NC}\n"
+            git stash pop
+            read -p "Enter..." junk ;;
+
+        24) # FORGET CACHED FILE
+            [[ "$IN_GIT" = false ]] && continue
+            read -e -p "Enter file to forget (git rm --cached): " file_to_forget
+            if [[ -n "$file_to_forget" ]]; then
+                git rm --cached "$file_to_forget"
+                printf "${GREEN}File removed from cache.${NC}\n"
             fi
             read -p "Enter..." junk ;;
 
