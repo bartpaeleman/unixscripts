@@ -33,6 +33,17 @@ check_cmd() {
     return 0
 }
 
+# --- HELPER: GEOTRACE ---
+run_geotrace() {
+    read -p "Target IP/Domain: " target
+    if [[ -f "$SCRIPT_DIR/geotrace.sh" ]]; then
+        "$SCRIPT_DIR/geotrace.sh" "$target"
+    else
+        echo -e "${RED}geotrace.sh script not found in $SCRIPT_DIR${NC}"
+    fi
+    pause
+}
+
 # --- SUBMENU: INTERFACES & ROUTING ---
 menu_interfaces() {
     while true; do
@@ -95,13 +106,7 @@ menu_connectivity() {
                 pause
                 ;;
             3)
-                read -p "Target IP/Domain: " target
-                if [[ -f "$SCRIPT_DIR/geotrace.sh" ]]; then
-                    "$SCRIPT_DIR/geotrace.sh" "$target"
-                else
-                    echo -e "${RED}geotrace.sh script not found in $SCRIPT_DIR${NC}"
-                fi
-                pause
+                run_geotrace
                 ;;
             [Xx]) return ;;
         esac
@@ -264,6 +269,7 @@ while true; do
     echo " 4) Statistics (netstat, ss)"
     echo " 5) Web Tools (curl, wget)"
     echo " 6) Advanced / Python Tools"
+    echo " 7) GeoTrace (traceroute with GeoIP)"
     echo -e "---------------------------------------------------------------"
     echo " Q) Quit"
     echo -e "${BOLD}===============================================================${NC}"
@@ -277,6 +283,7 @@ while true; do
         4) menu_stats ;;
         5) menu_web ;;
         6) menu_python ;;
+        7) run_geotrace ;;
         [Qq]) clear; exit 0 ;;
         *) sleep 0.1 ;;
     esac
