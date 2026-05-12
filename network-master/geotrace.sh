@@ -79,7 +79,11 @@ echo "--------------------------------------------------------------------------
 if [ ! -s "$TEMP_FILE" ]; then
     echo "Geen actieve hops gevonden of doel onbereikbaar."
 else
-    sort "$TEMP_FILE" | cut -d'|' -f2- | column -t -s '|'
+    if command -v column &> /dev/null; then
+        sort "$TEMP_FILE" | cut -d'|' -f2- | column -t -s '|'
+    else
+        sort "$TEMP_FILE" | cut -d'|' -f2- | awk -F'|' '{ printf "%-4s %-15s %-15s %-15s %s\n", $1, $2, $3, $4, $5 }'
+    fi
 fi
 
 rm "$TEMP_FILE"
