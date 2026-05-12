@@ -30,7 +30,18 @@ echo -e "Installing to: ${CYAN}${INSTALL_DIR}${NC}"
 
 if [[ -d "$INSTALL_DIR" ]]; then
     echo -e "${YELLOW}Warning: Directory '$INSTALL_DIR' already exists.${NC}"
-    read -p "Continue and overwrite existing files? (y/n): " CONFIRM
+    read -p "Existing installation detected. Do you want to update it instead, preserving configurations? (y/n): " DO_UPDATE
+    if [[ "$DO_UPDATE" =~ ^[Yy]$ ]]; then
+        echo -e "${CYAN}Switching to update mode...${NC}"
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        if [[ -f "$SCRIPT_DIR/update.sh" ]]; then
+            exec "$SCRIPT_DIR/update.sh" "$INSTALL_DIR"
+        else
+            echo -e "${RED}Error: update.sh not found.${NC}"
+            exit 1
+        fi
+    fi
+    read -p "Continue and OVERWRITE existing files? (y/n): " CONFIRM
     if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
         echo "Installation aborted."
         exit 1
@@ -65,19 +76,22 @@ if [[ ! -f "$ENV_EXAMPLE" ]]; then
     echo -e "${RED}Error: .env.example not found in installation.${NC}"
     echo "Please check the repository integrity."
 else
+    NEEDS_CONFIG=false
     if [[ -f "$ENV_FILE" ]]; then
         echo -e "${YELLOW}.env file already exists in target.${NC}"
         read -p "Overwrite with new configuration? (y/n): " OVR_ENV
         if [[ "$OVR_ENV" =~ ^[Yy]$ ]]; then
             cp "$ENV_EXAMPLE" "$ENV_FILE"
+            NEEDS_CONFIG=true
         fi
     else
         cp "$ENV_EXAMPLE" "$ENV_FILE"
         echo -e "${GREEN}Created .env from template.${NC}"
+        NEEDS_CONFIG=true
     fi
 
     # Interactive Configuration
-    if [[ -f "$ENV_FILE" ]]; then
+    if [[ "$NEEDS_CONFIG" == true && -f "$ENV_FILE" ]]; then
         echo -e "\n${YELLOW}Please enter your GitHub credentials for the tools:${NC}"
 
         read -p "GitHub Username: " GH_USER

@@ -23,37 +23,40 @@ Bij het starten van de hoofdtool krijg je toegang tot de volgende 9 modules en d
 ---
 
 ## 1. Git Master (`git-master.sh`)
-Een uitgebreide Git workflow beheerder die is opgedeeld in vier fasen, plus een setup configuratie.
+Een uitgebreide Git workflow beheerder die is opgedeeld in vier hoofdsecties (INFO, DEVELOPMENT, FIX, MAINTENANCE), plus een setup configuratie.
 
-### Fase 1: Development Cycle
-* **1) DASHBOARD:** Toont een overzicht van de repository status, inclusief actieve branches, ongecommite wijzigingen en recente git history.
-* **2) CHECKOUT REPO:** Haalt nieuwe branches op (`fetch --prune`) en stelt je in staat om eenvoudig van branch te wisselen of een nieuwe remote branch lokaal uit te checken.
-* **3) BRANCH EXPLORER:** Maak een nieuwe feature branch aan of wissel tussen bestaande branches.
-* **4) QUICK COMMIT:** Voegt automatisch alle wijzigingen toe (`git add .`), vraagt om een commitbericht en pusht deze naar de origin server.
-* **5) SYNC FETCH:** Haalt externe wijzigingen (`git pull`) voor de huidige branch binnen.
-* **6) SYNC FORCE:** Handige tool bij conflicten; kies om de lokale wijzigingen te overschrijven met de serverversie, of forceer de lokale versie naar de server.
-* **7) BACKUP POINT:** Maakt direct een lokale snapshot/kopie aan van de huidige branch met een tijdstempel.
+### 1. INFO
+* **a) DASHBOARD:** Toont een overzicht van de repository status, inclusief actieve branches, ongecommite wijzigingen en recente git history.
+* **b) DIFF VIEWER:** Vergelijk ongecommite/gestagede wijzigingen, of zie het verschil tussen twee specifieke branches of commits.
+* **c) FILE HISTORY:** Bekijk de volledige commit historie van één specifiek bestand.
+* **d) SEARCH CODE:** Zoek naar een specifiek woord of tekst binnen de bestanden (via `git grep` of standaard `grep`).
+* **e) COMMIT FINDER:** Zoek specifieke commits op basis van hun bericht/titel.
+* **f) BRANCH COMPARE:** Zie welke commits zich in de ene branch bevinden maar niet in een andere.
 
-### Fase 2: UAT & Release
-* **8) PREPARE UAT:** Voegt een specifieke branch samen met de `uat` branch (forceert overschrijven bij conflicten) voor testdoeleinden.
-* **9) STAGING PUSH:** Forceert de huidige branch naar de `dev-stable` branch.
-* **10) MERGE FIXES:** Integreer gemakkelijk een externe 'fix'-branch in de huidige branch en verwijder daarna de fix-branch.
-* **11) RELEASE TAG:** Geef het huidige werk een versie-tag (bijv. v1.0) en push deze direct naar de server.
+### 2. DEVELOPMENT
+* **a) CHECKOUT REPO:** Haalt nieuwe branches op (`fetch --prune`) en stelt je in staat om eenvoudig van branch te wisselen of een nieuwe remote branch lokaal uit te checken.
+* **b) BRANCH EXPLORER:** Maak een nieuwe feature branch aan of wissel tussen bestaande branches.
+* **c) QUICK COMMIT:** Voegt automatisch alle wijzigingen toe (`git add .`), vraagt om een commitbericht en pusht deze naar de origin server.
+* **d) SYNC FETCH:** Haalt externe wijzigingen (`git pull`) voor de huidige branch binnen.
+* **e) PREPARE UAT:** Voegt een specifieke branch samen met de `uat` branch (forceert overschrijven bij conflicten) voor testdoeleinden.
+* **f) STAGING PUSH:** Forceert de huidige branch naar de `dev-stable` branch.
+* **g) MERGE FIXES:** Integreer gemakkelijk een externe 'fix'-branch in de huidige branch en verwijder daarna de fix-branch.
+* **h) RELEASE TAG:** Geef het huidige werk een versie-tag (bijv. v1.0) en push deze direct naar de server.
+* **i) CLEANUP PRUNE:** Verwijdert lokaal branches die op de server (GitHub) niet meer bestaan.
+* **j) DELETE LOCAL:** Handmatig een lokale branch selecteren en verwijderen.
 
-### Fase 3: Maintenance & Emergency
-* **12) CLEANUP PRUNE:** Verwijdert lokaal branches die op de server (GitHub) niet meer bestaan.
-* **13) DELETE LOCAL:** Handmatig een lokale branch selecteren en verwijderen.
-* **14) UNDO COMMIT:** Draait de laatste commit terug (`git reset --soft`), waardoor je bestanden behouden blijven in staging.
-* **15) FORCE RESET:** Een gevaarlijke (rode) optie die alle lokale wijzigingen vernietigt en de repository reset naar `origin/main`.
-* **16) EMERGENCY:** Opties om een mislukte merge af te breken, git locks `.git/index.lock` te verwijderen of een verborgen stash terug te halen.
-* **17) RESTORE COMMIT:** Blader door recente commits en kies om een oudere commit uit te checken (voor inspectie), te reverten (een nieuwe undo-commit te maken) of de branch hard terug te zetten naar dit punt (waarbij alle nieuwere commits worden verwijderd).
+### 3. FIX
+* **a) SYNC FORCE:** Handige tool bij conflicten; kies om de lokale wijzigingen te overschrijven met de serverversie, of forceer de lokale versie naar de server.
+* **b) UNDO COMMIT:** Draait de laatste commit terug (`git reset --soft`), waardoor je bestanden behouden blijven in staging.
+* **c) FORCE RESET:** Een gevaarlijke (rode) optie die alle lokale wijzigingen vernietigt en de repository reset naar `origin/main`.
+* **d) EMERGENCY:** Opties om een mislukte merge af te breken, git locks `.git/index.lock` te verwijderen of een verborgen stash terug te halen.
+* **e) RESTORE COMMIT:** Blader door recente commits en kies om een oudere commit uit te checken (voor inspectie), te reverten (een nieuwe undo-commit te maken) of de branch hard terug te zetten naar dit punt.
+* **f) STASH PULL POP:** Slaat tijdelijke wijzigingen op (stash), haalt externe wijzigingen binnen via pull, en past de tijdelijke wijzigingen weer toe (pop).
+* **g) FORGET FILE:** Verwijdert een bestand uit de git cache (`git rm --cached`).
 
-### Fase 4: Analysis & Tools
-* **18) DIFF VIEWER:** Vergelijk ongecommite/gestagede wijzigingen, of zie het verschil tussen twee specifieke branches of commits.
-* **19) FILE HISTORY:** Bekijk de volledige commit historie van één specifiek bestand.
-* **20) SEARCH CODE:** Zoek naar een specifiek woord of tekst binnen de bestanden (via `git grep` of standaard `grep`).
-* **21) COMMIT FINDER:** Zoek specifieke commits op basis van hun bericht/titel.
-* **22) BRANCH COMPARE:** Zie welke commits zich in de ene branch bevinden maar niet in een andere.
+### 4. MAINTENANCE
+* **a) BACKUP POINT:** Maakt direct een lokale snapshot/kopie aan van de huidige branch met een tijdstempel.
+* **b) RESTORE BACKUP:** Herstel een eerdere backup snapshot over de huidige branch, force push naar GitHub of check de backup los uit.
 
 * **S) SETUP PERSISTENCE:** Configureert de `.env` file met je GitHub token en installeert command-line aliassen voor snelle toegang in elke terminal sessie.
 

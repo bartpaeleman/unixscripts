@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================================
-# GIT MASTER CONTROL PANEL v7.1.0
+# GIT MASTER CONTROL PANEL v7.2.0
 # Professional Git Workflow Manager for QNAP & macOS
 # ============================================================
 
@@ -263,7 +263,7 @@ while true; do
         clear
         # Header
         printf -- "${GREEN}${BOLD}===============================================================${NC}\n"
-        printf -- "       ${GREEN}${BOLD}GIT MASTER CONTROL PANEL v7.1.0${NC}\n"
+        printf -- "       ${GREEN}${BOLD}GIT MASTER CONTROL PANEL v7.2.0${NC}\n"
         printf -- "${GREEN}${BOLD}===============================================================${NC}\n"
         printf -- " Status   : $ENV_VAL\n"
         printf -- " Project  : ${CYAN}$PROJECT_NAME${NC} @ ${YELLOW}$CURRENT_BRANCH${NC}\n"
@@ -357,9 +357,11 @@ while true; do
             4)
                 printf "\n${YELLOW}${BOLD}[MAINTENANCE]${NC}\n"
                 printf " a) BACKUP POINT     - Create local snapshot branch\n"
+        printf " b) RESTORE BACKUP   - Restore from a local snapshot branch\n"
                 read -p "Select command (X to return): " sub_choice
                 case "$sub_choice" in
                     [Aa]) choice="7" ;;
+            [Bb]) choice="25" ;;
                     [Xx]) continue ;;
                     *) continue ;;
                 esac
@@ -860,6 +862,67 @@ while true; do
                 git rm --cached "$file_to_forget"
                 printf "${GREEN}File removed from cache.${NC}\n"
             fi
+            read -p "Enter..." junk ;;
+
+        25) # RESTORE BACKUP
+            [[ "$IN_GIT" = false ]] && continue
+            clear
+            printf "${CYAN}${BOLD}RESTORE BACKUP${NC}\n\n"
+
+            # Find backup branches
+            backup_branches=()
+            while IFS= read -r branch; do
+                [[ -n "$branch" ]] && backup_branches+=("$branch")
+            done < <(git branch --list "backup/*" | sed 's/^[* ]*//')
+
+            if [[ ${#backup_branches[@]} -eq 0 ]]; then
+                printf "${YELLOW}No backup branches found.${NC}\n"
+                read -p "Enter..." junk
+                continue
+            fi
+
+            printf "${YELLOW}Available Backups:${NC}\n"
+            for i in "${!backup_branches[@]}"; do
+                printf " %2d) %s\n" "$((i+1))" "${backup_branches[$i]}"
+            done
+
+            read -p "Select backup to restore (X to cancel): " backup_idx
+            [[ "$backup_idx" =~ ^[Xx]$ ]] && continue
+
+            if [[ ! "$backup_idx" =~ ^[0-9]+$ ]] || [[ "$backup_idx" -lt 1 ]] || [[ "$backup_idx" -gt "${#backup_branches[@]}" ]]; then
+                printf "${RED}Invalid selection.${NC}\n"
+                read -p "Enter..." junk
+                continue
+            fi
+
+            selected_backup="${backup_branches[$((backup_idx-1))]}"
+            printf "\n${CYAN}Selected: ${selected_backup}${NC}\n"
+            printf "1) Checkout this backup as active branch\n"
+            printf "2) Overwrite 'main' locally with this backup\n"
+            printf "3) Overwrite 'main' locally AND force push to GitHub\n"
+            printf "X) Cancel\n"
+
+            read -p "Choose action: " restore_action
+            case "$restore_action" in
+                1)
+                    git checkout "$selected_backup"
+                    printf "${GREEN}Checked out ${selected_backup}.${NC}\n"
+                    ;;
+                2)
+                    git checkout main
+                    git reset --hard "$selected_backup"
+                    printf "${GREEN}'main' has been overwritten with ${selected_backup} locally.${NC}\n"
+                    ;;
+                3)
+                    git checkout main
+                    git reset --hard "$selected_backup"
+                    git push origin main --force
+                    printf "${GREEN}'main' has been overwritten locally and forcefully pushed to GitHub.${NC}\n"
+                    ;;
+                *)
+                    printf "${YELLOW}Action cancelled.${NC}\n"
+                    ;;
+            esac
             read -p "Enter..." junk ;;
 
         [Ss]) # SETUP
