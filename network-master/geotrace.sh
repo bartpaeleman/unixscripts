@@ -75,15 +75,11 @@ wait
 echo -e "\n${BOLD}HOP  IP-ADRES        STAD            LAND            STATUS & PROVIDER${NC}"
 echo "--------------------------------------------------------------------------------------"
 
-# Check of het bestand leeg is (geen hops gevonden)
-if [ ! -s "$TEMP_FILE" ]; then
+# Check of het bestand leeg is of alleen spaties bevat
+if [ ! -s "$TEMP_FILE" ] || [ -z "$(cat "$TEMP_FILE" | tr -d '[:space:]')" ]; then
     echo "Geen actieve hops gevonden of doel onbereikbaar."
 else
-    if command -v column &> /dev/null; then
-        sort "$TEMP_FILE" | cut -d'|' -f2- | column -t -s '|'
-    else
-        sort "$TEMP_FILE" | cut -d'|' -f2- | awk -F'|' '{ printf "%-4s %-15s %-15s %-15s %s\n", $1, $2, $3, $4, $5 }'
-    fi
+    sort "$TEMP_FILE" | cut -d'|' -f2- | awk -F'|' '{ printf "%-4s %-15s %-15s %-15s %s\n", $1, $2, $3, $4, $5 }'
 fi
 
 rm "$TEMP_FILE"
