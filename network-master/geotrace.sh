@@ -38,19 +38,19 @@ for line in $HOPS; do
 
         # Privé IP check
         if [[ $IP =~ ^127\. ]] || [[ $IP =~ ^10\. ]] || [[ $IP =~ ^172\.(1[6-9]|2[0-9]|3[0-1])\. ]] || [[ $IP =~ ^192\.168\. ]]; then
-            printf "%02d|%s|%s|%s|%s|%s\n" "$HOP_NUM" "$HOP_NUM" "$IP" "Lokaal" "Intern Netwerk" "-" >> "$TEMP_FILE"
+            printf "%02d|%s|%s|%s|%s|%s|%s\n" "$HOP_NUM" "$HOP_NUM" "$IP" "Lokaal" "Intern Netwerk" "-" "-" >> "$TEMP_FILE"
         else
             # API aanroep met --max-time 2 om hangen te voorkomen
             DATA=$(curl -s --max-time 2 "http://ip-api.com/csv/$IP?fields=city,country,continentCode,countryCode,isp")
             
             # Als API niet antwoordt, vul lege waarden in
             if [ $? -ne 0 ] || [ -z "$DATA" ]; then
-                printf "%02d|%s|%s|%s|%s|%s\n" "$HOP_NUM" "$HOP_NUM" "$IP" "Timeout" "Onbekend" "API niet bereikbaar" >> "$TEMP_FILE"
+                printf "%02d|%s|%s|%s|%s|%s|%s\n" "$HOP_NUM" "$HOP_NUM" "$IP" "Timeout" "Onbekend" "API niet bereikbaar" "-" >> "$TEMP_FILE"
             else
-                CITY=$(echo $DATA | cut -d',' -f1)
+                CONT=$(echo $DATA | cut -d',' -f1)
                 COUNTRY=$(echo $DATA | cut -d',' -f2)
-                CONT=$(echo $DATA | cut -d',' -f3)
-                CODE=$(echo $DATA | cut -d',' -f4)
+                CODE=$(echo $DATA | cut -d',' -f3)
+                CITY=$(echo $DATA | cut -d',' -f4)
                 ISP=$(echo $DATA | cut -d',' -f5)
 
                 COLOR=$NC
@@ -64,7 +64,7 @@ for line in $HOPS; do
                     LABEL="BUITEN-EU"
                 fi
 
-                printf "%02d|%s|%s|%s|%s|${COLOR}%s${NC}\n" "$HOP_NUM" "$HOP_NUM" "$IP" "$CITY" "$COUNTRY" "$LABEL ($ISP)" >> "$TEMP_FILE"
+                printf "%02d|%s|%s|%s|%s|${COLOR}%s${NC}|%s\n" "$HOP_NUM" "$HOP_NUM" "$IP" "$CITY" "$COUNTRY" "$LABEL" "$ISP" >> "$TEMP_FILE"
             fi
         fi
     ) &
@@ -72,14 +72,14 @@ done
 
 wait
 
-echo -e "\n${BOLD}HOP  IP-ADRES        STAD            LAND            STATUS & PROVIDER${NC}"
+echo -e "\n${BOLD}HOP  IP-ADRES        STAD            LAND            STATUS          PROVIDER${NC}"
 echo "--------------------------------------------------------------------------------------"
 
 # Check of het bestand leeg is of alleen spaties bevat
 if [ ! -s "$TEMP_FILE" ] || [ -z "$(cat "$TEMP_FILE" | tr -d '[:space:]')" ]; then
     echo "Geen actieve hops gevonden of doel onbereikbaar."
 else
-    sort "$TEMP_FILE" | cut -d'|' -f2- | awk -F'|' '{ printf "%-4s %-15s %-15s %-15s %s\n", $1, $2, $3, $4, $5 }'
+    sort "$TEMP_FILE" | cut -d'|' -f2- | awk -F'|' '{ printf "%-4s %-15s %-15s %-15s %-15s %s\n", $1, $2, $3, $4, $5, $6 }'
 fi
 
 rm "$TEMP_FILE"
