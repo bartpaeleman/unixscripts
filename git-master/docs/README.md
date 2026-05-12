@@ -1,4 +1,4 @@
-# Git Master Control Panel v7.0
+# Git Master Control Panel v7.2.0
 
 Professional Git workflow manager for QNAP NAS and macOS, designed to streamline development cycles on GitHub.
 
@@ -103,36 +103,50 @@ PATH_ROOT="/your/projects/path"
 | `T` | TEST | Switch to test/UAT environment |
 | `0` | Clone | Clone a new repository from GitHub |
 
-### Development Cycle (Phase 1)
+### 1. INFO
 
-| Key | Action | Description |
-|-----|--------|-------------|
-| `1` | Dashboard | View status, branches, and commit history |
-| `2` | Checkout Repo | Fetch & Switch to Repository (Branch) |
-| `3` | Branch Explorer | Create or switch branches |
-| `4` | Quick Commit | Stage, commit, and push changes |
-| `5` | Pull | Fetch and merge remote changes |
-| `6` | Force Sync | Resolve conflicts (overwrite local or remote) |
-| `7` | Backup | Create a timestamped backup branch |
+| Action | Description |
+|--------|-------------|
+| Dashboard | View status, branches, and commit history |
+| Diff Viewer | Compare uncommitted/staged changes or specific branches/commits |
+| File History | View full commit history for a specific file |
+| Search Code | Search for specific text within files |
+| Commit Finder | Search specific commits based on their message/title |
+| Branch Compare | View commits present in one branch but not another |
 
-### UAT & Release (Phase 2)
+### 2. DEVELOPMENT
 
-| Key | Action | Description |
-|-----|--------|-------------|
-| `8` | Prepare UAT | Merge external branch for testing |
-| `9` | Staging Push | Promote current branch to dev-stable |
-| `10` | Merge Fixes | Integrate fix branches |
-| `11` | Release Tag | Create version tag (e.g., v1.2.3) |
+| Action | Description |
+|--------|-------------|
+| Checkout Repo | Fetch & Switch to Repository (Branch) |
+| Branch Explorer | Create or switch branches |
+| Quick Commit | Stage, commit, and push changes |
+| Sync Fetch | Fetch and merge remote changes |
+| Prepare UAT | Merge external branch for testing |
+| Staging Push | Promote current branch to dev-stable |
+| Merge Fixes | Integrate fix branches |
+| Release Tag | Create version tag (e.g., v1.2.3) |
+| Cleanup Prune | Remove dead branches (deleted on GitHub) |
+| Delete Local | Remove a local branch |
 
-### Maintenance (Phase 3)
+### 3. FIX
 
-| Key | Action | Description |
-|-----|--------|-------------|
-| `12` | Prune | Remove dead branches (deleted on GitHub) |
-| `13` | Delete Local | Remove a local branch |
-| `14` | Undo Commit | Rollback last commit (keep changes) |
-| `15` | Force Reset | Nuclear option - reset to main |
-| `16` | Emergency | Abort merges, clear locks, pop stash |
+| Action | Description |
+|--------|-------------|
+| Sync Force | Resolve conflicts (overwrite local or remote) |
+| Undo Commit | Rollback last commit (keep changes) |
+| Force Reset | Nuclear option - reset to main |
+| Emergency | Abort merges, clear locks, pop stash |
+| Restore Commit | Checkout, revert, or hard reset to an older commit |
+| Stash Pull Pop | Save temp changes, pull remote changes, and re-apply temp changes |
+| Forget File | Remove a file from git cache |
+
+### 4. MAINTENANCE
+
+| Action | Description |
+|--------|-------------|
+| Backup Point | Create a local snapshot branch with timestamp |
+| Restore Backup | Restore from a local snapshot branch |
 
 ## 🔧 Configuration Reference
 
@@ -273,7 +287,12 @@ chmod +x git-master.sh
 
 ## 📝 Version History
 
-### v7.1.0 (Current)
+### v7.2.0 (Current)
+- ✅ **New Feature**: "Restore Backup" menu option under MAINTENANCE to easily restore from local snapshot branches
+- ✅ **Enhancement**: Smarter installation and update scripts (`install.sh` and `update.sh`) to seamlessly handle existing installations
+- ✅ **Documentation**: Updated manuals and README to reflect the modern 4-phase menu structure (INFO, DEVELOPMENT, FIX, MAINTENANCE)
+
+### v7.1.0
 - ✅ **New Feature**: "Checkout Repo" menu option (Phase 1) for easy remote branch switching
 - ✅ **Enhancement**: Safeguard against overwriting existing `.env` configuration
 - ✅ **Enhancement**: Granular cleanup options in File Master

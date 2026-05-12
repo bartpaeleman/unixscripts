@@ -21,9 +21,13 @@ echo "This script will update the entire suite of tools in the specified locatio
 echo "Your existing .env configuration will be preserved."
 
 # --- 1. DETERMINE UPDATE LOCATION ---
-DEFAULT_DIR="$HOME/dev-tools"
-read -p "Update location [${DEFAULT_DIR}]: " TARGET_DIR
-TARGET_DIR="${TARGET_DIR:-$DEFAULT_DIR}"
+if [[ -n "$1" ]]; then
+    TARGET_DIR="$1"
+else
+    DEFAULT_DIR="$HOME/dev-tools"
+    read -p "Update location [${DEFAULT_DIR}]: " TARGET_DIR
+    TARGET_DIR="${TARGET_DIR:-$DEFAULT_DIR}"
+fi
 
 # Expand tilde if present
 TARGET_DIR="${TARGET_DIR/#\~/$HOME}"

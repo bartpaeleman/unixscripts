@@ -40,10 +40,10 @@ Or if aliases are installed: `scriptmaster`
 
 ## Repository Contents
 
-### 1. Git Master Control Panel
+### 1. Git Master Control Panel (v7.2.0)
 A professional Git workflow manager to simplify development cycles.
 *   **Location**: `git-master/`
-*   **Key Features**: Environment management (PROD/DEV/TEST), automated branching, UAT workflows, and new "Checkout Repo" feature.
+*   **Key Features**: Environment management (PROD/DEV/TEST), automated branching, UAT workflows, and a powerful Backup & Restore suite.
 
 ### 2. Development Scripts
 Standalone utility scripts for web development and system maintenance.
