@@ -70,6 +70,7 @@ menu_connectivity() {
         echo -e "${CYAN}${BOLD}=== Connectivity ===${NC}"
         echo "1) ping - Test Connection"
         echo "2) traceroute - Trace Path"
+        echo "3) geotrace - Trace Path with GeoIP Location"
         echo "X) Back"
 
         read -p "Select: " choice
@@ -90,6 +91,15 @@ menu_connectivity() {
                     tracert "$target" # Windows/Generic
                 else
                     echo "traceroute command not found"
+                fi
+                pause
+                ;;
+            3)
+                read -p "Target IP/Domain: " target
+                if [[ -f "$SCRIPT_DIR/geotrace.sh" ]]; then
+                    "$SCRIPT_DIR/geotrace.sh" "$target"
+                else
+                    echo -e "${RED}geotrace.sh script not found in $SCRIPT_DIR${NC}"
                 fi
                 pause
                 ;;

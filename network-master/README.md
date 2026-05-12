@@ -9,7 +9,7 @@ A comprehensive network diagnostic and management toolkit designed for QNAP NAS 
 - **Python Integration**: Includes a Python-based TCP port scanner.
 - **Categorized Menus**:
   - **Interfaces**: `ifconfig`, `ip`, `route`, `arp`
-  - **Connectivity**: `ping`, `traceroute`
+  - **Connectivity**: `ping`, `traceroute`, `geotrace` (GeoIP mapped traceroute)
   - **DNS**: `nslookup`, `dig`
   - **Statistics**: `netstat`, `ss`
   - **Web**: `curl`, `wget`, Public IP check
