@@ -1,8 +1,10 @@
 #!/bin/bash
 
 RED='\033[0;31m'
+PURPLE='\033[0;35m'
 ORANGE='\033[0;33m'
 YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
 GREY='\033[0;37m'
 BOLD='\033[1m'
 NC='\033[0m'
@@ -57,7 +59,6 @@ for line in $HOPS; do
         if [ -z "$IP" ]; then exit 0; fi
 
         if [ "$IP" = "*" ]; then
-            # Geen kleur: STAD|LAND|STATUS|RISICO|ISP
             printf "%02d|%s|%s|%s|%s|%s|%s\n" \
                 "$HOP_NUM" "*" "-" "-" "Tijdlimiet" "-" "-" >> "$TEMP_FILE"
             exit 0
@@ -81,7 +82,6 @@ for line in $HOPS; do
                 CODE=$(echo "$DATA"       | cut -d',' -f5)
                 ISP=$(echo "$DATA"        | cut -d',' -f6)
 
-                # Lege stad opvangen
                 if [ -z "$CITY" ]; then CITY="-"; fi
 
                 if [ "$API_STATUS" = "fail" ]; then
@@ -106,7 +106,6 @@ for line in $HOPS; do
                     STATUS="BUITEN-EU"
                 fi
 
-                # Sla op ZONDER kleurcodes — kleur wordt toegepast bij weergave
                 printf "%02d|%s|%s|%s|%s|%s|%s\n" \
                     "$HOP_NUM" "$IP" "$CITY" "$COUNTRY" \
                     "$STATUS" "$RISICO_TYPE" "$ISP" >> "$TEMP_FILE"
@@ -126,22 +125,24 @@ if [ ! -s "$TEMP_FILE" ] || [ -z "$(tr -d '[:space:]' < "$TEMP_FILE")" ]; then
     echo "Geen actieve hops gevonden of doel onbereikbaar."
 else
     sort "$TEMP_FILE" | while IFS='|' read -r hop ip city country status risico isp; do
-        # Trim spaties die printf heeft toegevoegd bij opslag
         city=$(echo "$city" | tr -d ' ')
         status=$(echo "$status" | tr -d ' ')
         risico=$(echo "$risico" | tr -d ' ')
 
-        # Kleur bepalen op basis van status/risico
-        COLOR=""
-        RESET=""
+        # Kleur op basis van risico-type en status
+        COLOR=$(printf '\033[0m')
+        RESET=$(printf '\033[0m')
+
         if [ "$risico" = "Autoritair" ]; then
-            COLOR=$(printf '\033[0;31m'); RESET=$(printf '\033[0m')
+            COLOR=$(printf '\033[0;31m')       # Rood
         elif [ "$risico" = "Sanctieland" ]; then
-            COLOR=$(printf '\033[0;33m'); RESET=$(printf '\033[0m')
+            COLOR=$(printf '\033[0;35m')       # Paars
         elif [ "$risico" = "Privacy-risico" ]; then
-            COLOR=$(printf '\033[1;33m'); RESET=$(printf '\033[0m')
+            COLOR=$(printf '\033[0;33m')       # Oranje
         elif [ "$status" = "BUITEN-EU" ]; then
-            COLOR=$(printf '\033[0;37m'); RESET=$(printf '\033[0m')
+            COLOR=$(printf '\033[1;33m')       # Geel
+        elif [ "$status" = "OK" ]; then
+            COLOR=$(printf '\033[0;32m')       # Groen
         fi
 
         printf "%-4s %-16s %-16s %-16s ${COLOR}%-14s${RESET} %-16s %s\n" \
@@ -150,4 +151,4 @@ else
 fi
 
 echo "-------------------------------------------------------------------------------------------------"
-echo -e "${RED}!! RISICO !!${NC} Rood=Autoritair  ${ORANGE}Oranje=Sanctieland${NC}  ${YELLOW}LET OP=Privacy-risico${NC}  Grijs=Buiten-EU"
+echo -e "${GREEN}OK${NC}=EU/Veilig  ${YELLOW}BUITEN-EU${NC}=Niet-EU  ${ORANGE}LET OP${NC}=Privacy-risico  ${PURPLE}!! RISICO !!${NC}=Sanctieland  ${RED}!! RISICO !!${NC}=Autoritair"
