@@ -1,8 +1,9 @@
 #!/bin/bash
 
-# Kleurcodes
 RED='\033[0;31m'
+ORANGE='\033[0;33m'
 YELLOW='\033[1;33m'
+GREY='\033[0;37m'
 BOLD='\033[1m'
 NC='\033[0m'
 
@@ -12,20 +13,20 @@ if [ -z "$1" ]; then
 fi
 
 TARGET=$1
-RISK_COUNTRIES="RU CN KP IR SY"
+AUTHORITARIAN="RU CN KP IR SY BY MM CU AF"
+SANCTIONED="IQ LY SD SO YE ZW BI CD ER VE"
+PRIVACY="IN BR PK BD"
 
 echo -e "${BOLD}Traceroute naar: $TARGET${NC}"
 echo "Max 30 hops, niet-reagerende hops worden overgeslagen..."
 
 TEMP_FILE=$(mktemp)
 
-# Vang alle output op, filter header- en warningregels, parse hops
-# -n: Geen DNS  -q 1: 1 pakket per hop  -w 2: wacht max 2s  -m 30: max 30 hops
 HOPS=$(traceroute -n -q 1 -w 2 -m 30 "$TARGET" 2>&1 \
     | grep -vE "^traceroute|Warning:|^$" \
     | awk '{print $1","$2}')
 
-# Resolve eindbestemming via dig of host
+# Resolve eindbestemming
 if command -v dig >/dev/null 2>&1; then
     TARGET_IP=$(dig +short A "$TARGET" 2>/dev/null | grep -E '^[0-9]+\.' | head -1)
 elif command -v host >/dev/null 2>&1; then
@@ -33,8 +34,6 @@ elif command -v host >/dev/null 2>&1; then
 else
     TARGET_IP=""
 fi
-
-# Als TARGET al een IP is, gebruik het rechtstreeks
 if [ -z "$TARGET_IP" ] && echo "$TARGET" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
     TARGET_IP="$TARGET"
 fi
@@ -55,56 +54,62 @@ for line in $HOPS; do
         HOP_NUM=$(echo "$line" | cut -d',' -f1)
         IP=$(echo "$line" | cut -d',' -f2)
 
-        if [ -z "$IP" ]; then
-            exit 0
-        fi
+        if [ -z "$IP" ]; then exit 0; fi
 
-        # Toon * hops als "geen antwoord"
         if [ "$IP" = "*" ]; then
-            printf "%02d|%-15s|%-15s|%-15s|%-14s|%s\n" \
-                "$HOP_NUM" "*" "Geen antwoord" "-" "Tijdlimiet" "-" >> "$TEMP_FILE"
+            # Geen kleur: STAD|LAND|STATUS|RISICO|ISP
+            printf "%02d|%s|%s|%s|%s|%s|%s\n" \
+                "$HOP_NUM" "*" "-" "-" "Tijdlimiet" "-" "-" >> "$TEMP_FILE"
             exit 0
         fi
 
-        # Privé IP check
-        if echo "$IP" | grep -qE '^127\.|^10\.|^192\.168\.'; then
-            printf "%02d|%-15s|%-15s|%-15s|%-14s|%s\n" \
-                "$HOP_NUM" "$IP" "Lokaal" "Intern Netwerk" "-" "-" >> "$TEMP_FILE"
-        elif echo "$IP" | grep -qE '^172\.(1[6-9]|2[0-9]|3[0-1])\.'; then
-            printf "%02d|%-15s|%-15s|%-15s|%-14s|%s\n" \
-                "$HOP_NUM" "$IP" "Lokaal" "Intern Netwerk" "-" "-" >> "$TEMP_FILE"
+        if echo "$IP" | grep -qE '^127\.|^10\.|^192\.168\.|^172\.(1[6-9]|2[0-9]|3[0-1])\.'; then
+            printf "%02d|%s|%s|%s|%s|%s|%s\n" \
+                "$HOP_NUM" "$IP" "Lokaal" "Intern Netwerk" "-" "-" "-" >> "$TEMP_FILE"
         else
-            # API: volgorde continentCode,country,city,countryCode,isp
             DATA=$(curl -s --max-time 2 \
-                "http://ip-api.com/csv/$IP?fields=continentCode,country,city,countryCode,isp")
+                "http://ip-api.com/csv/$IP?fields=status,continentCode,country,city,countryCode,isp")
 
             if [ $? -ne 0 ] || [ -z "$DATA" ]; then
-                printf "%02d|%-15s|%-15s|%-15s|%-14s|%s\n" \
-                    "$HOP_NUM" "$IP" "Timeout" "Onbekend" "API fout" "-" >> "$TEMP_FILE"
+                printf "%02d|%s|%s|%s|%s|%s|%s\n" \
+                    "$HOP_NUM" "$IP" "-" "Onbekend" "API fout" "-" "-" >> "$TEMP_FILE"
             else
-                CONT=$(echo "$DATA"    | cut -d',' -f1)
-                COUNTRY=$(echo "$DATA" | cut -d',' -f2)
-                CITY=$(echo "$DATA"    | cut -d',' -f3)
-                CODE=$(echo "$DATA"    | cut -d',' -f4)
-                ISP=$(echo "$DATA"     | cut -d',' -f5)
+                API_STATUS=$(echo "$DATA" | cut -d',' -f1)
+                CONT=$(echo "$DATA"       | cut -d',' -f2)
+                COUNTRY=$(echo "$DATA"    | cut -d',' -f3)
+                CITY=$(echo "$DATA"       | cut -d',' -f4)
+                CODE=$(echo "$DATA"       | cut -d',' -f5)
+                ISP=$(echo "$DATA"        | cut -d',' -f6)
 
-                LABEL="OK"
-                PREFIX=""
-                SUFFIX=""
+                # Lege stad opvangen
+                if [ -z "$CITY" ]; then CITY="-"; fi
 
-                if echo "$RISK_COUNTRIES" | grep -qw "$CODE"; then
-                    PREFIX=$(printf '\033[0;31m')
-                    SUFFIX=$(printf '\033[0m')
-                    LABEL="!! RISICO !!"
-                elif [ "$CONT" != "EU" ]; then
-                    PREFIX=$(printf '\033[1;33m')
-                    SUFFIX=$(printf '\033[0m')
-                    LABEL="BUITEN-EU"
+                if [ "$API_STATUS" = "fail" ]; then
+                    printf "%02d|%s|%s|%s|%s|%s|%s\n" \
+                        "$HOP_NUM" "$IP" "-" "Onbekend" "Onbekend" "-" "-" >> "$TEMP_FILE"
+                    exit 0
                 fi
 
-                printf "%02d|%-15s|%-15s|%-15s|%s%-14s%s|%s\n" \
+                STATUS="OK"
+                RISICO_TYPE="-"
+
+                if echo " $AUTHORITARIAN " | grep -q " $CODE "; then
+                    STATUS="!! RISICO !!"
+                    RISICO_TYPE="Autoritair"
+                elif echo " $SANCTIONED " | grep -q " $CODE "; then
+                    STATUS="!! RISICO !!"
+                    RISICO_TYPE="Sanctieland"
+                elif echo " $PRIVACY " | grep -q " $CODE "; then
+                    STATUS="LET OP"
+                    RISICO_TYPE="Privacy-risico"
+                elif [ "$CONT" != "EU" ]; then
+                    STATUS="BUITEN-EU"
+                fi
+
+                # Sla op ZONDER kleurcodes — kleur wordt toegepast bij weergave
+                printf "%02d|%s|%s|%s|%s|%s|%s\n" \
                     "$HOP_NUM" "$IP" "$CITY" "$COUNTRY" \
-                    "$PREFIX" "$LABEL" "$SUFFIX" "$ISP" >> "$TEMP_FILE"
+                    "$STATUS" "$RISICO_TYPE" "$ISP" >> "$TEMP_FILE"
             fi
         fi
     ) &
@@ -113,17 +118,36 @@ done
 wait
 
 echo ""
-printf "${BOLD}%-4s %-15s %-15s %-15s %-14s %s${NC}\n" \
-    "HOP" "IP-ADRES" "STAD" "LAND" "STATUS" "PROVIDER"
-echo "-----------------------------------------------------------------------------------------"
+printf "${BOLD}%-4s %-16s %-16s %-16s %-14s %-16s %s${NC}\n" \
+    "HOP" "IP-ADRES" "STAD" "LAND" "STATUS" "RISICO-TYPE" "PROVIDER"
+echo "-------------------------------------------------------------------------------------------------"
 
 if [ ! -s "$TEMP_FILE" ] || [ -z "$(tr -d '[:space:]' < "$TEMP_FILE")" ]; then
     echo "Geen actieve hops gevonden of doel onbereikbaar."
 else
-    sort "$TEMP_FILE" | while IFS='|' read -r hop ip city country status isp; do
-        printf "%-4s %-15s %-15s %-15s %-14s %s\n" \
-            "$hop" "$ip" "$city" "$country" "$status" "$isp"
+    sort "$TEMP_FILE" | while IFS='|' read -r hop ip city country status risico isp; do
+        # Trim spaties die printf heeft toegevoegd bij opslag
+        city=$(echo "$city" | tr -d ' ')
+        status=$(echo "$status" | tr -d ' ')
+        risico=$(echo "$risico" | tr -d ' ')
+
+        # Kleur bepalen op basis van status/risico
+        COLOR=""
+        RESET=""
+        if [ "$risico" = "Autoritair" ]; then
+            COLOR=$(printf '\033[0;31m'); RESET=$(printf '\033[0m')
+        elif [ "$risico" = "Sanctieland" ]; then
+            COLOR=$(printf '\033[0;33m'); RESET=$(printf '\033[0m')
+        elif [ "$risico" = "Privacy-risico" ]; then
+            COLOR=$(printf '\033[1;33m'); RESET=$(printf '\033[0m')
+        elif [ "$status" = "BUITEN-EU" ]; then
+            COLOR=$(printf '\033[0;37m'); RESET=$(printf '\033[0m')
+        fi
+
+        printf "%-4s %-16s %-16s %-16s ${COLOR}%-14s${RESET} %-16s %s\n" \
+            "$hop" "$ip" "$city" "$country" "$status" "$risico" "$isp"
     done
 fi
 
-echo "-----------------------------------------------------------------------------------------"
+echo "-------------------------------------------------------------------------------------------------"
+echo -e "${RED}!! RISICO !!${NC} Rood=Autoritair  ${ORANGE}Oranje=Sanctieland${NC}  ${YELLOW}LET OP=Privacy-risico${NC}  Grijs=Buiten-EU"
