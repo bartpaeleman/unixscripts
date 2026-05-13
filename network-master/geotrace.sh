@@ -163,4 +163,4 @@ else
 fi
 
 echo "---------------------------------------------------------------------------------------------------------------"
-echo -e "${GREEN}OK${NC}=EU/Veilig  ${YELLOW}BUITEN-EU${NC}=Niet-EU  ${CYAN}LET OP${NC}=Privacy-risico  ${PURPLE}RISICO${NC}=Sanctieland  ${RED}RISICO${NC}=Autoritair"
+echo -e "${GREEN}EU/Veilig${NC}  ${YELLOW}Niet-EU${NC}  ${CYAN}Privacy-risico${NC}  ${PURPLE}Sanctieland${NC}  ${RED}Autoritair${NC}"
