@@ -106,6 +106,29 @@ def analyze():
             score += vt_score
             reasons.append(f"VirusTotal detected {malicious_hits} malicious hits (+{vt_score})")
 
+    # 5. IOC module scoring (Shodan)
+    if schema.ioc and schema.ioc.get("shodan"):
+        shodan_data = schema.ioc["shodan"]
+
+        # Check for exposed sensitive ports
+        exposed_ports = shodan_data.get("ports", [])
+        sensitive_ports = {
+            21: "FTP", 22: "SSH", 23: "Telnet",
+            3306: "MySQL", 5432: "PostgreSQL",
+            27017: "MongoDB", 3389: "RDP"
+        }
+
+        found_sensitive = [sensitive_ports[p] for p in exposed_ports if p in sensitive_ports]
+        if found_sensitive:
+            score += 20
+            reasons.append(f"Shodan detected exposed sensitive ports: {', '.join(found_sensitive)} (+20)")
+
+        # Check for known vulnerabilities
+        vulns = shodan_data.get("vulns", [])
+        if vulns:
+            score += 30
+            reasons.append(f"Shodan detected {len(vulns)} known vulnerabilities (+30)")
+
     # Finalize score
     schema.risk_score = min(100, score)
     schema.risk_reasons = reasons
