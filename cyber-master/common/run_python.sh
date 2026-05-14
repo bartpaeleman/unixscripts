@@ -7,8 +7,9 @@ REQUIREMENTS="$BASE_DIR/requirements.txt"
 
 # Check if requirements.txt exists and update/install dependencies
 if [ -f "$REQUIREMENTS" ]; then
-    echo "[info] Checking dependencies from $REQUIREMENTS..."
-    python3 -m pip install -r "$REQUIREMENTS" -q
+    # Print to stderr so we don't break stdout JSON pipelines
+    echo "[info] Checking dependencies from $REQUIREMENTS..." >&2
+    python3 -m pip install -r "$REQUIREMENTS" -q >&2
 fi
 
 # Run the passed python script and arguments
