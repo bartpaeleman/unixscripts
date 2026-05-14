@@ -16,7 +16,7 @@ show_help() {
     echo "  mail <file>       Run the Phishing Email Analyzer on an .eml file."
     echo "  enrich <target>   Run the Passive DNS & URL Enricher."
     echo "  score             Run the Risk Scorer (requires JSON via stdin)."
-    echo "  report [format]   Generate a Markdown or HTML report (requires JSON via stdin)."
+    echo "  report [format]   Generate a Markdown, HTML, or PDF report (requires JSON via stdin)."
     echo ""
     echo "Pipeline Wrappers:"
     echo "  threatctx <target> Run the full enrichment, scoring, and reporting pipeline."
@@ -60,11 +60,13 @@ run_interactive() {
         echo "1) Run Full Threat Context and generate Markdown Report (threatctx)"
         echo "2) Output raw JSON (Enrich + Score)"
         echo "3) Generate HTML Report"
-        read -p "Select action (1/2/3): " recon_action
+        echo "4) Generate PDF Report"
+        read -p "Select action (1/2/3/4): " recon_action
         case "$recon_action" in
             1) threatctx "$target" ;;
             2) echo "{\"target\": \"$target\"}" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/enrich/enricher.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/scoring/risk_scorer.py" ;;
             3) echo "{\"target\": \"$target\"}" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/enrich/enricher.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/scoring/risk_scorer.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/reporting/reporter.py" --format html ;;
+            4) echo "{\"target\": \"$target\"}" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/enrich/enricher.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/scoring/risk_scorer.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/reporting/reporter.py" --format pdf ;;
             *) echo "Invalid choice." ;;
         esac
     else
