@@ -1,0 +1,117 @@
+import sys
+import os
+import json
+import typer
+from typing import Optional
+from datetime import datetime
+from dateutil.parser import parse as parse_date
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from common.core import UnifiedSchema, get_logger
+
+app = typer.Typer()
+logger = get_logger("risk_scorer")
+
+FINANCIAL_KEYWORDS = ["bank", "login", "secure", "auth", "finance", "crypto", "wallet", "paypal"]
+BULLETPROOF_HOSTERS_AND_TOR = ["tor", "bulletproof", "floki", "shinjiru", "koddos", "veesp"]
+
+@app.command()
+def analyze():
+    """
+    Contextual Risk Scoring Engine.
+    Reads a UnifiedSchema JSON object from stdin, calculates risk, and outputs to stdout.
+    """
+    if sys.stdin.isatty():
+        logger.error("No input provided. Pipe a Unified JSON object via stdin.")
+        sys.exit(1)
+
+    try:
+        stdin_data = sys.stdin.read().strip()
+        if not stdin_data:
+            logger.error("Empty input received.")
+            sys.exit(1)
+        data = json.loads(stdin_data)
+        schema = UnifiedSchema(**data)
+    except Exception as e:
+        logger.error(f"Failed to parse stdin as JSON or validate schema: {e}")
+        sys.exit(1)
+
+    # Initialize scoring
+    score = 0
+    reasons = []
+
+    # 1. Mail module scoring
+    if schema.mail:
+        auth = schema.mail.get("auth", {})
+        if auth.get("spf") == "fail":
+            score += 30
+            reasons.append("SPF validation failed (+30)")
+
+        if auth.get("dmarc") == "none" or auth.get("dmarc") == "unknown":
+            # Taking "none" roughly as "not enforced/missing"
+            score += 30
+            reasons.append("DMARC policy is none/missing (+30)")
+
+        anomalies = schema.mail.get("anomalies", [])
+        has_reply_to_anomaly = any("Reply-To mismatch" in a for a in anomalies)
+        if has_reply_to_anomaly:
+            score += 20
+            reasons.append("Suspicious Reply-To mismatch detected (+20)")
+
+    # 2. ASN/Enrich module scoring
+    if schema.asn:
+        asn_desc = str(schema.asn.get("asn", "")).lower()
+        isp_desc = str(schema.asn.get("isp", "")).lower()
+        org_desc = str(schema.asn.get("org", "")).lower()
+
+        is_bulletproof = any(kw in asn_desc or kw in isp_desc or kw in org_desc for kw in BULLETPROOF_HOSTERS_AND_TOR)
+        if is_bulletproof:
+            score += 40
+            reasons.append("ASN matches known bulletproof hoster or Tor exit node (+40)")
+
+    if schema.ioc and schema.ioc.get("whois"):
+        creation_date_str = schema.ioc["whois"].get("creation_date")
+        if creation_date_str:
+            try:
+                import datetime as dt
+                creation_date = parse_date(creation_date_str).replace(tzinfo=dt.timezone.utc)
+                age_days = (dt.datetime.now(dt.timezone.utc) - creation_date).days
+                if age_days < 30:
+                    score += 20
+                    reasons.append(f"Newly registered domain (Age: {age_days} days) (+20)")
+            except Exception as e:
+                logger.warning(f"Failed to parse WHOIS creation date: {e}")
+
+    # 3. TLS module scoring
+    if schema.tls:
+        issuer = str(schema.tls.get("issuer", "")).lower()
+        target_lower = schema.target.lower()
+
+        is_financial_target = any(kw in target_lower for kw in FINANCIAL_KEYWORDS)
+        if "let's encrypt" in issuer and is_financial_target:
+            score += 20
+            reasons.append("Let's Encrypt cert used on a financial/login target (+20)")
+
+        days_until_expiry = schema.tls.get("days_until_expiry")
+        if days_until_expiry is not None and days_until_expiry < 0:
+            score += 40
+            reasons.append("TLS Certificate is expired (+40)")
+
+    # 4. IOC module scoring (VirusTotal)
+    if schema.ioc and schema.ioc.get("virustotal"):
+        vt_stats = schema.ioc["virustotal"].get("vt_stats", {})
+        malicious_hits = vt_stats.get("malicious", 0)
+        if malicious_hits > 0:
+            vt_score = min(50, malicious_hits * 5)
+            score += vt_score
+            reasons.append(f"VirusTotal detected {malicious_hits} malicious hits (+{vt_score})")
+
+    # Finalize score
+    schema.risk_score = min(100, score)
+    schema.risk_reasons = reasons
+
+    # Output strictly to stdout
+    print(schema.model_dump_json())
+
+if __name__ == "__main__":
+    app()
