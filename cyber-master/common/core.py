@@ -4,6 +4,7 @@ import logging
 from typing import Dict, Any, Optional
 from pydantic import BaseModel, Field, ConfigDict
 from rich.logging import RichHandler
+from rich.console import Console
 
 # 1. Unified JSON Schema model
 class UnifiedSchema(BaseModel):
@@ -60,7 +61,8 @@ def get_logger(name: str, level: int = logging.INFO) -> logging.Logger:
         logger.setLevel(level)
 
         # Create rich handler
-        rich_handler = RichHandler(rich_tracebacks=True, markup=True)
+        console = Console(stderr=True)
+        rich_handler = RichHandler(console=console, rich_tracebacks=True, markup=True)
         rich_handler.setLevel(level)
 
         # Create formatter
