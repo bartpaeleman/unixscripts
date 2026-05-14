@@ -1,7 +1,7 @@
 import os
 import yaml
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from pydantic import BaseModel, Field, ConfigDict
 from rich.logging import RichHandler
 from rich.console import Console
@@ -13,6 +13,7 @@ class UnifiedSchema(BaseModel):
     """
     target: str = Field(..., description="Target identifier (e.g., IP, domain, URL, email)")
     risk_score: int = Field(default=0, description="Risk score associated with the target")
+    risk_reasons: Optional[List[str]] = Field(default_factory=list, description="Reasons for the calculated risk score")
 
     # Optional nested dictionaries for specific modules
     asn: Optional[Dict[str, Any]] = Field(default=None, description="ASN enrichment data")
