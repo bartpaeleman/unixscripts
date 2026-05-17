@@ -28,50 +28,90 @@ show_help() {
     echo ""
 }
 
-run_interactive() {
-    echo -e "\033[1;36mCyber-Master Interactive Mode\033[0m"
-    echo "1) Email/Phishing Analysis"
-    echo "2) Domain/IP Recon & Full Threat Context"
-    read -p "Select module (1/2): " module_choice
+# Colors
+GREEN='\033[1;32m'
+CYAN='\033[1;36m'
+YELLOW='\033[1;33m'
+RED='\033[1;31m'
+NC='\033[0m'
 
-    if [ "$module_choice" == "1" ]; then
-        read -p "Enter path to .eml file or raw headers: " eml_file
-        if [ ! -f "$eml_file" ]; then
-            echo "File not found: $eml_file"
-            exit 1
-        fi
-        echo "1) Show Terminal UI (mailtrace)"
-        echo "2) Extract key findings (mhdr)"
-        echo "3) Output raw JSON"
-        read -p "Select action (1/2/3): " email_action
-        case "$email_action" in
-            1) mailtrace "$eml_file" ;;
-            2) cat "$eml_file" | mhdr ;;
-            3) "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/mail/mail_analyzer.py" "$eml_file" --json ;;
-            *) echo "Invalid choice." ;;
-        esac
+pause() {
+    echo -e "\n${YELLOW}Press Enter to continue...${NC}"
+    read -r
+}
 
-    elif [ "$module_choice" == "2" ]; then
-        read -p "Enter target IP or Domain: " target
-        if [ -z "$target" ]; then
-            echo "Target cannot be empty."
-            exit 1
-        fi
-        echo "1) Run Full Threat Context and generate Markdown Report (threatctx)"
-        echo "2) Output raw JSON (Enrich + Score)"
-        echo "3) Generate HTML Report"
-        echo "4) Generate PDF Report"
-        read -p "Select action (1/2/3/4): " recon_action
-        case "$recon_action" in
-            1) threatctx "$target" ;;
-            2) echo "{\"target\": \"$target\"}" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/enrich/enricher.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/scoring/risk_scorer.py" ;;
-            3) echo "{\"target\": \"$target\"}" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/enrich/enricher.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/scoring/risk_scorer.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/reporting/reporter.py" --format html ;;
-            4) echo "{\"target\": \"$target\"}" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/enrich/enricher.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/scoring/risk_scorer.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/reporting/reporter.py" --format pdf ;;
-            *) echo "Invalid choice." ;;
-        esac
-    else
-        echo "Invalid choice."
+get_eml_file() {
+    read -p "Enter path to .eml file or raw headers: " eml_file
+    if [ ! -f "$eml_file" ]; then
+        echo -e "${RED}File not found: $eml_file${NC}"
+        pause
+        return 1
     fi
+    return 0
+}
+
+get_target() {
+    read -p "Enter target IP or Domain: " target
+    if [ -z "$target" ]; then
+        echo -e "${RED}Target cannot be empty.${NC}"
+        pause
+        return 1
+    fi
+    return 0
+}
+
+run_interactive() {
+    while true; do
+        clear
+        echo -e "${CYAN}================================================${NC}"
+        echo -e "         ${CYAN}CYBER-MASTER CONTROL PANEL${NC}"
+        echo -e "${CYAN}================================================${NC}"
+        echo -e "${GREEN}--- Email / Phishing Analysis ---${NC}"
+        echo "1) Analyze Email and Show Terminal UI (mailtrace)"
+        echo "2) Extract Key Findings from Email (mhdr)"
+        echo "3) Output Email Analysis as Raw JSON"
+        echo -e "\n${GREEN}--- Recon & Threat Context ---${NC}"
+        echo "4) Recon Domain/IP and Generate Markdown Report"
+        echo "5) Recon Domain/IP and Generate HTML Report"
+        echo "6) Recon Domain/IP and Generate PDF Report"
+        echo "7) Output Recon & Risk Score as Raw JSON"
+        echo -e "\n${YELLOW}X) Exit${NC}"
+        echo -e "${CYAN}================================================${NC}"
+
+        read -p "Select action: " choice
+
+        case "$choice" in
+            1)
+                if get_eml_file; then mailtrace "$eml_file"; pause; fi
+                ;;
+            2)
+                if get_eml_file; then cat "$eml_file" | mhdr; pause; fi
+                ;;
+            3)
+                if get_eml_file; then "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/mail/mail_analyzer.py" "$eml_file" --json; pause; fi
+                ;;
+            4)
+                if get_target; then threatctx "$target"; pause; fi
+                ;;
+            5)
+                if get_target; then echo "{\"target\": \"$target\"}" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/enrich/enricher.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/scoring/risk_scorer.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/reporting/reporter.py" --format html; pause; fi
+                ;;
+            6)
+                if get_target; then echo "{\"target\": \"$target\"}" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/enrich/enricher.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/scoring/risk_scorer.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/reporting/reporter.py" --format pdf; pause; fi
+                ;;
+            7)
+                if get_target; then echo "{\"target\": \"$target\"}" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/enrich/enricher.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/scoring/risk_scorer.py"; pause; fi
+                ;;
+            [xX])
+                echo -e "${GREEN}Exiting...${NC}"
+                exit 0
+                ;;
+            *)
+                echo -e "${RED}Invalid choice.${NC}"
+                pause
+                ;;
+        esac
+    done
 }
 
 if [ $# -eq 0 ]; then
