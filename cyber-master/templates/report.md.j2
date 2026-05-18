@@ -40,4 +40,10 @@
 {% if schema.ioc.rdns %}
 - **Reverse DNS:** {{ schema.ioc.rdns }}
 {% endif %}
+{% if schema.ioc.shodan %}
+### Shodan Intelligence
+- **Open Ports:** {{ schema.ioc.shodan.ports | join(', ') }}
+- **OS:** {{ schema.ioc.shodan.os }}
+- **Vulnerabilities:** {{ schema.ioc.shodan.vulns | length }}
+{% endif %}
 {% endif %}

@@ -122,6 +122,37 @@ async def check_virustotal(target: str, client: httpx.AsyncClient) -> Dict[str, 
         logger.error(f"Error checking VirusTotal: {e}")
     return {}
 
+async def check_shodan(target: str, client: httpx.AsyncClient) -> Dict[str, Any]:
+    """Check Shodan API for open ports and services."""
+    api_key = config.get("SHODAN_API_KEY")
+    if not api_key:
+        return {}
+
+    # Simple check to see if target looks like an IP
+    import ipaddress
+    try:
+        ipaddress.ip_address(target)
+    except ValueError:
+        # Shodan host lookup requires an IP. If it's a domain, we skip or could resolve it first.
+        # For simplicity, we skip if it's not a direct IP.
+        return {}
+
+    try:
+        resp = await client.get(f"https://api.shodan.io/shodan/host/{target}?key={api_key}")
+        if resp.status_code == 200:
+            data = resp.json()
+            return {
+                "ports": data.get("ports", []),
+                "vulns": data.get("vulns", []),
+                "os": data.get("os", "unknown"),
+                "hostnames": data.get("hostnames", [])
+            }
+        elif resp.status_code == 404:
+            return {"status": "Not found in Shodan"}
+    except Exception as e:
+        logger.error(f"Error checking Shodan: {e}")
+    return {}
+
 async def get_tls_info(target: str) -> Dict[str, Any]:
     """Retrieve TLS certificate info."""
     ext = tldextract.extract(target)
@@ -196,10 +227,11 @@ async def enrich(schema: UnifiedSchema):
             check_abuseipdb(target, client),
             check_virustotal(target, client),
             get_tls_info(target),
+            check_shodan(target, client),
             return_exceptions=True
         )
 
-    asn_data, whois_rdns_data, abuse_data, vt_data, tls_data = [
+    asn_data, whois_rdns_data, abuse_data, vt_data, tls_data, shodan_data = [
         res if not isinstance(res, Exception) else {} for res in results
     ]
 
@@ -216,6 +248,7 @@ async def enrich(schema: UnifiedSchema):
         "rdns": whois_rdns_data.get("rdns", ""),
         "abuseipdb": abuse_data,
         "virustotal": vt_data,
+        "shodan": shodan_data,
         "domain_info": domain_info
     })
 
