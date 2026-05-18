@@ -92,18 +92,39 @@ def reconstruct_relay_chain(received_headers: List[str]) -> List[Dict[str, Any]]
     chain.reverse()
     return chain
 
-def extract_urls(mail: mailparser.MailParser) -> List[str]:
-    urls = set()
-    url_pattern = re.compile(r'https?://[^\s<>"\']+|www\.[^\s<>"\']+')
-    if mail.body:
-        urls.update(url_pattern.findall(mail.body))
-    if mail.text_plain:
-        for t in mail.text_plain:
-            urls.update(url_pattern.findall(t))
+def extract_urls(mail: mailparser.MailParser) -> List[Dict[str, str]]:
+    urls = []
+    seen = set()
+
+    # Try to extract href and inner text from HTML bodies
     if mail.text_html:
         for t in mail.text_html:
-            urls.update(url_pattern.findall(t))
-    return list(urls)
+            # Simple regex to find <a href="url">text</a>
+            # Note: This is a basic parser and might not catch highly obfuscated HTML
+            for match in re.finditer(r'<a\s+(?:[^>]*?\s+)?href=["\'](.*?)["\'][^>]*>(.*?)</a>', t, re.IGNORECASE | re.DOTALL):
+                url = match.group(1).strip()
+                # Strip internal tags from display text
+                text = re.sub(r'<[^>]+>', '', match.group(2)).strip()
+                if not text:
+                    text = "[No Text/Image]"
+
+                if url not in seen:
+                    seen.add(url)
+                    urls.append({"url": url, "text": text})
+
+    # Fallback to plain regex for plain text or anything missed
+    url_pattern = re.compile(r'https?://[^\s<>"\']+|www\.[^\s<>"\']+')
+    texts_to_search = []
+    if mail.body: texts_to_search.append(mail.body)
+    if mail.text_plain: texts_to_search.extend(mail.text_plain)
+
+    for t in texts_to_search:
+        for url in url_pattern.findall(t):
+            if url not in seen:
+                seen.add(url)
+                urls.append({"url": url, "text": url}) # Raw text is just the URL itself
+
+    return urls
 
 @app.command()
 def analyze(
@@ -247,10 +268,16 @@ def analyze(
 
             if urls:
                 console.print(f"\n[bold]Extracted URLs ({len(urls)}):[/bold]")
-                for u in urls[:5]:
-                    console.print(f"  - {u}")
-                if len(urls) > 5:
-                    console.print("  ... and more")
+                url_table = Table(show_header=True, header_style="bold magenta")
+                url_table.add_column("Display Text")
+                url_table.add_column("Actual Link")
+
+                # Show up to 10 urls to avoid completely filling the screen even with pager
+                for u in urls[:10]:
+                    url_table.add_row(u["text"][:50] + ("..." if len(u["text"]) > 50 else ""), u["url"])
+                console.print(url_table)
+                if len(urls) > 10:
+                    console.print(f"  ... and {len(urls) - 10} more")
 
             if attachments:
                 console.print(f"\n[bold]Attachments ({len(attachments)}):[/bold]")

@@ -12,6 +12,9 @@
         .score-low { color: green; }
         ul { margin-bottom: 20px; }
         li { margin-bottom: 5px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 15px; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
     </style>
 </head>
 <body>
@@ -64,6 +67,27 @@
 
     {% if schema.ioc %}
     <h2>Indicators of Compromise (IOCs)</h2>
+
+    {% if schema.ioc.urls %}
+    <h3>Extracted URLs</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Display Text</th>
+                <th>Actual Link</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for u in schema.ioc.urls %}
+            <tr>
+                <td>{{ u.text }}</td>
+                <td>{{ u.url }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
     <ul>
     {% if schema.ioc.virustotal %}
         <li><strong>VirusTotal Malicious Hits:</strong> {{ schema.ioc.virustotal.vt_stats.malicious }}</li>
