@@ -44,9 +44,18 @@ def extract_auth_results(headers: Dict[str, Any]) -> Dict[str, str]:
 
 def reconstruct_relay_chain(received_headers: List[str]) -> List[Dict[str, Any]]:
     chain = []
+    import socket
     for i, header in enumerate(received_headers):
         ip_match = re.search(r'\[([\d\.]+|[a-fA-F0-9:]+)\]|\(([\d\.]+|[a-fA-F0-9:]+)\)', header)
         ip = ip_match.group(1) or ip_match.group(2) if ip_match else "unknown"
+
+        hostname = "unknown"
+        if ip != "unknown":
+            try:
+                # Basic reverse DNS lookup
+                hostname, _, _ = socket.gethostbyaddr(ip)
+            except Exception:
+                pass
 
         parts = header.split(";")
         date_str = parts[-1].strip() if len(parts) > 1 else ""
@@ -63,6 +72,7 @@ def reconstruct_relay_chain(received_headers: List[str]) -> List[Dict[str, Any]]
             "hop": i + 1,
             "raw": header,
             "ip": ip,
+            "hostname": hostname,
             "date": parsed_date.isoformat() if parsed_date else None,
             "timezone": tz
         })
@@ -201,9 +211,23 @@ def analyze(
     if json_output:
         print(schema.model_dump_json())
     else:
+        # Determine risk label and color
+        if schema.risk_score <= 20:
+            risk_label = "Low"
+            risk_color = "green"
+        elif schema.risk_score <= 50:
+            risk_label = "Medium"
+            risk_color = "yellow"
+        elif schema.risk_score <= 80:
+            risk_label = "High"
+            risk_color = "red"
+        else:
+            risk_label = "Critical"
+            risk_color = "bold red"
+
         console.print(Panel(f"[bold blue]Phishing Email Analysis:[/bold blue] {mail.subject}", expand=False))
         console.print(f"[bold]Target (Sender):[/bold] {from_email}")
-        console.print(f"[bold]Risk Score:[/bold] [red]{schema.risk_score}[/red]" if schema.risk_score > 50 else f"[bold]Risk Score:[/bold] [green]{schema.risk_score}[/green]")
+        console.print(f"[bold]Risk Score:[/bold] [{risk_color}]{schema.risk_score} ({risk_label})[/{risk_color}]")
 
         console.print("\n[bold]Authentication Results:[/bold]")
         for k, v in auth_results.items():
@@ -235,11 +259,12 @@ def analyze(
         chain_table = Table(show_header=True, header_style="bold cyan")
         chain_table.add_column("Hop")
         chain_table.add_column("IP")
+        chain_table.add_column("Resolved Hostname")
         chain_table.add_column("Date")
         chain_table.add_column("Delay (s)")
         for hop in relay_chain:
             delay = str(hop.get("delay_seconds", ""))
-            chain_table.add_row(str(hop["hop"]), hop["ip"], hop.get("date", ""), delay)
+            chain_table.add_row(str(hop["hop"]), hop["ip"], hop.get("hostname", "unknown"), hop.get("date", ""), delay)
         console.print(chain_table)
 
 if __name__ == "__main__":

@@ -41,7 +41,7 @@ pause() {
 }
 
 get_eml_file() {
-    read -p "Enter path to .eml file or raw headers: " eml_file
+    read -e -p "Enter path to .eml file or raw headers: " eml_file
     if [ ! -f "$eml_file" ]; then
         echo -e "${RED}File not found: $eml_file${NC}"
         pause
@@ -51,7 +51,7 @@ get_eml_file() {
 }
 
 get_target() {
-    read -p "Enter target IP or Domain: " target
+    read -e -p "Enter target IP or Domain: " target
     if [ -z "$target" ]; then
         echo -e "${RED}Target cannot be empty.${NC}"
         pause
