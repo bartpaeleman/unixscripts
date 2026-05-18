@@ -17,7 +17,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from common.core import UnifiedSchema, get_logger
 
 app = typer.Typer()
-console = Console()
+# Force terminal to allow coloring through the pager pipe
+console = Console(force_terminal=True)
 logger = get_logger("mail_analyzer")
 
 def extract_auth_results(headers: Dict[str, Any]) -> Dict[str, str]:
@@ -91,18 +92,39 @@ def reconstruct_relay_chain(received_headers: List[str]) -> List[Dict[str, Any]]
     chain.reverse()
     return chain
 
-def extract_urls(mail: mailparser.MailParser) -> List[str]:
-    urls = set()
-    url_pattern = re.compile(r'https?://[^\s<>"\']+|www\.[^\s<>"\']+')
-    if mail.body:
-        urls.update(url_pattern.findall(mail.body))
-    if mail.text_plain:
-        for t in mail.text_plain:
-            urls.update(url_pattern.findall(t))
+def extract_urls(mail: mailparser.MailParser) -> List[Dict[str, str]]:
+    urls = []
+    seen = set()
+
+    # Try to extract href and inner text from HTML bodies
     if mail.text_html:
         for t in mail.text_html:
-            urls.update(url_pattern.findall(t))
-    return list(urls)
+            # Simple regex to find <a href="url">text</a>
+            # Note: This is a basic parser and might not catch highly obfuscated HTML
+            for match in re.finditer(r'<a\s+(?:[^>]*?\s+)?href=["\'](.*?)["\'][^>]*>(.*?)</a>', t, re.IGNORECASE | re.DOTALL):
+                url = match.group(1).strip()
+                # Strip internal tags from display text
+                text = re.sub(r'<[^>]+>', '', match.group(2)).strip()
+                if not text:
+                    text = "[No Text/Image]"
+
+                if url not in seen:
+                    seen.add(url)
+                    urls.append({"url": url, "text": text})
+
+    # Fallback to plain regex for plain text or anything missed
+    url_pattern = re.compile(r'https?://[^\s<>"\']+|www\.[^\s<>"\']+')
+    texts_to_search = []
+    if mail.body: texts_to_search.append(mail.body)
+    if mail.text_plain: texts_to_search.extend(mail.text_plain)
+
+    for t in texts_to_search:
+        for url in url_pattern.findall(t):
+            if url not in seen:
+                seen.add(url)
+                urls.append({"url": url, "text": url}) # Raw text is just the URL itself
+
+    return urls
 
 @app.command()
 def analyze(
@@ -225,8 +247,11 @@ def analyze(
             risk_label = "Critical"
             risk_color = "bold red"
 
+        # Ensure LESS allows raw control characters for coloring
+        os.environ["LESS"] = "-R"
+
         # Use console pager to prevent scrolling off the screen
-        with console.pager():
+        with console.pager(styles=True):
             console.print(Panel(f"[bold blue]Phishing Email Analysis:[/bold blue] {mail.subject}", expand=False))
             console.print(f"[bold]Target (Sender):[/bold] {from_email}")
             console.print(f"[bold]Risk Score:[/bold] [{risk_color}]{schema.risk_score} ({risk_label})[/{risk_color}]")
@@ -243,10 +268,16 @@ def analyze(
 
             if urls:
                 console.print(f"\n[bold]Extracted URLs ({len(urls)}):[/bold]")
-                for u in urls[:5]:
-                    console.print(f"  - {u}")
-                if len(urls) > 5:
-                    console.print("  ... and more")
+                url_table = Table(show_header=True, header_style="bold magenta")
+                url_table.add_column("Display Text")
+                url_table.add_column("Actual Link")
+
+                # Show up to 10 urls to avoid completely filling the screen even with pager
+                for u in urls[:10]:
+                    url_table.add_row(u["text"][:50] + ("..." if len(u["text"]) > 50 else ""), u["url"])
+                console.print(url_table)
+                if len(urls) > 10:
+                    console.print(f"  ... and {len(urls) - 10} more")
 
             if attachments:
                 console.print(f"\n[bold]Attachments ({len(attachments)}):[/bold]")
@@ -278,10 +309,16 @@ def analyze(
                 reporter_script = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "reporting", "reporter.py"))
                 python_bin = sys.executable
 
-                console.print("[yellow]Generating PDF...[/yellow]")
+                # Construct absolute path in the same dir as the email file
+                eml_abspath = os.path.abspath(file)
+                eml_dir = os.path.dirname(eml_abspath)
+                eml_basename = os.path.basename(eml_abspath)
+                pdf_out_path = os.path.join(eml_dir, f"Analyse - {eml_basename}.pdf")
 
-                # Execute reporter script with the generated schema JSON payload
-                proc = subprocess.Popen([python_bin, reporter_script, "--format", "pdf"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                console.print(f"[yellow]Generating PDF at: {pdf_out_path}...[/yellow]")
+
+                # Execute reporter script with the generated schema JSON payload and --out flag
+                proc = subprocess.Popen([python_bin, reporter_script, "--format", "pdf", "--out", pdf_out_path], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
                 stdout, stderr = proc.communicate(input=schema.model_dump_json())
 
                 if proc.returncode == 0:

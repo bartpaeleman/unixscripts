@@ -34,6 +34,15 @@
 
 {% if schema.ioc %}
 ## Indicators of Compromise (IOCs)
+{% if schema.ioc.urls %}
+### Extracted URLs
+| Display Text | Actual Link |
+| --- | --- |
+{% for u in schema.ioc.urls %}
+| {{ u.text }} | {{ u.url }} |
+{% endfor %}
+{% endif %}
+
 {% if schema.ioc.virustotal %}
 - **VirusTotal Malicious Hits:** {{ schema.ioc.virustotal.vt_stats.malicious }}
 {% endif %}

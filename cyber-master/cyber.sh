@@ -114,13 +114,11 @@ run_interactive() {
     done
 }
 
-if [ $# -eq 0 ]; then
-    run_interactive
-    exit 0
+# Default to interactive if no arguments
+COMMAND=${1:-interactive}
+if [ $# -gt 0 ]; then
+    shift
 fi
-
-COMMAND=$1
-shift
 
 case "$COMMAND" in
     mail)
