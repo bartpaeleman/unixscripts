@@ -181,13 +181,16 @@ def analyze(
             if proc.returncode == 0:
                 registrar = ""
                 creation_date = ""
+                contact = ""
                 for line in proc.stdout.splitlines():
                     if "Registrar:" in line and not registrar:
                         registrar = line.split(":", 1)[1].strip()
                     if "Creation Date:" in line and not creation_date:
                         creation_date = line.split(":", 1)[1].strip()
-                if registrar or creation_date:
-                    whois_data = {"registrar": registrar, "creation_date": creation_date}
+                    if "Registrant Organization:" in line and not contact:
+                        contact = line.split(":", 1)[1].strip()
+                if registrar or creation_date or contact:
+                    whois_data = {"registrar": registrar, "creation_date": creation_date, "contact": contact}
         except Exception as e:
             pass
 
@@ -223,15 +226,60 @@ def analyze(
             "sha256": sha256
         })
 
+    # Determine Dangerous Attachments
+    dangerous_extensions = ['.exe', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.zip', '.rar', '.js', '.vbs', '.scr']
+    has_dangerous_attachment = False
+    for att in attachments:
+        ext = os.path.splitext(att["filename"].lower())[1]
+        if ext in dangerous_extensions:
+            has_dangerous_attachment = True
+            break
+
     risk_score = 0
-    if anomalies: risk_score += 20 * len(anomalies)
-    if auth_results["spf"] == "fail": risk_score += 20
-    if auth_results["dkim"] == "fail": risk_score += 20
-    if auth_results["dmarc"] == "fail": risk_score += 20
+    reasons = []
+
+    if anomalies:
+        for a in anomalies:
+            if "Return-Path mismatch" in a or "Reply-To mismatch" in a or "Display-name spoofing" in a:
+                risk_score += 10
+                reasons.append(a + " (+10)")
+            else:
+                risk_score += 10
+                reasons.append(a + " (+10)")
+
+    if reply_to_email == "":
+        risk_score += 10
+        reasons.append("Reply-To header is empty (+10)")
+
+    for check in ["spf", "dkim", "dmarc"]:
+        res = auth_results.get(check, "unknown")
+        if res in ["fail", "unknown", "none"]:
+            risk_score += 10
+            reasons.append(f"{check.upper()} record is {res} (+10)")
+
+    if whois_data and whois_data.get("creation_date"):
+        try:
+            import datetime as dt
+            creation_date = parse_date(whois_data["creation_date"]).replace(tzinfo=dt.timezone.utc)
+            age_days = (dt.datetime.now(dt.timezone.utc) - creation_date).days
+            if age_days < 14:
+                risk_score += 20
+                reasons.append(f"WHOIS Creation Date is < 2 weeks ago ({age_days} days) (+20)")
+        except Exception:
+            pass
+
+    if urls:
+        risk_score += 10
+        reasons.append(f"Email contains clickable URLs (+10)")
+
+    if has_dangerous_attachment:
+        risk_score += 20
+        reasons.append("Email contains a potentially dangerous attachment (+20)")
 
     schema = UnifiedSchema(
         target=from_email,
         risk_score=min(100, risk_score),
+        risk_reasons=reasons,
         mail={
             "headers": {
                 "from": from_email,
@@ -281,6 +329,7 @@ def analyze(
                 console.print(f"\n[bold]Sender Domain WHOIS ({from_email.split('@')[1]}):[/bold]")
                 console.print(f"  Registrar: {whois_data.get('registrar', 'unknown')}")
                 console.print(f"  Creation Date: {whois_data.get('creation_date', 'unknown')}")
+                console.print(f"  Contact: {whois_data.get('contact', 'unknown')}")
 
             console.print("\n[bold]Authentication Results:[/bold]")
             for k, v in auth_results.items():

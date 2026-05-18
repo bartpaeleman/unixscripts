@@ -62,6 +62,10 @@ launch_intel() {
     pause
 }
 
+launch_cyber() {
+    bash "$SCRIPT_DIR/cyber-master/cyber.sh"
+}
+
 edit_intel_config() {
     local config_file="$SCRIPT_DIR/intelmaster/config.json"
     if [ -f "$config_file" ]; then
@@ -138,6 +142,7 @@ while true; do
     echo "8) Text Master      (Stats, Diff, Merge)"
     echo "9) Video Master     (Download & Clip Videos)"
     echo "10) Intel Master    (Threat Intelligence Menu)"
+    echo "11) Cyber Master    (Phishing & Recon Tools)"
     echo -e "-----------------------------------"
     echo "S) Setup Environment (Permissions & Aliases)"
     echo "X) Exit"
@@ -154,6 +159,7 @@ while true; do
         8) launch_text ;;
         9) launch_video ;;
         10) launch_intel ;;
+        11) launch_cyber ;;
         [sS]) setup_env ;;
         [xX]) exit 0 ;;
         *) echo "Invalid option." ; pause ;;
