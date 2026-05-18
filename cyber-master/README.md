@@ -52,6 +52,18 @@ The root `cyber.sh` script acts as the main entry point:
 - `mhdr <file>`: Analyzes an email and extracts only key findings via `jq`.
 - `mailtrace <file>`: Directly analyzes an email and shows the rich Terminal UI.
 
+**Interactive Mode:**
+- `interactive`: Start the interactive wizard to guide you through analyzing an Email or doing Recon on a Domain/IP. Allows selecting output formats (Terminal UI, JSON, HTML/MD/PDF).
+
+### Addressed Use-Cases & Mapping
+
+The `cyber-master` suite is built to cover several crucial, daily SOC / Analyst workflows via its modular approach:
+
+- **Recon & Threat Intel (Passive DNS + ASN + Hosting Correlator):** Addressed via the `enrich` module. Utilizing `httpx` to gather ASN/ISP intel (`ip-api`), checking AbuseIPDB, querying VirusTotal, and now integrated **Shodan** support for IP targets to list open ports and vulnerabilities.
+- **Network Analysis (TLS Auditor):** Addressed via the `enrich` module's TLS capabilities (`ssl.getpeercert`). It assesses issuer information and certificate expiry to discover anomalies like free certificates (Let's Encrypt) used on financial targets.
+- **Contextual Risk Scoring Engine:** Addressed via the `score` module. Centralizes inputs from `mail` and `enrich` to evaluate penalty points based on anomalies (e.g., mismatched routing, DMARC failures, bulletproof ASN hosters, newly registered domains, Shodan exposed sensitive ports).
+- **Email / Phishing Analysis Tooling:** Addressed via the `mail` module. Validates SPF/DKIM/DMARC headers, traces relay chains step-by-step extracting delays, detects mismatched display names vs return-paths, and extracts attachments/URLs. Includes a Terminal UI (`mailtrace`) for visual analysts and strict JSON pipelines for automated triage.
+
 ### Examples
 
 **1. Automated Threat Context Pipeline**
