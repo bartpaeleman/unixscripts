@@ -34,6 +34,13 @@
 
 {% if schema.ioc %}
 ## Indicators of Compromise (IOCs)
+
+{% if schema.ioc.whois %}
+### Sender Domain WHOIS
+- **Registrar:** {{ schema.ioc.whois.registrar }}
+- **Creation Date:** {{ schema.ioc.whois.creation_date }}
+{% endif %}
+
 {% if schema.ioc.urls %}
 ### Extracted URLs
 | Display Text | Actual Link |

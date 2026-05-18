@@ -171,6 +171,26 @@ def analyze(
 
     originating_ip = relay_chain[-1]["ip"] if relay_chain else "unknown"
 
+    # Quick WHOIS lookup on sender domain
+    whois_data = {}
+    if from_email and "@" in from_email:
+        domain = from_email.split("@")[1].lower()
+        try:
+            import subprocess
+            proc = subprocess.run(["whois", domain], capture_output=True, text=True, timeout=5)
+            if proc.returncode == 0:
+                registrar = ""
+                creation_date = ""
+                for line in proc.stdout.splitlines():
+                    if "Registrar:" in line and not registrar:
+                        registrar = line.split(":", 1)[1].strip()
+                    if "Creation Date:" in line and not creation_date:
+                        creation_date = line.split(":", 1)[1].strip()
+                if registrar or creation_date:
+                    whois_data = {"registrar": registrar, "creation_date": creation_date}
+        except Exception as e:
+            pass
+
     anomalies = []
     if return_path and from_email.lower() != return_path.lower():
         anomalies.append(f"Return-Path mismatch: From ({from_email}) vs Return-Path ({return_path})")
@@ -226,7 +246,8 @@ def analyze(
         ioc={
             "urls": urls,
             "attachments": attachments,
-            "originating_ip": originating_ip
+            "originating_ip": originating_ip,
+            "whois": whois_data
         }
     )
 
@@ -255,6 +276,11 @@ def analyze(
             console.print(Panel(f"[bold blue]Phishing Email Analysis:[/bold blue] {mail.subject}", expand=False))
             console.print(f"[bold]Target (Sender):[/bold] {from_email}")
             console.print(f"[bold]Risk Score:[/bold] [{risk_color}]{schema.risk_score} ({risk_label})[/{risk_color}]")
+
+            if whois_data:
+                console.print(f"\n[bold]Sender Domain WHOIS ({from_email.split('@')[1]}):[/bold]")
+                console.print(f"  Registrar: {whois_data.get('registrar', 'unknown')}")
+                console.print(f"  Creation Date: {whois_data.get('creation_date', 'unknown')}")
 
             console.print("\n[bold]Authentication Results:[/bold]")
             for k, v in auth_results.items():

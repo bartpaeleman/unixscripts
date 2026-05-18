@@ -46,6 +46,16 @@ def analyze():
         if auth.get("spf") == "fail":
             score += 30
             reasons.append("SPF validation failed (+30)")
+        elif auth.get("spf") == "unknown":
+            score += 20
+            reasons.append("SPF record is missing/unknown (+20)")
+
+        if auth.get("dkim") == "fail":
+            score += 30
+            reasons.append("DKIM validation failed (+30)")
+        elif auth.get("dkim") == "unknown":
+            score += 20
+            reasons.append("DKIM record is missing/unknown (+20)")
 
         if auth.get("dmarc") == "none" or auth.get("dmarc") == "unknown":
             # Taking "none" roughly as "not enforced/missing"
@@ -57,6 +67,24 @@ def analyze():
         if has_reply_to_anomaly:
             score += 20
             reasons.append("Suspicious Reply-To mismatch detected (+20)")
+
+        has_return_path_anomaly = any("Return-Path mismatch" in a for a in anomalies)
+        if has_return_path_anomaly:
+            score += 20
+            reasons.append("Suspicious Return-Path mismatch detected (+20)")
+
+        has_spoof_anomaly = any("Display-name spoofing" in a for a in anomalies)
+        if has_spoof_anomaly:
+            score += 30
+            reasons.append("Display-name spoofing detected (+30)")
+
+        # Domain mismatch scoring (basic check)
+        from_email = schema.mail.get("headers", {}).get("from", "")
+        if from_email and "@" in from_email:
+            domain = from_email.split("@")[1].lower()
+            # If the domain is significantly different from what is expected (this is hard to determine perfectly without a baseline)
+            # but we will rely on anomalies caught earlier.
+            pass
 
     # 2. ASN/Enrich module scoring
     if schema.asn:
