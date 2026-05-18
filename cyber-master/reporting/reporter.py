@@ -12,7 +12,8 @@ logger = get_logger("reporter")
 
 @app.command()
 def generate(
-    format: str = typer.Option("md", help="Format of the report: md, html, or pdf")
+    format: str = typer.Option("md", help="Format of the report: md, html, or pdf"),
+    out: str = typer.Option(None, "--out", "-o", help="Custom output file path")
 ):
     """
     Reporting module.
@@ -56,9 +57,13 @@ def generate(
 
     try:
         output = template.render(schema=schema)
-        # Create a safe filename
-        safe_target = schema.target.replace("/", "_").replace("\\", "_")
-        output_file = f"report_{safe_target}.{intended_format}"
+
+        if out:
+            output_file = os.path.abspath(out)
+        else:
+            # Create a safe filename
+            safe_target = schema.target.replace("/", "_").replace("\\", "_")
+            output_file = f"report_{safe_target}.{intended_format}"
 
         if intended_format == "pdf":
             try:

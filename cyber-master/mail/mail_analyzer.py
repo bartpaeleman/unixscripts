@@ -17,7 +17,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from common.core import UnifiedSchema, get_logger
 
 app = typer.Typer()
-console = Console()
+# Force terminal to allow coloring through the pager pipe
+console = Console(force_terminal=True)
 logger = get_logger("mail_analyzer")
 
 def extract_auth_results(headers: Dict[str, Any]) -> Dict[str, str]:
@@ -225,8 +226,11 @@ def analyze(
             risk_label = "Critical"
             risk_color = "bold red"
 
+        # Ensure LESS allows raw control characters for coloring
+        os.environ["LESS"] = "-R"
+
         # Use console pager to prevent scrolling off the screen
-        with console.pager():
+        with console.pager(styles=True):
             console.print(Panel(f"[bold blue]Phishing Email Analysis:[/bold blue] {mail.subject}", expand=False))
             console.print(f"[bold]Target (Sender):[/bold] {from_email}")
             console.print(f"[bold]Risk Score:[/bold] [{risk_color}]{schema.risk_score} ({risk_label})[/{risk_color}]")
@@ -278,10 +282,16 @@ def analyze(
                 reporter_script = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "reporting", "reporter.py"))
                 python_bin = sys.executable
 
-                console.print("[yellow]Generating PDF...[/yellow]")
+                # Construct absolute path in the same dir as the email file
+                eml_abspath = os.path.abspath(file)
+                eml_dir = os.path.dirname(eml_abspath)
+                eml_basename = os.path.basename(eml_abspath)
+                pdf_out_path = os.path.join(eml_dir, f"Analyse - {eml_basename}.pdf")
 
-                # Execute reporter script with the generated schema JSON payload
-                proc = subprocess.Popen([python_bin, reporter_script, "--format", "pdf"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                console.print(f"[yellow]Generating PDF at: {pdf_out_path}...[/yellow]")
+
+                # Execute reporter script with the generated schema JSON payload and --out flag
+                proc = subprocess.Popen([python_bin, reporter_script, "--format", "pdf", "--out", pdf_out_path], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
                 stdout, stderr = proc.communicate(input=schema.model_dump_json())
 
                 if proc.returncode == 0:
