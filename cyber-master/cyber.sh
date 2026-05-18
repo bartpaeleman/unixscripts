@@ -115,8 +115,8 @@ run_interactive() {
 }
 
 if [ $# -eq 0 ]; then
-    show_help
-    exit 1
+    run_interactive
+    exit 0
 fi
 
 COMMAND=$1
