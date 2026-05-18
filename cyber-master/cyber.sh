@@ -16,102 +16,13 @@ show_help() {
     echo "  mail <file>       Run the Phishing Email Analyzer on an .eml file."
     echo "  enrich <target>   Run the Passive DNS & URL Enricher."
     echo "  score             Run the Risk Scorer (requires JSON via stdin)."
-    echo "  report [format]   Generate a Markdown, HTML, or PDF report (requires JSON via stdin)."
+    echo "  report [format]   Generate a Markdown or HTML report (requires JSON via stdin)."
     echo ""
     echo "Pipeline Wrappers:"
     echo "  threatctx <target> Run the full enrichment, scoring, and reporting pipeline."
     echo "  mhdr <file>        Extract key findings (IP, SPF, DKIM) from an email."
     echo "  mailtrace <file>   Analyze an email and display the Terminal UI."
     echo ""
-    echo "Interactive:"
-    echo "  interactive        Start the interactive wizard to guide you through tools."
-    echo ""
-}
-
-# Colors
-GREEN='\033[1;32m'
-CYAN='\033[1;36m'
-YELLOW='\033[1;33m'
-RED='\033[1;31m'
-NC='\033[0m'
-
-pause() {
-    echo -e "\n${YELLOW}Press Enter to continue...${NC}"
-    read -r
-}
-
-get_eml_file() {
-    read -p "Enter path to .eml file or raw headers: " eml_file
-    if [ ! -f "$eml_file" ]; then
-        echo -e "${RED}File not found: $eml_file${NC}"
-        pause
-        return 1
-    fi
-    return 0
-}
-
-get_target() {
-    read -p "Enter target IP or Domain: " target
-    if [ -z "$target" ]; then
-        echo -e "${RED}Target cannot be empty.${NC}"
-        pause
-        return 1
-    fi
-    return 0
-}
-
-run_interactive() {
-    while true; do
-        clear
-        echo -e "${CYAN}================================================${NC}"
-        echo -e "         ${CYAN}CYBER-MASTER CONTROL PANEL${NC}"
-        echo -e "${CYAN}================================================${NC}"
-        echo -e "${GREEN}--- Email / Phishing Analysis ---${NC}"
-        echo "1) Analyze Email and Show Terminal UI (mailtrace)"
-        echo "2) Extract Key Findings from Email (mhdr)"
-        echo "3) Output Email Analysis as Raw JSON"
-        echo -e "\n${GREEN}--- Recon & Threat Context ---${NC}"
-        echo "4) Recon Domain/IP and Generate Markdown Report"
-        echo "5) Recon Domain/IP and Generate HTML Report"
-        echo "6) Recon Domain/IP and Generate PDF Report"
-        echo "7) Output Recon & Risk Score as Raw JSON"
-        echo -e "\n${YELLOW}X) Exit${NC}"
-        echo -e "${CYAN}================================================${NC}"
-
-        read -p "Select action: " choice
-
-        case "$choice" in
-            1)
-                if get_eml_file; then mailtrace "$eml_file"; pause; fi
-                ;;
-            2)
-                if get_eml_file; then cat "$eml_file" | mhdr; pause; fi
-                ;;
-            3)
-                if get_eml_file; then "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/mail/mail_analyzer.py" "$eml_file" --json; pause; fi
-                ;;
-            4)
-                if get_target; then threatctx "$target"; pause; fi
-                ;;
-            5)
-                if get_target; then echo "{\"target\": \"$target\"}" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/enrich/enricher.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/scoring/risk_scorer.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/reporting/reporter.py" --format html; pause; fi
-                ;;
-            6)
-                if get_target; then echo "{\"target\": \"$target\"}" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/enrich/enricher.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/scoring/risk_scorer.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/reporting/reporter.py" --format pdf; pause; fi
-                ;;
-            7)
-                if get_target; then echo "{\"target\": \"$target\"}" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/enrich/enricher.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/scoring/risk_scorer.py"; pause; fi
-                ;;
-            [xX])
-                echo -e "${GREEN}Exiting...${NC}"
-                exit 0
-                ;;
-            *)
-                echo -e "${RED}Invalid choice.${NC}"
-                pause
-                ;;
-        esac
-    done
 }
 
 if [ $# -eq 0 ]; then
@@ -147,9 +58,6 @@ case "$COMMAND" in
         ;;
     mailtrace)
         mailtrace "$@"
-        ;;
-    interactive)
-        run_interactive
         ;;
     --help|-h|help)
         show_help
