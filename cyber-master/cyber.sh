@@ -67,13 +67,12 @@ run_interactive() {
         echo -e "         ${CYAN}CYBER-MASTER CONTROL PANEL${NC}"
         echo -e "${CYAN}================================================${NC}"
         echo -e "${GREEN}--- Email / Phishing Analysis ---${NC}"
-        echo "1) Analyze Email and Show Terminal UI (mailtrace)"
+        echo "1) Analyze Email (mailtrace)"
         echo "2) Extract Key Findings from Email (mhdr)"
-        echo "3) Output Email Analysis as Raw JSON"
         echo -e "\n${GREEN}--- Recon & Threat Context ---${NC}"
-        echo "4) Recon Domain/IP and Generate Markdown Report"
-        echo "5) Recon Domain/IP and Generate HTML Report"
-        echo "6) Recon Domain/IP and Generate PDF Report"
+        echo "3) Recon Domain/IP and Generate Markdown Report"
+        echo "4) Recon Domain/IP and Generate HTML Report"
+        echo "5) Recon Domain/IP and Generate PDF Report"
         echo -e "\n${YELLOW}X) Exit${NC}"
         echo -e "${CYAN}================================================${NC}"
 
@@ -87,15 +86,12 @@ run_interactive() {
                 if get_eml_file; then cat "$eml_file" | mhdr; pause; fi
                 ;;
             3)
-                if get_eml_file; then "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/mail/mail_analyzer.py" "$eml_file" --json; pause; fi
-                ;;
-            4)
                 if get_target; then threatctx "$target"; pause; fi
                 ;;
-            5)
+            4)
                 if get_target; then echo "{\"target\": \"$target\"}" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/enrich/enricher.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/scoring/risk_scorer.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/reporting/reporter.py" --format html; pause; fi
                 ;;
-            6)
+            5)
                 if get_target; then echo "{\"target\": \"$target\"}" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/enrich/enricher.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/scoring/risk_scorer.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/reporting/reporter.py" --format pdf; pause; fi
                 ;;
             [xX])

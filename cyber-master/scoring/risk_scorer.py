@@ -65,26 +65,39 @@ def analyze():
         anomalies = schema.mail.get("anomalies", [])
         has_reply_to_anomaly = any("Reply-To mismatch" in a for a in anomalies)
         if has_reply_to_anomaly:
-            score += 20
-            reasons.append("Suspicious Reply-To mismatch detected (+20)")
+            score += 10
+            reasons.append("Suspicious Reply-To mismatch detected (+10)")
+
+        has_reply_empty_anomaly = any("Reply-To header is empty" in a for a in anomalies)
+        if has_reply_empty_anomaly:
+            score += 10
+            reasons.append("Reply-To header is empty (+10)")
 
         has_return_path_anomaly = any("Return-Path mismatch" in a for a in anomalies)
         if has_return_path_anomaly:
-            score += 20
-            reasons.append("Suspicious Return-Path mismatch detected (+20)")
+            score += 10
+            reasons.append("Suspicious Return-Path mismatch detected (+10)")
 
         has_spoof_anomaly = any("Display-name spoofing" in a for a in anomalies)
         if has_spoof_anomaly:
-            score += 30
-            reasons.append("Display-name spoofing detected (+30)")
+            score += 10
+            reasons.append("Display-name spoofing detected (+10)")
 
-        # Domain mismatch scoring (basic check)
-        from_email = schema.mail.get("headers", {}).get("from", "")
-        if from_email and "@" in from_email:
-            domain = from_email.split("@")[1].lower()
-            # If the domain is significantly different from what is expected (this is hard to determine perfectly without a baseline)
-            # but we will rely on anomalies caught earlier.
-            pass
+    if schema.ioc and schema.ioc.get("urls"):
+        score += 10
+        reasons.append("Email contains clickable URLs (+10)")
+
+    if schema.ioc and schema.ioc.get("attachments"):
+        dangerous_extensions = ['.exe', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.zip', '.rar', '.js', '.vbs', '.scr']
+        has_dangerous = False
+        for att in schema.ioc["attachments"]:
+            ext = os.path.splitext(att.get("filename", "").lower())[1]
+            if ext in dangerous_extensions:
+                has_dangerous = True
+                break
+        if has_dangerous:
+            score += 20
+            reasons.append("Email contains a potentially dangerous attachment (+20)")
 
     # 2. ASN/Enrich module scoring
     if schema.asn:
@@ -104,11 +117,14 @@ def analyze():
                 import datetime as dt
                 creation_date = parse_date(creation_date_str).replace(tzinfo=dt.timezone.utc)
                 age_days = (dt.datetime.now(dt.timezone.utc) - creation_date).days
-                if age_days < 30:
+                if age_days < 14:
+                    score += 20
+                    reasons.append(f"WHOIS Creation Date is < 2 weeks ago ({age_days} days) (+20)")
+                elif age_days < 30:
                     score += 20
                     reasons.append(f"Newly registered domain (Age: {age_days} days) (+20)")
             except Exception as e:
-                logger.warning(f"Failed to parse WHOIS creation date: {e}")
+                pass
 
     # 3. TLS module scoring
     if schema.tls:

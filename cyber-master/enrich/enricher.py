@@ -50,12 +50,15 @@ async def get_whois_and_rdns(target: str) -> Dict[str, Any]:
             # Very basic extraction just as an example
             registrar = ""
             creation_date = ""
+            contact = ""
             for line in output.splitlines():
                 if "Registrar:" in line and not registrar:
                     registrar = line.split(":", 1)[1].strip()
                 if "Creation Date:" in line and not creation_date:
                     creation_date = line.split(":", 1)[1].strip()
-            whois_data = {"registrar": registrar, "creation_date": creation_date}
+                if "Registrant Organization:" in line and not contact:
+                    contact = line.split(":", 1)[1].strip()
+            whois_data = {"registrar": registrar, "creation_date": creation_date, "contact": contact}
         else:
             whois_data = {}
 
