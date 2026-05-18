@@ -225,47 +225,73 @@ def analyze(
             risk_label = "Critical"
             risk_color = "bold red"
 
-        console.print(Panel(f"[bold blue]Phishing Email Analysis:[/bold blue] {mail.subject}", expand=False))
-        console.print(f"[bold]Target (Sender):[/bold] {from_email}")
-        console.print(f"[bold]Risk Score:[/bold] [{risk_color}]{schema.risk_score} ({risk_label})[/{risk_color}]")
+        # Use console pager to prevent scrolling off the screen
+        with console.pager():
+            console.print(Panel(f"[bold blue]Phishing Email Analysis:[/bold blue] {mail.subject}", expand=False))
+            console.print(f"[bold]Target (Sender):[/bold] {from_email}")
+            console.print(f"[bold]Risk Score:[/bold] [{risk_color}]{schema.risk_score} ({risk_label})[/{risk_color}]")
 
-        console.print("\n[bold]Authentication Results:[/bold]")
-        for k, v in auth_results.items():
-            color = "green" if v == "pass" else "red" if v == "fail" else "yellow"
-            console.print(f"  {k.upper()}: [{color}]{v}[/{color}]")
+            console.print("\n[bold]Authentication Results:[/bold]")
+            for k, v in auth_results.items():
+                color = "green" if v == "pass" else "red" if v == "fail" else "yellow"
+                console.print(f"  {k.upper()}: [{color}]{v}[/{color}]")
 
-        if anomalies:
-            console.print("\n[bold red]Anomalies Detected:[/bold red]")
-            for a in anomalies:
-                console.print(f"  - {a}")
+            if anomalies:
+                console.print("\n[bold red]Anomalies Detected:[/bold red]")
+                for a in anomalies:
+                    console.print(f"  - {a}")
 
-        if urls:
-            console.print(f"\n[bold]Extracted URLs ({len(urls)}):[/bold]")
-            for u in urls[:5]:
-                console.print(f"  - {u}")
-            if len(urls) > 5:
-                console.print("  ... and more")
+            if urls:
+                console.print(f"\n[bold]Extracted URLs ({len(urls)}):[/bold]")
+                for u in urls[:5]:
+                    console.print(f"  - {u}")
+                if len(urls) > 5:
+                    console.print("  ... and more")
 
-        if attachments:
-            console.print(f"\n[bold]Attachments ({len(attachments)}):[/bold]")
-            table = Table(show_header=True, header_style="bold magenta")
-            table.add_column("Filename")
-            table.add_column("SHA256")
-            for att in attachments:
-                table.add_row(att["filename"], att["sha256"])
-            console.print(table)
+            if attachments:
+                console.print(f"\n[bold]Attachments ({len(attachments)}):[/bold]")
+                table = Table(show_header=True, header_style="bold magenta")
+                table.add_column("Filename")
+                table.add_column("SHA256")
+                for att in attachments:
+                    table.add_row(att["filename"], att["sha256"])
+                console.print(table)
 
-        console.print("\n[bold]Relay Chain (Hop-by-Hop):[/bold]")
-        chain_table = Table(show_header=True, header_style="bold cyan")
-        chain_table.add_column("Hop")
-        chain_table.add_column("IP")
-        chain_table.add_column("Resolved Hostname")
-        chain_table.add_column("Date")
-        chain_table.add_column("Delay (s)")
-        for hop in relay_chain:
-            delay = str(hop.get("delay_seconds", ""))
-            chain_table.add_row(str(hop["hop"]), hop["ip"], hop.get("hostname", "unknown"), hop.get("date", ""), delay)
-        console.print(chain_table)
+            console.print("\n[bold]Relay Chain (Hop-by-Hop):[/bold]")
+            chain_table = Table(show_header=True, header_style="bold cyan")
+            chain_table.add_column("Hop")
+            chain_table.add_column("IP")
+            chain_table.add_column("Resolved Hostname")
+            chain_table.add_column("Date")
+            chain_table.add_column("Delay (s)")
+            for hop in relay_chain:
+                delay = str(hop.get("delay_seconds", ""))
+                chain_table.add_row(str(hop["hop"]), hop["ip"], hop.get("hostname", "unknown"), hop.get("date", ""), delay)
+            console.print(chain_table)
+
+        # Prompt user to generate PDF
+        console.print("\n[bold cyan]Would you like to export this analysis as a PDF? (y/n):[/bold cyan] ", end="")
+        try:
+            choice = input().strip().lower()
+            if choice == "y" or choice == "yes":
+                import subprocess
+                reporter_script = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "reporting", "reporter.py"))
+                python_bin = sys.executable
+
+                console.print("[yellow]Generating PDF...[/yellow]")
+
+                # Execute reporter script with the generated schema JSON payload
+                proc = subprocess.Popen([python_bin, reporter_script, "--format", "pdf"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                stdout, stderr = proc.communicate(input=schema.model_dump_json())
+
+                if proc.returncode == 0:
+                    console.print("[bold green]PDF generation completed.[/bold green]")
+                else:
+                    console.print(f"[bold red]Failed to generate PDF: {stderr}[/bold red]")
+        except KeyboardInterrupt:
+            pass
+        except Exception as e:
+            console.print(f"[bold red]Error prompting for PDF: {e}[/bold red]")
 
 if __name__ == "__main__":
     app()
