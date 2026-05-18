@@ -68,6 +68,18 @@
     {% if schema.ioc %}
     <h2>Indicators of Compromise (IOCs)</h2>
 
+    {% if schema.ioc.whois %}
+    {% if schema.mail %}
+    <h3>Sender Domain WHOIS</h3>
+    {% else %}
+    <h3>Domain WHOIS Information</h3>
+    {% endif %}
+    <ul>
+        <li><strong>Registrar:</strong> {{ schema.ioc.whois.registrar }}</li>
+        <li><strong>Creation Date:</strong> {{ schema.ioc.whois.creation_date }}</li>
+    </ul>
+    {% endif %}
+
     {% if schema.ioc.urls %}
     <h3>Extracted URLs</h3>
     <table>

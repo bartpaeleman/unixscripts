@@ -74,7 +74,6 @@ run_interactive() {
         echo "4) Recon Domain/IP and Generate Markdown Report"
         echo "5) Recon Domain/IP and Generate HTML Report"
         echo "6) Recon Domain/IP and Generate PDF Report"
-        echo "7) Output Recon & Risk Score as Raw JSON"
         echo -e "\n${YELLOW}X) Exit${NC}"
         echo -e "${CYAN}================================================${NC}"
 
@@ -98,9 +97,6 @@ run_interactive() {
                 ;;
             6)
                 if get_target; then echo "{\"target\": \"$target\"}" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/enrich/enricher.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/scoring/risk_scorer.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/reporting/reporter.py" --format pdf; pause; fi
-                ;;
-            7)
-                if get_target; then echo "{\"target\": \"$target\"}" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/enrich/enricher.py" | "$PYTHON_WRAPPER" "$CYBER_MASTER_DIR/scoring/risk_scorer.py"; pause; fi
                 ;;
             [xX])
                 echo -e "${GREEN}Exiting...${NC}"
