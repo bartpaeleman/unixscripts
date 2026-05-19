@@ -1,6 +1,6 @@
 # Developer Tools Collection
 
-A comprehensive collection of development utilities and scripts designed for QNAP NAS and macOS environments.
+A comprehensive collection of development utilities and scripts designed for QNAP NAS and Linux environments.
 
 ## Installation
 
@@ -53,11 +53,9 @@ Standalone utility scripts for web development and system maintenance.
 | **Web Scaffold** | Generates standard projects with auto-documentation support. | `scaffold` |
 | **DB Master** | Database backup and statistical analysis toolkit. | `dbmaster` |
 | **Container Master** | Interactive Docker management and inspection. | `dockermaster` |
-| **Network Master** | Comprehensive network diagnostics and port scanning. | `netmaster` |
 | **Data Master** | Advanced CSV/JSON/XML/YAML conversion, viewing, and normalization. | `datamaster` |
 | **File Master** | Bulk rename, archive, granular cleanup (Junk/Empty/Dupes), and comparison. Defaults to current directory. | `filemaster` |
 | **Text Master** | Text analysis, search & replace, and file merging. | `textmaster` |
-| **Video Master** | Download and extract segments from online videos using yt-dlp and ffmpeg. | `videomaster` |
 
 ## Usage Examples
 
@@ -75,10 +73,6 @@ filemaster
 # Text Master (Compare files)
 textmaster
 # Select option 3 (Compare)
-
-# Video Master (Download an audio segment)
-videomaster
-# Select option 5 (Download Specific Video Segment (Clip))
 ```
 
 ## Requirements

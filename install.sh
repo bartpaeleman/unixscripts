@@ -101,15 +101,9 @@ else
         GH_USER=$(echo "$GH_USER" | sed 's/[\/&]/\\&/g')
         GH_TOKEN=$(echo "$GH_TOKEN" | sed 's/[\/&]/\\&/g')
 
-        if [[ "$(uname)" == "Darwin" ]]; then
-            # macOS sed
-            sed -i '' "s/^GITHUB_USERNAME=.*/GITHUB_USERNAME=\"$GH_USER\"/" "$ENV_FILE"
-            sed -i '' "s/^GITHUB_TOKEN=.*/GITHUB_TOKEN=\"$GH_TOKEN\"/" "$ENV_FILE"
-        else
-            # GNU sed
+        # GNU sed (QNAP)
             sed -i "s/^GITHUB_USERNAME=.*/GITHUB_USERNAME=\"$GH_USER\"/" "$ENV_FILE"
             sed -i "s/^GITHUB_TOKEN=.*/GITHUB_TOKEN=\"$GH_TOKEN\"/" "$ENV_FILE"
-        fi
 
         echo -e "${GREEN}Credentials updated in .env${NC}"
     fi

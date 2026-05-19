@@ -2,7 +2,7 @@
 
 # ============================================================
 # GIT MASTER CONTROL PANEL v7.2.0
-# Professional Git Workflow Manager for QNAP & macOS
+# Professional Git Workflow Manager for QNAP & Linux
 # ============================================================
 
 set -euo pipefail  # Exit on error, undefined vars, pipe failures

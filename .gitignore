@@ -4,4 +4,3 @@ __pycache__/
 *.log
 .env
 .venv/
-cyber-master/.venv/

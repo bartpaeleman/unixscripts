@@ -15,10 +15,10 @@ chmod +x install.sh git-master.sh
 ```
 
 The installer will:
-- Detect your platform (QNAP/macOS/Linux)
+- Detect your platform (QNAP/Linux)
 - Ask for GitHub credentials
 - Configure paths
-- Set up persistence (QNAP) or aliases (macOS)
+- Set up persistence (QNAP) or aliases (Linux)
 - Validate your GitHub connection
 
 ---
@@ -89,7 +89,7 @@ cd ~/git-master
 ./git-master.sh
 
 # Or if aliases are set up:
-gitmaster  # QNAP/macOS with aliases
+gitmaster  # QNAP/Linux with aliases
 
 # First steps in the menu:
 # - Press P/D/T to navigate environments
@@ -117,13 +117,13 @@ gitmaster  # QNAP/macOS with aliases
 - Creates aliases: `gitmaster`, `prod`, `dev`, `test`
 - Survives reboots automatically
 
-### macOS
+### Linux
 - Installer adds aliases to `~/.zshrc` or `~/.bashrc`
 - Run `source ~/.zshrc` to activate immediately
 - May need to grant terminal full disk access
 
 ### Linux
-- Similar to macOS setup
+- Similar to Linux setup
 - Uses `~/.bashrc` for aliases
 - Works with any Bash-compatible shell
 

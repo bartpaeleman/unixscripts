@@ -1,6 +1,6 @@
 # Web Project Scaffolder
 
-A simple shell script to generate a standard directory structure for new web development projects. Compatible with macOS and QNAP Shell.
+A simple shell script to generate a standard directory structure for new web development projects. Compatible with Linux and QNAP Shell.
 
 ## Usage
 
@@ -36,5 +36,5 @@ project-name/
 
 ## Requirements
 
-- Bash shell (macOS, Linux, or QNAP)
+- Bash shell (Linux, or QNAP)
 - Python 3 (for README generation)
