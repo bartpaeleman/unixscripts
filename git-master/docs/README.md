@@ -1,6 +1,6 @@
 # Git Master Control Panel v7.2.0
 
-Professional Git workflow manager for QNAP NAS and macOS, designed to streamline development cycles on GitHub.
+Professional Git workflow manager for QNAP NAS and Linux, designed to streamline development cycles on GitHub.
 
 ## Quick Start
 
@@ -34,7 +34,7 @@ git-master-clean/
 - **UAT Workflow**: Streamlined testing and staging processes
 - **Emergency Tools**: Conflict resolution, rollback, and recovery
 - **Secure Configuration**: Environment-based secrets management
-- **Cross-Platform**: Works on QNAP NAS and macOS
+- **Cross-Platform**: Works on QNAP NAS and Linux
 
 ## 🚀 Quick Start
 
@@ -185,7 +185,7 @@ AUTO_PRUNE=true
    chmod 700 git-master.sh
    ```
 
-## 🍎 macOS Specific Setup
+## Linux Specific Setup
 
 ```bash
 # Install via Homebrew (if not already installed)
@@ -280,7 +280,7 @@ cd /share/Web/DEV/scripts
 - Run option `S` to install persistence
 - Verify `/etc/profile` includes the source line
 
-### macOS: Permission denied
+### Linux: Permission denied
 ```bash
 chmod +x git-master.sh
 ```

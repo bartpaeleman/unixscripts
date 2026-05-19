@@ -1,6 +1,6 @@
 # Database Master Tool
 
-A comprehensive toolkit for managing MySQL/MariaDB databases on QNAP and macOS. Includes backup capabilities and python-powered statistical analysis.
+A comprehensive toolkit for managing MySQL/MariaDB databases on QNAP and Linux. Includes backup capabilities and python-powered statistical analysis.
 
 ## Usage
 

@@ -94,7 +94,7 @@ cat > "$INSTALL_PATH/assets/css/style.css" <<EOF
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     line-height: 1.6;
     color: var(--text-color);
     margin: 0;

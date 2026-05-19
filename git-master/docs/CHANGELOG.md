@@ -21,10 +21,10 @@
 ### 2. Cross-Platform Compatibility ✅
 **BEFORE:**
 - Hardcoded QNAP paths
-- Limited macOS support
+- Limited Linux support
 
 **AFTER:**
-- ✅ Auto-detection of QNAP vs macOS
+- ✅ Auto-detection of QNAP vs Linux
 - ✅ Configurable paths for any system
 - ✅ Platform-specific installation
 - ✅ Works on Linux too
@@ -240,7 +240,7 @@ chmod +x install.sh
 3. ✅ Fixed undefined `check_dirty` function
 4. ✅ Fixed branch selection with remote prefixes
 5. ✅ Fixed QNAP persistence across reboots
-6. ✅ Fixed macOS compatibility issues
+6. ✅ Fixed Linux compatibility issues
 7. ✅ Fixed stash handling in UAT workflow
 8. ✅ Fixed merge conflict resolution
 

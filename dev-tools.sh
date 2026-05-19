@@ -17,7 +17,7 @@ echo -e "${CYAN}=== Dev Tools Initialization ===${NC}"
 echo "Setting executable permissions..."
 
 # List of directories to process
-DIRS=("git-master" "web-scaffold" "db-tools" "container-master" "network-master" "data-master" "file-master" "text-master" "intelmaster")
+DIRS=("git-master" "web-scaffold" "db-tools" "container-master" "file-master" "text-master" "data-master")
 
 COUNT=0
 

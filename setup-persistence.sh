@@ -34,15 +34,9 @@ fi
 
 # --- 0. CREDENTIAL HELPER SETUP ---
 echo -e "\n${CYAN}Configuring Git Credentials...${NC}"
-if [[ "$(uname)" == "Darwin" ]]; then
-    # macOS
-    git config --global credential.helper osxkeychain
-    echo -e "  ${GREEN}Set credential helper to osxkeychain (macOS)${NC}"
-else
     # QNAP / Linux
     git config --global credential.helper 'cache --timeout=360000'
     echo -e "  ${GREEN}Set credential helper to cache (100 hours) (QNAP/Linux)${NC}"
-fi
 
 # --- 1. CONFIGURATION LOADING ---
 # Try to load paths from git-master .env
@@ -74,14 +68,14 @@ alias scriptmaster='"${REPO_DIR}/script-master.sh"'
 alias devtools='"${REPO_DIR}/dev-tools.sh"'
 alias gitmaster='"${REPO_DIR}/git-master/git-master.sh"'
 alias dockermaster='"${REPO_DIR}/container-master/container-master.sh"'
-alias netmaster='"${REPO_DIR}/network-master/network-master.sh"'
+
 alias dbmaster='"${REPO_DIR}/db-tools/db-master.sh"'
 alias scaffold='"${REPO_DIR}/web-scaffold/scaffold.sh"'
 alias datamaster='"${REPO_DIR}/data-master/data-master.sh"'
 alias filemaster='"${REPO_DIR}/file-master/file-master.sh"'
 alias textmaster='"${REPO_DIR}/text-master/text-master.sh"'
-alias videomaster='"${REPO_DIR}/video-master/video-master.sh"'
-alias intelmaster='"${REPO_DIR}/intelmaster/threat-intel.sh"'
+
+
 alias persis='"${REPO_DIR}/setup-persistence.sh"'
 # ------------------------------------
 EOF
@@ -109,11 +103,7 @@ if [[ ${#PROFILES[@]} -eq 0 ]]; then
     if [[ "$CURRENT_SHELL" == "zsh" ]]; then
         PREFERRED_PROFILE="$HOME/.zshrc"
     elif [[ "$CURRENT_SHELL" == "bash" ]]; then
-        if [[ "$(uname)" == "Darwin" ]]; then
-            PREFERRED_PROFILE="$HOME/.bash_profile"
-        else
             PREFERRED_PROFILE="$HOME/.bashrc"
-        fi
     else
         PREFERRED_PROFILE="$HOME/.profile"
     fi

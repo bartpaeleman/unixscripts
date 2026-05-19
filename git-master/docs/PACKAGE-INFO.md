@@ -171,7 +171,7 @@ All non-essential documentation:
 
 ### Compatibility
 - QNAP BusyBox v1.24.1+
-- macOS (all versions)
+- Linux (all versions)
 - Linux (all distros)
 
 ### Smart Features
@@ -187,7 +187,7 @@ All non-essential documentation:
 - ✅ Individual developers
 - ✅ Small teams
 - ✅ QNAP NAS users
-- ✅ macOS developers
+- ✅ Linux developers
 - ✅ Git beginners
 - ✅ Power users
 

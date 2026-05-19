@@ -42,10 +42,7 @@ validate_env() {
 }
 
 # Detect platform
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    PLATFORM="macOS"
-    DEFAULT_ROOT="$HOME/Projects"
-elif [[ -d "/share" ]]; then
+if [[ -d "/share" ]]; then
     PLATFORM="QNAP"
     DEFAULT_ROOT="/share/Web"
 else
@@ -232,8 +229,8 @@ mkdir -p "${path_root}/TEST"
 printf "${GREEN}✓ Directories created${NC}\n"
 
 # Step 7: Platform-specific setup
-if [[ "$PLATFORM" == "macOS" ]]; then
-    printf "\n${CYAN}macOS Setup${NC}\n"
+if [[ "$PLATFORM" == "Linux" ]]; then
+    printf "\n${CYAN}Linux Setup${NC}\n"
     SHELL_RC="$HOME/.zshrc"
     [[ ! -f "$SHELL_RC" ]] && SHELL_RC="$HOME/.bashrc"
     
@@ -351,7 +348,7 @@ printf "\n"
 
 printf "${CYAN}Next Steps:${NC}\n"
 printf "  1. Run: ${YELLOW}./git-master.sh${NC}\n"
-if [[ "$PLATFORM" == "macOS" ]] && [[ "$add_alias" == "y" ]]; then
+if [[ "$PLATFORM" == "Linux" ]] && [[ "$add_alias" == "y" ]]; then
     printf "  2. Or use: ${YELLOW}gitmaster${NC} (after sourcing ${SHELL_RC})\n"
 elif [[ "$PLATFORM" == "QNAP" ]]; then
     printf "  2. Or use: ${YELLOW}gitmaster${NC} (from anywhere after reconnect)\n"

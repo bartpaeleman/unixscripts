@@ -2,7 +2,7 @@
 
 # ============================================================
 # CONTAINER MASTER CONTROL PANEL v1.0
-# Docker Management for QNAP Container Station & macOS
+# Docker Management for QNAP Container Station & Linux
 # ============================================================
 
 # set -e is disabled for interactive menu stability
@@ -56,7 +56,7 @@ list_containers() {
 
 view_logs() {
     echo -e "\n${CYAN}Select container to view logs:${NC}"
-    # Get list of container names - macOS compatible way
+    # Get list of container names - Linux compatible way
     containers=()
     while IFS= read -r line; do
         containers+=("$line")

@@ -1,6 +1,6 @@
 # Container Master Control Panel
 
-A robust, interactive shell script for managing Docker containers on QNAP Container Station, macOS, or any Linux environment.
+A robust, interactive shell script for managing Docker containers on QNAP Container Station, Linux, or any Linux environment.
 
 ## Features
 
@@ -21,7 +21,7 @@ A robust, interactive shell script for managing Docker containers on QNAP Contai
    ./container-master.sh
    ```
 
-### macOS / Linux
+### Linux
 Ensure Docker Desktop or Docker Engine is installed and running.
 
 ```bash
