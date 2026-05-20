@@ -1,0 +1,275 @@
+#!/usr/bin/env bash
+# === File List Generator ===
+
+set -euo pipefail
+
+# Default values
+EXTENSIE="mp4"
+UITVOER_BESTAND="file_list.txt"
+BRONMAP="$(pwd)"
+DOELMAP="$(pwd)"
+VERBOSE=false
+RECURSIVE=true
+INCLUDE_PATHS=false
+
+# --- Help function ---
+toon_help() {
+    cat << EOF
+Usage: $0 [options]
+
+Generates a UTF-8 text file with filenames (without extension).
+Filters out hidden files and sorts by name.
+
+Options:
+  -e, --extension EXT  File extension (default: mp4)
+  -o, --output FILE    Output file (default: file_list.txt)
+  -s, --source DIR     Source directory to search (default: current directory)
+  -t, --target DIR     Target directory for output file (default: current directory)
+  -v, --verbose        Show detailed information
+  -p, --paths          Include path information in the list
+  -n, --non-recursive  Search only in current directory (non-recursive)
+  -h, --help           Show this help
+
+Examples:
+  $0                                # MP4 files in current directory
+  $0 -s /path/to/source -e mp3      # Search in source dir, output in current dir
+  $0 -s /source -t /output -e jpg   # Search in /source, output in /output
+  $0 -e mp3 -o music.txt -v         # Verbose mode with custom output name
+EOF
+}
+
+# --- Parse arguments ---
+while [[ $# -gt 0 ]]; do
+    case "${1:-}" in
+        -e|--extension)
+            if [[ -n "${2:-}" ]]; then
+                EXTENSIE="${2#.}"
+                shift
+            else
+                echo "❌ --extension requires a value"
+                exit 1
+            fi
+            ;;
+        -o|--output)
+            if [[ -n "${2:-}" ]]; then
+                UITVOER_BESTAND="$2"
+                shift
+            else
+                echo "❌ --output requires a filename"
+                exit 1
+            fi
+            ;;
+        -s|--source)
+            if [[ -n "${2:-}" ]]; then
+                BRONMAP="$2"
+                shift
+            else
+                echo "❌ --source requires a path"
+                exit 1
+            fi
+            ;;
+        -t|--target)
+            if [[ -n "${2:-}" ]]; then
+                DOELMAP="$2"
+                shift
+            else
+                echo "❌ --target requires a path"
+                exit 1
+            fi
+            ;;
+        -p|--paths)
+            INCLUDE_PATHS=true
+            ;;
+        -n|--non-recursive)
+            RECURSIVE=false
+            ;;
+        -v|--verbose)
+            VERBOSE=true
+            ;;
+        -h|--help)
+            toon_help
+            exit 0
+            ;;
+        *)
+            echo "❌ Unknown option: ${1:-}"
+            toon_help
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+# --- Path corrections ---
+# Handle situations where -p is appended to a string or backslashes occur
+if [[ ! -d "$BRONMAP" ]]; then
+    if [[ "$BRONMAP" == *-p ]]; then
+        test_map="${BRONMAP%-p}"
+        test_map_clean="${test_map//\\ / }"
+        if [[ -d "$test_map_clean" ]]; then
+            BRONMAP="$test_map_clean"
+            INCLUDE_PATHS=true
+        elif [[ -d "$test_map" ]]; then
+            BRONMAP="$test_map"
+            INCLUDE_PATHS=true
+        fi
+    fi
+
+    if [[ ! -d "$BRONMAP" ]]; then
+        test_map_clean="${BRONMAP//\\ / }"
+        if [[ -d "$test_map_clean" ]]; then
+            BRONMAP="$test_map_clean"
+        fi
+    fi
+fi
+
+# Remove trailing slash
+BRONMAP="${BRONMAP%/}"
+
+# --- Checks ---
+if [[ ! -d "$BRONMAP" ]]; then
+    echo "❌ Source directory does not exist: $BRONMAP"
+    exit 1
+fi
+
+if [[ ! -d "$DOELMAP" ]]; then
+    echo "❌ Target directory does not exist: $DOELMAP"
+    exit 1
+fi
+
+if [[ -z "$EXTENSIE" ]]; then
+    echo "❌ Extension cannot be empty"
+    exit 1
+fi
+
+echo "=== File List Generator ==="
+echo "📁 Source directory: $BRONMAP"
+echo "💾 Target directory: $DOELMAP"
+echo "📄 Extension: .$EXTENSIE"
+echo "📝 Output file: $UITVOER_BESTAND"
+echo "🔍 Mode: $($RECURSIVE && echo "Recursive" || echo "Current directory only")"
+echo "🚫 Hidden files: filtered out"
+echo "🔤 Sorting: alphabetical"
+echo
+
+# Temporary file for processing
+TMP_FILE=$(mktemp -t bestanden_lijst.XXXXXX)
+trap 'rm -f "$TMP_FILE"' EXIT INT TERM
+
+echo "🔍 Searching for .$EXTENSIE files in $BRONMAP..."
+
+# Find command filtering hidden files and sorting
+if $RECURSIVE; then
+    echo "🌳 Searching recursively..."
+    find "$BRONMAP" -type f -iname "*.${EXTENSIE}" ! -name ".*" ! -path "*/.*" | sort > "$TMP_FILE"
+else
+    echo "📂 Searching non-recursively..."
+    find "$BRONMAP" -maxdepth 1 -type f -iname "*.${EXTENSIE}" ! -name ".*" | sort > "$TMP_FILE"
+fi
+
+# Count found files
+AANTAL_BESTANDEN=$(wc -l < "$TMP_FILE" 2>/dev/null | tr -d ' ' || echo "0")
+
+if [[ $AANTAL_BESTANDEN -eq 0 ]] || [[ -z "$AANTAL_BESTANDEN" ]]; then
+    echo "❌ No .$EXTENSIE files found in $BRONMAP (excluding hidden files)"
+    exit 1
+fi
+
+echo "✅ Number of .$EXTENSIE files found: $AANTAL_BESTANDEN"
+
+if $VERBOSE; then
+    echo ""
+    echo "📋 Found files (sorted):"
+    echo "----------------------------------------"
+    head -10 "$TMP_FILE" | while read -r line; do
+        echo "📄 $line"
+    done
+    if [[ $AANTAL_BESTANDEN -gt 10 ]]; then
+        echo "... (and $((AANTAL_BESTANDEN - 10)) more files)"
+    fi
+    echo "----------------------------------------"
+fi
+
+# Determine full path for output file
+OUTPUT_PATH="$DOELMAP/$UITVOER_BESTAND"
+echo "💾 Output file will be saved to: $OUTPUT_PATH"
+
+echo ""
+echo "🔄 Processing files..."
+
+{
+    # Header with metadata
+    echo "# File list generated on: $(date)"
+    echo "# Source directory: $BRONMAP"
+    echo "# Target directory: $DOELMAP"
+    echo "# Extension: .$EXTENSIE"
+    echo "# Total files: $AANTAL_BESTANDEN"
+    echo "# Sorting: alphabetical"
+    echo "# Hidden files: filtered out"
+    echo "#"
+    echo "# Filenames (without extension):"
+    echo ""
+
+    # Process each file - sorted
+    while IFS= read -r bestand; do
+        [[ -z "$bestand" ]] && continue
+
+        # Remove source directory from path for cleaner output
+        relatieve_pad="${bestand#$BRONMAP/}"
+
+        if $INCLUDE_PATHS; then
+            # Keep path but remove extension
+            bestand_zonder_extensie="${relatieve_pad%.$EXTENSIE}"
+            # For uppercase extensions
+            upper_ext=$(echo "$EXTENSIE" | tr '[:lower:]' '[:upper:]')
+            bestand_zonder_extensie="${bestand_zonder_extensie%.$upper_ext}"
+        else
+            # Only filename without path
+            bestand_naam=$(basename "$relatieve_pad")
+            bestand_zonder_extensie="${bestand_naam%.$EXTENSIE}"
+            # For uppercase extensions
+            upper_ext=$(echo "$EXTENSIE" | tr '[:lower:]' '[:upper:]')
+            bestand_zonder_extensie="${bestand_zonder_extensie%.$upper_ext}"
+        fi
+
+        # Show info if verbose is enabled
+        if $VERBOSE; then
+            if $INCLUDE_PATHS; then
+                echo "📝 $relatieve_pad -> $bestand_zonder_extensie"
+            else
+                echo "📝 $(basename "$relatieve_pad") -> $bestand_zonder_extensie"
+            fi
+        fi
+
+        # Write to output
+        echo "$bestand_zonder_extensie"
+
+    done < "$TMP_FILE"
+} > "$OUTPUT_PATH"
+
+# Check if file was successfully created
+if [[ ! -f "$OUTPUT_PATH" ]]; then
+    echo "❌ Error creating output file: $OUTPUT_PATH"
+    exit 1
+fi
+
+echo "✅ File successfully created: $OUTPUT_PATH"
+
+# Show example of content
+echo ""
+echo "📋 Example of generated content (first 10 lines):"
+echo "----------------------------------------"
+head -10 "$OUTPUT_PATH"
+echo "----------------------------------------"
+
+# Show file size and encoding
+if command -v file >/dev/null 2>&1; then
+    encoding=$(file -b --mime-encoding "$OUTPUT_PATH")
+    echo "🔍 File encoding: $encoding"
+fi
+
+echo ""
+echo "🎉 Done! $AANTAL_BESTANDEN files processed and sorted."
+echo "📁 Source: $BRONMAP"
+echo "💾 Target: $DOELMAP"
+echo "🚫 Hidden files were filtered out"
+echo "🔤 Files are alphabetically sorted"

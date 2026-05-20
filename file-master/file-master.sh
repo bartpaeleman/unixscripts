@@ -115,7 +115,7 @@ cleanup_dir() {
         echo "3) Remove Duplicates (MD5)"
         echo "4) Custom (Select combination)"
         echo "5) All of the above"
-        echo "X) Cancel"
+        echo "0) Cancel"
 
         read -p "Select Action: " clean_choice
 
@@ -133,7 +133,7 @@ cleanup_dir() {
                 [[ "$c_dupes" == "y" ]] && ARGS="$ARGS --dupes"
                 ;;
             5) ARGS="--junk --empty --dupes" ;;
-            [Xx]) return ;;
+            0) return ;;
             *) echo "Invalid option"; continue ;;
         esac
 
@@ -189,6 +189,12 @@ while true; do
     echo "3) Archive Directory (Zip/Tar)"
     echo "4) Cleanup (Duplicates/Empty Dirs)"
     echo "5) Compare Files"
+    echo "6) Advanced Rename (plasmasturm)"
+    echo "7) Fuzzy Finder (fzf)"
+    echo "8) List Directory (txt)"
+    echo "9) List Directory (csv)"
+    echo "10) Copy & Sync Folders"
+    echo "11) Compare Folders"
     echo "X) Exit"
 
     read -p "Select: " choice
@@ -198,6 +204,32 @@ while true; do
         3) archive_dir ;;
         4) cleanup_dir ;;
         5) compare_files ;;
+        6) "$SCRIPT_DIR/rename_advanced.sh" ;;
+        7) "$SCRIPT_DIR/fzf_manager.sh" ;;
+        8)
+            echo -e "\n${CYAN}=== List Directory (txt) ===${NC}"
+            read -e -p "Enter arguments for list (or press enter for interactive/help): " args
+            eval "\"$SCRIPT_DIR/lijst\" $args"
+            pause
+            ;;
+        9)
+            echo -e "\n${CYAN}=== List Directory (csv) ===${NC}"
+            read -e -p "Enter arguments for csvlist (or press enter for interactive/help): " args
+            eval "\"$SCRIPT_DIR/csvlijst\" $args"
+            pause
+            ;;
+        10)
+            echo -e "\n${CYAN}=== Copy & Sync ===${NC}"
+            read -e -p "Enter arguments for copy_sync (or press enter for interactive): " args
+            eval "\"$SCRIPT_DIR/copy_sync\" $args"
+            pause
+            ;;
+        11)
+            echo -e "\n${CYAN}=== Compare Folders ===${NC}"
+            read -e -p "Enter arguments for compare_folders (or press enter for interactive): " args
+            eval "\"$SCRIPT_DIR/compare_folders\" $args"
+            pause
+            ;;
         [Xx]) exit 0 ;;
     esac
 done

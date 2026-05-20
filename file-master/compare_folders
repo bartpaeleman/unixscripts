@@ -1,0 +1,141 @@
+#!/bin/bash
+
+# Zorg dat autocomplete het scherm niet overvol maakt door het te wissen bij tab
+set -o emacs
+bind '"\t": "\C-l\e\e"' 2>/dev/null || true
+
+# ============================================================
+# COMPARE FOLDERS TOOL
+# Compare two folders and show missing files
+# ============================================================
+
+set -u
+
+# Colors
+GREEN='\033[1;32m'
+CYAN='\033[1;36m'
+YELLOW='\033[1;33m'
+RED='\033[1;31m'
+NC='\033[0m'
+
+show_help() {
+    echo -e "${CYAN}=== Compare Folders Tool ===${NC}"
+    echo "Usage: $0 [options]"
+    echo ""
+    echo "An interactive script to compare two folders and"
+    echo "see which files are missing in the target folder."
+    echo ""
+    echo "Options:"
+    echo "  -h, --help    Show this help message"
+    echo ""
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    show_help
+    exit 0
+fi
+
+echo -e "${CYAN}================================================${NC}"
+echo -e "              ${CYAN}COMPARE FOLDERS TOOL${NC}"
+echo -e "${CYAN}================================================${NC}"
+
+# Ask for the source folder
+echo -e "${YELLOW}Provide the source folder (use Tab for autocomplete):${NC}"
+read -e -p "Source: " source_dir
+source_dir="${source_dir//\\ / }"
+source_dir="${source_dir%/}"
+
+if [ ! -d "$source_dir" ]; then
+    echo -e "${RED}Error: Source folder '$source_dir' does not exist.${NC}"
+    exit 1
+fi
+
+# Ask for the target folder
+echo -e "\n${YELLOW}Provide the target folder (use Tab for autocomplete):${NC}"
+read -e -p "Target: " target_dir
+target_dir="${target_dir//\\ / }"
+target_dir="${target_dir%/}"
+
+if [ ! -d "$target_dir" ]; then
+    echo -e "${RED}Error: Target folder '$target_dir' does not exist.${NC}"
+    exit 1
+fi
+
+# Filters
+echo -e "\n${CYAN}--- Set Filters ---${NC}"
+rsync_flags=()
+
+read -p "Exclude hidden files (e.g. .DS_Store, .git)? (y/n) [n]: " exclude_hidden
+if [[ "$exclude_hidden" == "y" || "$exclude_hidden" == "Y" ]]; then
+    rsync_flags+=("--exclude=.*" "--exclude=*/.*")
+fi
+
+read -p "Exclude specific extensions? (e.g. mp4, tmp, log or leave empty): " exclude_exts
+if [[ -n "$exclude_exts" ]]; then
+    for ext in ${exclude_exts//,/ }; do
+        ext="${ext#.}"
+        rsync_flags+=("--exclude=*.$ext")
+    done
+fi
+
+read -p "Exclude specific folders or files? (e.g. node_modules, build or leave empty): " exclude_names
+if [[ -n "$exclude_names" ]]; then
+    for name in ${exclude_names//,/ }; do
+        rsync_flags+=("--exclude=$name")
+    done
+fi
+
+echo -e "\n${YELLOW}🔍 Comparing...${NC}"
+
+# Use rsync in dry-run mode (--dry-run) with out-format (%n gives filenames)
+TMP_LIST=$(mktemp)
+
+# Execute and save, ignore directories by grepping for files (not ending in /)
+rsync -an --out-format="%n" "${rsync_flags[@]}" "$source_dir/" "$target_dir/" | \
+    grep -v "/$" | grep -v "^sending incremental file list" | grep -v "^sent " | grep -v "^total size is" > "$TMP_LIST"
+
+AANTAL=$(wc -l < "$TMP_LIST" | tr -d ' ')
+
+if [ "$AANTAL" -eq 0 ]; then
+    echo -e "${GREEN}✅ The folders are identical (no files missing or different in target).${NC}"
+    rm "$TMP_LIST"
+    exit 0
+else
+    echo -e "${RED}⚠️ There are $AANTAL files missing or different in the target:${NC}"
+    head -n 20 "$TMP_LIST" | while read -r line; do
+        echo "  - $line"
+    done
+
+    if [ "$AANTAL" -gt 20 ]; then
+        echo "  ... and $((AANTAL - 20)) more."
+    fi
+fi
+
+# Export CSV
+echo -e "\n${CYAN}--- Export Results ---${NC}"
+read -p "Do you want to save the results in a CSV file? (y/n) [n]: " export_csv
+
+if [[ "$export_csv" == "y" || "$export_csv" == "Y" ]]; then
+    read -e -p "Provide the location and name of the CSV file (e.g. /path/to/missing.csv): " csv_file
+    csv_file="${csv_file//\\ / }"
+
+    if [[ -z "$csv_file" ]]; then
+        csv_file="$PWD/missing_files.csv"
+        echo "No name provided, using default: $csv_file"
+    fi
+
+    echo "Filename,Path,Status" > "$csv_file"
+
+    while IFS= read -r line; do
+        if [ -n "$line" ]; then
+            naam=$(basename "$line")
+            pad=$(dirname "$line")
+            # Wrap with quotes for CSV
+            echo "\"$naam\",\"$pad\",\"Missing or changed\"" >> "$csv_file"
+        fi
+    done < "$TMP_LIST"
+
+    echo -e "${GREEN}✅ Results saved in: $csv_file${NC}"
+fi
+
+rm "$TMP_LIST"
