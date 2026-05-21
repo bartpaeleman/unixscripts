@@ -19,8 +19,19 @@ pause() {
 export PATH="$HOME/.local/bin:$PATH"
 
 check_dependencies() {
+    local install_needed=false
+
     if ! command -v rnr &> /dev/null; then
+        install_needed=true
         echo -e "${YELLOW}'rnr' (Advanced Rename Tool) is not installed.${NC}"
+    elif ! rnr --version &> /dev/null; then
+        # Catch GLIBC linker errors from previously installed wrong binary versions
+        install_needed=true
+        echo -e "${RED}'rnr' is installed but cannot execute (likely GLIBC error). Replacing it...${NC}"
+        rm -f "$HOME/.local/bin/rnr"
+    fi
+
+    if [ "$install_needed" = true ]; then
         read -e -p "Do you want to download and install 'rnr' locally? [Y/n]: " inst_choice
         if [[ "$inst_choice" == "n" || "$inst_choice" == "N" ]]; then
             echo -e "${RED}Exiting. Please install manually from https://github.com/ismaelgv/rnr/releases/latest${NC}"
