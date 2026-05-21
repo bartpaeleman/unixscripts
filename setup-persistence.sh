@@ -157,14 +157,17 @@ ALIAS_FILE="/share/CACHEDEV1_DATA/.bash_aliases"
 if [[ -f "$ALIAS_FILE" ]]; then
     if grep -q "alias prd=" "$ALIAS_FILE"; then
         FOUND_PROD=$(grep "alias prd=" "$ALIAS_FILE" | tail -n 1 | cut -d'"' -f2 | cut -d"'" -f2)
+        FOUND_PROD="${FOUND_PROD#cd }"
         [[ -n "$FOUND_PROD" ]] && PATH_PROD="$FOUND_PROD"
     fi
     if grep -q "alias dev=" "$ALIAS_FILE"; then
         FOUND_DEV=$(grep "alias dev=" "$ALIAS_FILE" | tail -n 1 | cut -d'"' -f2 | cut -d"'" -f2)
+        FOUND_DEV="${FOUND_DEV#cd }"
         [[ -n "$FOUND_DEV" ]] && PATH_DEV="$FOUND_DEV"
     fi
     if grep -q "alias tst=" "$ALIAS_FILE"; then
         FOUND_TEST=$(grep "alias tst=" "$ALIAS_FILE" | tail -n 1 | cut -d'"' -f2 | cut -d"'" -f2)
+        FOUND_TEST="${FOUND_TEST#cd }"
         [[ -n "$FOUND_TEST" ]] && PATH_TEST="$FOUND_TEST"
     fi
 fi

@@ -15,12 +15,48 @@ pause() {
     read -r
 }
 
+export PATH="$HOME/.local/bin:$PATH"
+
 check_dependencies() {
     if ! command -v fzf &> /dev/null; then
-        echo -e "${RED}'fzf' is not installed.${NC}"
-        echo -e "${YELLOW}Please install it manually. Example for QNAP/Entware: 'opkg install fzf', or Debian: 'apt-get install fzf'.${NC}"
-        pause
-        exit 1
+        echo -e "${YELLOW}'fzf' (Fuzzy Finder) is not installed.${NC}"
+        read -e -p "Do you want to download and install 'fzf' locally? [Y/n]: " inst_choice
+        if [[ "$inst_choice" == "n" || "$inst_choice" == "N" ]]; then
+            echo -e "${RED}Exiting. Please install manually from https://github.com/junegunn/fzf/releases/latest${NC}"
+            exit 1
+        fi
+
+        echo -e "${CYAN}Detecting system architecture...${NC}"
+        local arch=$(uname -m)
+        local asset=""
+
+        case $arch in
+            x86_64) asset="fzf-0.72.0-linux_amd64.tar.gz" ;;
+            aarch64) asset="fzf-0.72.0-linux_arm64.tar.gz" ;;
+            armv7l) asset="fzf-0.72.0-linux_armv7.tar.gz" ;;
+            *)
+                echo -e "${RED}Unsupported architecture ($arch) for automatic download.${NC}"
+                echo -e "${YELLOW}Please install manually from https://github.com/junegunn/fzf/releases/latest${NC}"
+                exit 1
+                ;;
+        esac
+
+        # Download and install
+        local dl_url="https://github.com/junegunn/fzf/releases/download/v0.72.0/$asset"
+        echo -e "${CYAN}Downloading $asset...${NC}"
+
+        mkdir -p /tmp/fzf_install
+        if curl -sL "$dl_url" -o "/tmp/fzf_install/$asset"; then
+            tar -xzf "/tmp/fzf_install/$asset" -C /tmp/fzf_install
+            mkdir -p "$HOME/.local/bin"
+            cp /tmp/fzf_install/fzf "$HOME/.local/bin/"
+            chmod +x "$HOME/.local/bin/fzf"
+            echo -e "${GREEN}'fzf' installed successfully to $HOME/.local/bin/fzf${NC}"
+        else
+            echo -e "${RED}Download failed. Please check your internet connection or install manually.${NC}"
+            exit 1
+        fi
+        rm -rf /tmp/fzf_install
     fi
 }
 
