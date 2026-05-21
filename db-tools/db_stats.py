@@ -17,7 +17,7 @@ def get_db_stats(host, user, db_name):
     """
 
     # Construct command (using mysql CLI to avoid dependencies)
-    cmd = ["mysql", "-h", host, "-u", user, f"-p{password}", "-e", sql, "-t"]
+    cmd = ["mariadb" if subprocess.run(["which", "mariadb"], stdout=subprocess.DEVNULL).returncode == 0 else "mysql", "-h", host, "-u", user, f"-p{password}", "-e", sql, "-t"]
 
     # If host is localhost or 127.0.0.1, QNAP might need explicit socket or TCP
     # Since we don't know socket path, stick to what's passed, but handle error gracefully
@@ -30,7 +30,7 @@ def get_db_stats(host, user, db_name):
         print("Error: Could not connect to database or query failed.")
         print("Check your credentials and host.")
     except FileNotFoundError:
-        print("Error: 'mysql' command not found.")
+        print("Error: 'mariadb' or 'mysql' command not found.")
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:
