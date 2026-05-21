@@ -66,16 +66,18 @@ if [[ "$CHECK_PYTHON" == "y" ]]; then
     if [[ ${#PROFILES[@]} -eq 0 ]]; then
         echo -e "${YELLOW}No writable profiles found. Skipping Python setup.${NC}"
     else
-        # 1. Detect current status
+        # 1. Detect current status and gather paths
+        FOUND_PATHS=()
+
+        # Gather from PATH using which
+        if command -v python &>/dev/null; then
+            FOUND_PATHS+=("$(command -v python)")
+        fi
         if command -v python3 &>/dev/null; then
-            CUR_PY=$(command -v python3)
-            echo -e "Current python3: ${GREEN}$CUR_PY${NC}"
-        else
-            echo -e "Current python3: ${RED}Not in PATH${NC}"
+            FOUND_PATHS+=("$(command -v python3)")
         fi
 
-        # 2. Check for common QNAP location
-        FOUND_QNAP_PY=""
+        # 2. Check common QNAP locations
         COMMON_PATHS=(
             "/share/CACHEDEV1_DATA/.qpkg/Python3/bin/python3"
             "/share/CACHEDEV1_DATA/.samba_python3/Python3/bin/python3"
@@ -85,36 +87,58 @@ if [[ "$CHECK_PYTHON" == "y" ]]; then
 
         for p in "${COMMON_PATHS[@]}"; do
             if [[ -x "$p" ]]; then
-                FOUND_QNAP_PY="$p"
-                break
+                FOUND_PATHS+=("$p")
             fi
         done
 
-        # Extended search if not found in common locations
-        if [[ -z "$FOUND_QNAP_PY" && -d "/share/CACHEDEV1_DATA/.qpkg" ]]; then
+        # Extended search in .qpkg if none of the above are valid/exist
+        if [[ ${#FOUND_PATHS[@]} -eq 0 && -d "/share/CACHEDEV1_DATA/.qpkg" ]]; then
             echo -e "${YELLOW}Searching for python3 in .qpkg...${NC}"
-            FOUND_QNAP_PY=$(find "/share/CACHEDEV1_DATA/.qpkg" -maxdepth 4 -name "python3" -type f -executable 2>/dev/null | head -n 1)
+            QPKG_PY=$(find "/share/CACHEDEV1_DATA/.qpkg" -maxdepth 4 -name "python3" -type f -executable 2>/dev/null | head -n 1)
+            [[ -n "$QPKG_PY" ]] && FOUND_PATHS+=("$QPKG_PY")
         fi
 
-        if [[ -n "$FOUND_QNAP_PY" ]]; then
-            echo -e "Found QNAP Python: ${GREEN}$FOUND_QNAP_PY${NC}"
+        # Remove duplicates
+        UNIQUE_PATHS=()
+        for p in "${FOUND_PATHS[@]}"; do
+            # Check if path is already in unique array
+            is_dup=false
+            for u in "${UNIQUE_PATHS[@]}"; do
+                if [[ "$p" == "$u" ]]; then
+                    is_dup=true
+                    break
+                fi
+            done
+            if [[ "$is_dup" == false && -x "$p" ]]; then
+                UNIQUE_PATHS+=("$p")
+            fi
+        done
+
+        # 3. Present Menu
+        echo -e "\n${CYAN}Discovered Python Paths:${NC}"
+        if [[ ${#UNIQUE_PATHS[@]} -gt 0 ]]; then
+            for i in "${!UNIQUE_PATHS[@]}"; do
+                echo -e "  ${GREEN}$((i+1))) ${UNIQUE_PATHS[$i]}${NC}"
+            done
+        else
+            echo -e "  ${RED}No Python installations automatically found.${NC}"
         fi
 
-        # 3. Ask user
         echo -e "\nConfiguring persistence..."
         TARGET_PY=""
 
-        # Check if current bash supports read -e -i for prefilling prompts
-        if bash -c 'help read' 2>/dev/null | grep -q '\[-i text\]'; then
-            read -e -i "$FOUND_QNAP_PY" -p "Enter path to python3 executable (empty to skip): " TARGET_PY
-        else
-            # Fallback for older Bash
-            if [[ -n "$FOUND_QNAP_PY" ]]; then
-                read -e -p "Enter path to python3 executable [${FOUND_QNAP_PY}]: " TARGET_PY
-                TARGET_PY="${TARGET_PY:-$FOUND_QNAP_PY}"
-            else
-                read -e -p "Enter path to python3 executable (empty to skip): " TARGET_PY
+        if [[ ${#UNIQUE_PATHS[@]} -gt 0 ]]; then
+            echo "Enter a number (1-${#UNIQUE_PATHS[@]}) to select a path,"
+            echo "or press M to type it manually, or Enter to skip."
+            read -e -p "Choice: " PY_CHOICE
+
+            if [[ "$PY_CHOICE" =~ ^[0-9]+$ ]] && [ "$PY_CHOICE" -ge 1 ] && [ "$PY_CHOICE" -le "${#UNIQUE_PATHS[@]}" ]; then
+                TARGET_PY="${UNIQUE_PATHS[$((PY_CHOICE-1))]}"
+            elif [[ "$PY_CHOICE" =~ ^[mM]$ ]]; then
+                read -e -p "Enter manual path to python executable: " TARGET_PY
             fi
+        else
+            read -e -p "Enter manual path to python executable (empty to skip): " TARGET_PY
         fi
 
         # 4. Apply
