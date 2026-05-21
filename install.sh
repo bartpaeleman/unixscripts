@@ -21,6 +21,25 @@ echo "This script will initialize the tools in the current repository directory.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 echo -e "Initializing tools at: ${CYAN}${SCRIPT_DIR}${NC}"
 
+# --- 0. PREFERRED INSTALLATION DIRECTORY (QNAP) ---
+if [[ -d "/share/Public" && "$SCRIPT_DIR" != "/share/Public/unixscripts" ]]; then
+    echo -e "\n${YELLOW}QNAP detected: /share/Public is available.${NC}"
+    echo "It is recommended to install persistent scripts in /share/Public/unixscripts"
+    read -e -p "Move installation to /share/Public/unixscripts? (y/n): " MOVE_DIR
+
+    if [[ "$MOVE_DIR" =~ ^[Yy]$ ]]; then
+        TARGET_DIR="/share/Public/unixscripts"
+        echo -e "${CYAN}Moving files to $TARGET_DIR...${NC}"
+        mkdir -p "$TARGET_DIR"
+        cp -a "$SCRIPT_DIR/." "$TARGET_DIR/"
+
+        # Switch context to the new location
+        SCRIPT_DIR="$TARGET_DIR"
+        cd "$SCRIPT_DIR"
+        echo -e "${GREEN}Successfully moved to $SCRIPT_DIR${NC}"
+    fi
+fi
+
 # --- 1. CONFIGURE ENVIRONMENT (.env) ---
 echo -e "\n${CYAN}Configuring Environment...${NC}"
 ENV_DIR="$SCRIPT_DIR/git-master/config"
