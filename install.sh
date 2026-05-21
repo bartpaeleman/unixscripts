@@ -2,7 +2,7 @@
 
 # ============================================================
 # MASTER INSTALLER
-# Installs the Dev Tools suite to a custom location
+# Installs the Dev Tools suite in the current directory
 # ============================================================
 
 set -e
@@ -16,59 +16,14 @@ BOLD='\033[1m'
 NC='\033[0m'
 
 echo -e "${CYAN}=== Dev Tools Master Installer ===${NC}"
-echo "This script will install the entire suite of tools to a location of your choice."
+echo "This script will initialize the tools in the current repository directory."
 
-# --- 1. DETERMINE INSTALL LOCATION ---
-DEFAULT_DIR="$HOME/dev-tools"
-read -p "Install location [${DEFAULT_DIR}]: " INSTALL_DIR
-INSTALL_DIR="${INSTALL_DIR:-$DEFAULT_DIR}"
-
-# Expand tilde if present
-INSTALL_DIR="${INSTALL_DIR/#\~/$HOME}"
-
-echo -e "Installing to: ${CYAN}${INSTALL_DIR}${NC}"
-
-if [[ -d "$INSTALL_DIR" ]]; then
-    echo -e "${YELLOW}Warning: Directory '$INSTALL_DIR' already exists.${NC}"
-    read -p "Existing installation detected. Do you want to update it instead, preserving configurations? (y/n): " DO_UPDATE
-    if [[ "$DO_UPDATE" =~ ^[Yy]$ ]]; then
-        echo -e "${CYAN}Switching to update mode...${NC}"
-        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-        if [[ -f "$SCRIPT_DIR/update.sh" ]]; then
-            exec "$SCRIPT_DIR/update.sh" "$INSTALL_DIR"
-        else
-            echo -e "${RED}Error: update.sh not found.${NC}"
-            exit 1
-        fi
-    fi
-    read -p "Continue and OVERWRITE existing files? (y/n): " CONFIRM
-    if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
-        echo "Installation aborted."
-        exit 1
-    fi
-else
-    mkdir -p "$INSTALL_DIR"
-fi
-
-# --- 2. COPY FILES ---
-echo -e "\n${CYAN}Copying files...${NC}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+echo -e "Initializing tools at: ${CYAN}${SCRIPT_DIR}${NC}"
 
-# Use rsync if available, otherwise cp
-if command -v rsync &> /dev/null; then
-    rsync -av --exclude='.git' --exclude='install.sh' --exclude='.DS_Store' "$SCRIPT_DIR/" "$INSTALL_DIR/"
-else
-    # Fallback to cp
-    cp -R "$SCRIPT_DIR/"* "$INSTALL_DIR/"
-    # Clean up unwanted files that might have been copied
-    rm -rf "$INSTALL_DIR/.git" "$INSTALL_DIR/install.sh"
-fi
-
-echo -e "${GREEN}Files copied successfully.${NC}"
-
-# --- 3. CONFIGURE ENVIRONMENT (.env) ---
+# --- 1. CONFIGURE ENVIRONMENT (.env) ---
 echo -e "\n${CYAN}Configuring Environment...${NC}"
-ENV_DIR="$INSTALL_DIR/git-master/config"
+ENV_DIR="$SCRIPT_DIR/git-master/config"
 ENV_FILE="$ENV_DIR/.env"
 ENV_EXAMPLE="$ENV_DIR/.env.example"
 
@@ -109,19 +64,19 @@ else
     fi
 fi
 
-# --- 4. FINALIZE SETUP ---
+# --- 2. FINALIZE SETUP ---
 echo -e "\n${CYAN}Finalizing Setup...${NC}"
 
 # Make the installed dev-tools.sh executable
-chmod +x "$INSTALL_DIR/dev-tools.sh"
+chmod +x "$SCRIPT_DIR/dev-tools.sh"
 
 # Run the initialization script from the new location
-echo -e "Running initialization script from ${INSTALL_DIR}..."
-(cd "$INSTALL_DIR" && ./dev-tools.sh)
+echo -e "Running initialization script from ${SCRIPT_DIR}..."
+(cd "$SCRIPT_DIR" && ./dev-tools.sh)
 
 echo -e "\n${GREEN}=========================================${NC}"
 echo -e "${GREEN}       INSTALLATION COMPLETE             ${NC}"
 echo -e "${GREEN}=========================================${NC}"
-echo -e "Location: ${INSTALL_DIR}"
+echo -e "Location: ${SCRIPT_DIR}"
 echo -e "Tools have been installed and aliases configured."
 echo -e "Please restart your terminal or run: ${BOLD}source ~/.bashrc${NC} (or your profile)"
