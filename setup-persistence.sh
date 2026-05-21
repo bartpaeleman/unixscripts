@@ -242,8 +242,7 @@ touch "$ALIAS_FILE"
 
 # Clean up old blocks in alias file if present
 if grep -q "# --- DEV TOOLS COLLECTION ALIASES ---" "$ALIAS_FILE"; then
-     sed -i.bak '/# --- DEV TOOLS COLLECTION ALIASES ---/,/# ------------------------------------/d' "$ALIAS_FILE"
-     rm -f "$ALIAS_FILE.bak"
+     sed '/# --- DEV TOOLS COLLECTION ALIASES ---/,/# ------------------------------------/d' "$ALIAS_FILE" > "${ALIAS_FILE}.tmp" && mv "${ALIAS_FILE}.tmp" "$ALIAS_FILE"
      echo -e "  ${YELLOW}Updated existing Tools Aliases in ${ALIAS_FILE}.${NC}"
 else
      echo -e "  ${GREEN}Added Tools Aliases to ${ALIAS_FILE}.${NC}"
@@ -251,8 +250,7 @@ fi
 echo "$ALIAS_BLOCK_TOOLS" >> "$ALIAS_FILE"
 
 if grep -q "# --- NAVIGATION ALIASES ---" "$ALIAS_FILE"; then
-     sed -i.bak '/# --- NAVIGATION ALIASES ---/,/# ----------------------------/d' "$ALIAS_FILE"
-     rm -f "$ALIAS_FILE.bak"
+     sed '/# --- NAVIGATION ALIASES ---/,/# ----------------------------/d' "$ALIAS_FILE" > "${ALIAS_FILE}.tmp" && mv "${ALIAS_FILE}.tmp" "$ALIAS_FILE"
      echo -e "  ${YELLOW}Updated existing Navigation Aliases in ${ALIAS_FILE}.${NC}"
 else
      echo -e "  ${GREEN}Added Navigation Aliases to ${ALIAS_FILE}.${NC}"
@@ -271,13 +269,11 @@ if [[ ${#PROFILES[@]} -gt 0 ]]; then
 
         # Clean up legacy inline blocks if present
         if grep -q "# --- DEV TOOLS COLLECTION ALIASES ---" "$prof"; then
-             sed -i.bak '/# --- DEV TOOLS COLLECTION ALIASES ---/,/# ------------------------------------/d' "$prof"
-             rm -f "$prof.bak"
+             sed '/# --- DEV TOOLS COLLECTION ALIASES ---/,/# ------------------------------------/d' "$prof" > "${prof}.tmp" && mv "${prof}.tmp" "$prof"
              echo -e "  ${YELLOW}Removed legacy inline Tools Aliases from ${prof}.${NC}"
         fi
         if grep -q "# --- NAVIGATION ALIASES ---" "$prof"; then
-             sed -i.bak '/# --- NAVIGATION ALIASES ---/,/# ----------------------------/d' "$prof"
-             rm -f "$prof.bak"
+             sed '/# --- NAVIGATION ALIASES ---/,/# ----------------------------/d' "$prof" > "${prof}.tmp" && mv "${prof}.tmp" "$prof"
              echo -e "  ${YELLOW}Removed legacy inline Navigation Aliases from ${prof}.${NC}"
         fi
 
