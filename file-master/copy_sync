@@ -77,7 +77,7 @@ echo "2) Sync 1-way (Only add new files, don't delete, don't overwrite existing)
 echo "3) Sync exact (Make target exactly like source, including DELETING on target)"
 echo "0) Cancel"
 
-read -p "Choice: " choice
+read -e -p "Choice: " choice
 
 # Array for safe processing of arguments
 rsync_flags=("-avh" "--progress")
@@ -108,13 +108,13 @@ esac
 echo -e "\n${CYAN}--- Set Filters ---${NC}"
 
 # Exclude hidden files
-read -p "Exclude hidden files (e.g. .DS_Store, .git)? (y/n) [n]: " exclude_hidden
+read -e -p "Exclude hidden files (e.g. .DS_Store, .git)? (y/n) [n]: " exclude_hidden
 if [[ "$exclude_hidden" == "y" || "$exclude_hidden" == "Y" ]]; then
     rsync_flags+=("--exclude=.*" "--exclude=*/.*")
 fi
 
 # Exclude extensions
-read -p "Exclude specific extensions? (e.g. mp4, tmp, log or leave empty): " exclude_exts
+read -e -p "Exclude specific extensions? (e.g. mp4, tmp, log or leave empty): " exclude_exts
 if [[ -n "$exclude_exts" ]]; then
     # Replace commas with spaces and iterate
     for ext in ${exclude_exts//,/ }; do
@@ -125,7 +125,7 @@ if [[ -n "$exclude_exts" ]]; then
 fi
 
 # Exclude specific names
-read -p "Exclude specific folders or files? (e.g. node_modules, build or leave empty): " exclude_names
+read -e -p "Exclude specific folders or files? (e.g. node_modules, build or leave empty): " exclude_names
 if [[ -n "$exclude_names" ]]; then
     for name in ${exclude_names//,/ }; do
         rsync_flags+=("--exclude=$name")

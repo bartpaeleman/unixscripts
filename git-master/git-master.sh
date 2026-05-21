@@ -18,7 +18,7 @@ load_env() {
         printf "\n${YELLOW}Configuration file not found.${NC}\n"
 
         if [[ -f "$ENV_EXAMPLE" ]]; then
-            read -p "Create .env from template? (y/n): " create_env
+            read -e -p "Create .env from template? (y/n): " create_env
             if [[ "$create_env" == "y" ]]; then
                 cp "$ENV_EXAMPLE" "$ENV_FILE"
                 printf "${GREEN}Created .env file.${NC}\n"
@@ -124,7 +124,7 @@ check_dirty() {
     if [[ -n $(git status -s) ]]; then
         printf "${YELLOW}Uncommitted changes detected!${NC}\n"
         git status -s
-        read -p "Continue anyway? (y/n): " cont
+        read -e -p "Continue anyway? (y/n): " cont
         [[ "$cont" != "y" ]] && return 1
     fi
     return 0
@@ -135,7 +135,7 @@ confirm_action() {
     local confirm_word="${2:-y}"
     
     printf "${YELLOW}${message}${NC}\n"
-    read -p "Type '${confirm_word}' to confirm: " response
+    read -e -p "Type '${confirm_word}' to confirm: " response
     [[ "$response" == "$confirm_word" ]] && return 0 || return 1
 }
 
@@ -281,7 +281,7 @@ while true; do
         printf " Q) QUIT\n"
         printf -- "${BOLD}===============================================================${NC}\n"
 
-        read -p "Select action: " main_choice
+        read -e -p "Select action: " main_choice
 
         case "$main_choice" in
             1)
@@ -292,7 +292,7 @@ while true; do
                 printf " d) SEARCH CODE     - Find text in all files (grep)\n"
                 printf " e) COMMIT FINDER   - Search commits by message\n"
                 printf " f) BRANCH COMPARE  - See differences between branches\n"
-                read -p "Select command (X to return): " sub_choice
+                read -e -p "Select command (X to return): " sub_choice
                 case "$sub_choice" in
                     [Aa]) choice="1" ;;
                     [Bb]) choice="18" ;;
@@ -316,7 +316,7 @@ while true; do
                 printf " h) RELEASE TAG     - Mark current state (v1.x)\n"
                 printf " i) CLEANUP PRUNE   - Delete branches gone on GitHub\n"
                 printf " j) DELETE LOCAL    - Manually delete a local branch\n"
-                read -p "Select command (X to return): " sub_choice
+                read -e -p "Select command (X to return): " sub_choice
                 case "$sub_choice" in
                     [Aa]) choice="2" ;;
                     [Bb]) choice="3" ;;
@@ -341,7 +341,7 @@ while true; do
                 printf " e) RESTORE COMMIT  - Checkout, Revert or Reset to a previous commit\n"
                 printf " f) STASH PULL POP  - Stash local changes, pull and pop\n"
                 printf " g) FORGET FILE     - Remove file from git cache\n"
-                read -p "Select command (X to return): " sub_choice
+                read -e -p "Select command (X to return): " sub_choice
                 case "$sub_choice" in
                     [Aa]) choice="6" ;;
                     [Bb]) choice="14" ;;
@@ -358,7 +358,7 @@ while true; do
                 printf "\n${YELLOW}${BOLD}[MAINTENANCE]${NC}\n"
                 printf " a) BACKUP POINT     - Create local snapshot branch\n"
         printf " b) RESTORE BACKUP   - Restore from a local snapshot branch\n"
-                read -p "Select command (X to return): " sub_choice
+                read -e -p "Select command (X to return): " sub_choice
                 case "$sub_choice" in
                     [Aa]) choice="7" ;;
             [Bb]) choice="25" ;;
@@ -379,7 +379,7 @@ while true; do
 
     case $choice in
         1) # DASHBOARD
-            [[ "$IN_GIT" = false ]] && { printf "${RED}Not in git repo${NC}\n"; read -p "Enter..." junk; continue; }
+            [[ "$IN_GIT" = false ]] && { printf "${RED}Not in git repo${NC}\n"; read -e -p "Enter..." junk; continue; }
             clear
             printf "${CYAN}${BOLD}DASHBOARD: $PROJECT_NAME${NC}\n\n"
             git fetch origin --prune 2>/dev/null || true
@@ -396,7 +396,7 @@ while true; do
                 git log -n 20 --oneline --graph
             } | more
             
-            read -p "Enter..." junk ;;
+            read -e -p "Enter..." junk ;;
 
         2) # CHECKOUT REPO
             [[ "$IN_GIT" = false ]] && continue
@@ -439,7 +439,7 @@ while true; do
                 ((i++))
             done < <(git branch -r | grep -v HEAD)
 
-            read -p "Select Repo/Branch (X to cancel): " cr_idx
+            read -e -p "Select Repo/Branch (X to cancel): " cr_idx
             [[ "$cr_idx" =~ ^[Xx]$ ]] && continue
 
             sel_br="${repo_list[$cr_idx]}"
@@ -450,14 +450,14 @@ while true; do
             else
                 printf "${RED}Invalid selection.${NC}\n"
             fi
-            read -p "Enter..." junk ;;
+            read -e -p "Enter..." junk ;;
 
         3) # BRANCH EXPLORER
             [[ "$IN_GIT" = false ]] && continue
             check_dirty || continue
             get_branch_list_raw "be"
             print_colored_branch_list "be"
-            read -p "Select number or name for NEW branch: " be_val
+            read -e -p "Select number or name for NEW branch: " be_val
             [[ "$be_val" =~ ^[Xx]$ ]] && continue
             
             if [[ "$be_val" =~ ^[0-9]+$ ]]; then
@@ -469,41 +469,41 @@ while true; do
             else
                 git checkout -b "$be_val" && printf "${GREEN}Branch $be_val created.${NC}\n"
             fi
-            read -p "Enter..." junk junk ;;
+            read -e -p "Enter..." junk junk ;;
 
         4) # QUICK COMMIT
             [[ "$IN_GIT" = false ]] && continue
             git status -s
-            read -p "Commit Message (X to cancel): " msg
+            read -e -p "Commit Message (X to cancel): " msg
             [[ "$msg" =~ ^[Xx]$ ]] && continue
             
             if [[ -n "$msg" ]]; then
                 git add . && \
                 git commit -m "$msg" && \
                 git push origin "$CURRENT_BRANCH"
-                read -p "Work pushed. Enter..." junk
+                read -e -p "Work pushed. Enter..." junk
             fi ;;
 
         5) # SYNC FETCH
             [[ "$IN_GIT" = false ]] && continue
             git pull origin "$CURRENT_BRANCH" || printf "${RED}Pull failed. Check conflicts/network.${NC}\n"
-            read -p "Pull complete. Enter..." junk ;;
+            read -e -p "Pull complete. Enter..." junk ;;
 
         6) # SYNC FORCE
             [[ "$IN_GIT" = false ]] && continue
             git fetch origin || printf "${RED}Fetch failed.${NC}\n"
             printf "A) OVERWRITE LOCAL (Loss of local work)\nB) FORCE PUSH (Loss of GitHub work)\nX) Cancel\n"
-            read -p "Action: " fa_choice
+            read -e -p "Action: " fa_choice
             [[ "$fa_choice" =~ [Aa] ]] && git reset --hard "origin/$CURRENT_BRANCH"
             [[ "$fa_choice" =~ [Bb] ]] && git push origin "$CURRENT_BRANCH" --force
-            read -p "Sync complete. Enter..." junk ;;
+            read -e -p "Sync complete. Enter..." junk ;;
 
         7) # BACKUP POINT
             [[ "$IN_GIT" = false ]] && continue
             TS=$(date +%Y%m%d_%H%M)
             git branch "backup/${CURRENT_BRANCH}_$TS"
             printf "${GREEN}Backup created.${NC}\n"
-            read -p "Enter..." junk ;;
+            read -e -p "Enter..." junk ;;
 
         8) # PREPARE UAT
             [[ "$IN_GIT" = false ]] && continue
@@ -511,7 +511,7 @@ while true; do
             git stash > /dev/null 2>&1
             get_branch_list_raw "uat"
             print_colored_branch_list "uat"
-            read -p "Select Jules' branch to test: " uat_idx
+            read -e -p "Select Jules' branch to test: " uat_idx
             [[ "$uat_idx" =~ ^[Xx]$ ]] && continue
             
             jules_br=$(eval echo "\$uat_${uat_idx}")
@@ -527,38 +527,38 @@ while true; do
             else
                 printf "${RED}Merge failed. Check emergency options.${NC}\n"
             fi
-            read -p "Enter..." junk ;;
+            read -e -p "Enter..." junk ;;
 
         9) # STAGING PUSH
             [[ "$IN_GIT" = false ]] && continue
             git branch -f dev-stable-backup dev-stable 2>/dev/null
-            read -p "Push ${CURRENT_BRANCH} → dev-stable? (y/n): " s_conf
+            read -e -p "Push ${CURRENT_BRANCH} → dev-stable? (y/n): " s_conf
             
             if [[ "$s_conf" == "y" ]]; then
                 git checkout dev-stable 2>/dev/null || git checkout -b dev-stable
                 git reset --hard "$CURRENT_BRANCH"
                 git push origin dev-stable --force && git checkout "$CURRENT_BRANCH"
             fi
-            read -p "Enter..." junk ;;
+            read -e -p "Enter..." junk ;;
 
         10) # MERGE FIXES
             [[ "$IN_GIT" = false ]] && continue
             get_branch_list_raw "mf"
             print_colored_branch_list "mf"
-            read -p "Select Fix Branch: " mf_idx
+            read -e -p "Select Fix Branch: " mf_idx
             [[ "$mf_idx" =~ ^[Xx]$ ]] && continue
 
             # Validate input
             if [[ ! "$mf_idx" =~ ^[0-9]+$ ]]; then
                  printf "${RED}Invalid input.${NC}\n"
-                 read -p "Enter..." junk
+                 read -e -p "Enter..." junk
                  continue
             fi
 
             # Check range (avoid unbound variable crash)
             if [[ -z "$(eval echo "\${mf_${mf_idx}:-}")" ]]; then
                 printf "${RED}Invalid selection.${NC}\n"
-                read -p "Enter..." junk
+                read -e -p "Enter..." junk
                 continue
             fi
             
@@ -568,17 +568,17 @@ while true; do
             if [[ -n "$fix_br" ]]; then
                 git merge "origin/$fix_br" --no-edit && git push origin "$CURRENT_BRANCH" && git branch -D "$fix_br" 2>/dev/null
             fi
-            read -p "Enter..." junk ;;
+            read -e -p "Enter..." junk ;;
 
         11) # RELEASE TAG
             [[ "$IN_GIT" = false ]] && continue
             git tag -l | tail -n 5
-            read -p "New version tag: " v_tag
+            read -e -p "New version tag: " v_tag
             
             if [[ -n "$v_tag" ]]; then
                 git tag -a "$v_tag" -m "Release $v_tag" && git push origin "$v_tag"
             fi
-            read -p "Enter..." junk ;;
+            read -e -p "Enter..." junk ;;
 
         12) # CLEANUP PRUNE
             [[ "$IN_GIT" = false ]] && continue
@@ -592,26 +592,26 @@ while true; do
             else
                 printf "Nothing to prune.\n"
             fi
-            read -p "Enter..." junk ;;
+            read -e -p "Enter..." junk ;;
 
         13) # DELETE LOCAL
             [[ "$IN_GIT" = false ]] && continue
             get_branch_list_raw "dk"
             print_colored_branch_list "dk"
-            read -p "Number to DELETE (CAUTION): " dk_idx
+            read -e -p "Number to DELETE (CAUTION): " dk_idx
             [[ "$dk_idx" =~ ^[Xx]$ ]] && continue
 
             # Validate input
             if [[ ! "$dk_idx" =~ ^[0-9]+$ ]]; then
                  printf "${RED}Invalid input.${NC}\n"
-                 read -p "Enter..." junk
+                 read -e -p "Enter..." junk
                  continue
             fi
 
             # Check range (avoid unbound variable crash)
             if [[ -z "$(eval echo "\${dk_${dk_idx}:-}")" ]]; then
                 printf "${RED}Invalid selection.${NC}\n"
-                read -p "Enter..." junk
+                read -e -p "Enter..." junk
                 continue
             fi
             
@@ -620,13 +620,13 @@ while true; do
                 git branch -D "$del_br"
                 printf "${RED}Branch $del_br deleted.${NC}\n"
             fi
-            read -p "Enter..." junk ;;
+            read -e -p "Enter..." junk ;;
 
         14) # UNDO COMMIT
             [[ "$IN_GIT" = false ]] && continue
             git reset --soft HEAD~1
             printf "${YELLOW}Last commit undone. Changes are kept in stage (files kept)${NC}\n"
-            read -p "Enter..." junk ;;
+            read -e -p "Enter..." junk ;;
 
         15) # FORCE RESET
             [[ "$IN_GIT" = false ]] && continue
@@ -634,24 +634,24 @@ while true; do
                 printf "${RED}${BOLD}!!! WARNING: YOU ARE IN PROD ENVIRONMENT !!!${NC}\n"
             fi
             
-            read -p "Type PROCEED to wipe local and reset to main: " p_conf
+            read -e -p "Type PROCEED to wipe local and reset to main: " p_conf
             if [[ "$p_conf" == "PROCEED" ]]; then
                 git checkout main && \
                 git reset --hard origin/main && \
                 git clean -fd
                 printf "${GREEN}Reset successful.${NC}\n"
             fi
-            read -p "Enter..." junk ;;
+            read -e -p "Enter..." junk ;;
 
         16) # EMERGENCY
             [[ "$IN_GIT" = false ]] && continue
             printf "1) ABORT MERGE 2) CLEAR LOCKS 3) POP STASH\n"
-            read -p "Action: " em_c
+            read -e -p "Action: " em_c
             
             [[ "$em_c" == "1" ]] && git merge --abort
             [[ "$em_c" == "2" ]] && rm -f .git/index.lock
             [[ "$em_c" == "3" ]] && git stash pop
-            read -p "Enter..." junk ;;
+            read -e -p "Enter..." junk ;;
 
         17) # RESTORE COMMIT
             [[ "$IN_GIT" = false ]] && continue
@@ -661,12 +661,12 @@ while true; do
             git log --oneline -n 30 | more
             printf "\n"
 
-            read -p "Enter commit hash to restore to (X to cancel): " target_commit
+            read -e -p "Enter commit hash to restore to (X to cancel): " target_commit
             [[ "$target_commit" =~ ^[Xx]$ ]] && continue
 
             if [[ -z "$target_commit" ]] || ! git rev-parse --verify --quiet "$target_commit" > /dev/null; then
                 printf "${RED}Invalid commit hash.${NC}\n"
-                read -p "Enter..." junk
+                read -e -p "Enter..." junk
                 continue
             fi
 
@@ -676,7 +676,7 @@ while true; do
             printf " 3) Reset branch to here (Discard all changes after this commit)\n"
             printf " X) Cancel\n"
 
-            read -p "Select action: " restore_choice
+            read -e -p "Select action: " restore_choice
 
             case "$restore_choice" in
                 1)
@@ -687,7 +687,7 @@ while true; do
                     ;;
                 3)
                     printf "${RED}WARNING: This will discard all commits after ${target_commit}.${NC}\n"
-                    read -p "Type 'PROCEED' to confirm: " r_conf
+                    read -e -p "Type 'PROCEED' to confirm: " r_conf
                     if [[ "$r_conf" == "PROCEED" ]]; then
                         git reset --hard "$target_commit"
                         printf "${GREEN}Reset successful.${NC}\n"
@@ -699,7 +699,7 @@ while true; do
                     continue
                     ;;
             esac
-            read -p "Enter..." junk ;;
+            read -e -p "Enter..." junk ;;
 
         18) # DIFF VIEWER
             [[ "$IN_GIT" = false ]] && continue
@@ -710,7 +710,7 @@ while true; do
             printf "2) Staged changes\n"
             printf "3) Compare two branches\n"
             printf "4) Compare with specific commit\n"
-            read -p "Select: " diff_choice
+            read -e -p "Select: " diff_choice
             
             case "$diff_choice" in
                 1) git diff | more ;;
@@ -718,21 +718,21 @@ while true; do
                 3) 
                     get_branch_list_raw "diff"
                     print_colored_branch_list "diff"
-                    read -p "First branch: " b1
+                    read -e -p "First branch: " b1
                     [[ "$b1" =~ ^[Xx]$ ]] && continue
 
                     if [[ ! "$b1" =~ ^[0-9]+$ ]] || [[ -z "$(eval echo "\${diff_${b1}:-}")" ]]; then
                         printf "${RED}Invalid selection.${NC}\n"
-                        read -p "Enter..." junk
+                        read -e -p "Enter..." junk
                         continue
                     fi
 
-                    read -p "Second branch: " b2
+                    read -e -p "Second branch: " b2
                     [[ "$b2" =~ ^[Xx]$ ]] && continue
 
                     if [[ ! "$b2" =~ ^[0-9]+$ ]] || [[ -z "$(eval echo "\${diff_${b2}:-}")" ]]; then
                         printf "${RED}Invalid selection.${NC}\n"
-                        read -p "Enter..." junk
+                        read -e -p "Enter..." junk
                         continue
                     fi
 
@@ -742,34 +742,34 @@ while true; do
                     ;;
                 4)
                     git log --oneline -n 10
-                    read -p "Commit hash: " commit_hash
+                    read -e -p "Commit hash: " commit_hash
                     git diff "${commit_hash}" | more
                     ;;
             esac
-            read -p "Enter..." junk ;;
+            read -e -p "Enter..." junk ;;
 
         19) # FILE HISTORY
             [[ "$IN_GIT" = false ]] && continue
             clear
             printf "${CYAN}${BOLD}FILE HISTORY${NC}\n\n"
-            read -p "Enter filename (with path): " filename
+            read -e -p "Enter filename (with path): " filename
             
             if [[ -n "$filename" ]]; then
                 printf "\n${YELLOW}Commits affecting: ${filename}${NC}\n\n"
                 git log --follow --oneline -- "$filename" | more
                 printf "\n"
-                read -p "See detailed changes? (y/n): " show_detail
+                read -e -p "See detailed changes? (y/n): " show_detail
                 if [[ "$show_detail" == "y" ]]; then
                     git log --follow -p -- "$filename" | more
                 fi
             fi
-            read -p "Enter..." junk ;;
+            read -e -p "Enter..." junk ;;
 
         20) # SEARCH CODE
             [[ "$IN_GIT" = false ]] && continue
             clear
             printf "${CYAN}${BOLD}CODE SEARCH${NC}\n\n"
-            read -p "Search for text: " search_text
+            read -e -p "Search for text: " search_text
             
             if [[ -n "$search_text" ]]; then
                 printf "\n${YELLOW}Searching for: '${search_text}'${NC}\n\n"
@@ -778,24 +778,24 @@ while true; do
                     grep -r -n "$search_text" . 2>/dev/null | grep -v ".git/" | more
                 }
             fi
-            read -p "Enter..." junk ;;
+            read -e -p "Enter..." junk ;;
 
         21) # COMMIT FINDER
             [[ "$IN_GIT" = false ]] && continue
             clear
             printf "${CYAN}${BOLD}COMMIT FINDER${NC}\n\n"
-            read -p "Search commit messages for: " search_msg
+            read -e -p "Search commit messages for: " search_msg
             
             if [[ -n "$search_msg" ]]; then
                 printf "\n${YELLOW}Commits containing: '${search_msg}'${NC}\n\n"
                 git log --all --oneline --grep="$search_msg" | more
                 printf "\n"
-                read -p "Show full details? (y/n): " show_full
+                read -e -p "Show full details? (y/n): " show_full
                 if [[ "$show_full" == "y" ]]; then
                     git log --all --grep="$search_msg" | more
                 fi
             fi
-            read -p "Enter..." junk ;;
+            read -e -p "Enter..." junk ;;
 
         22) # BRANCH COMPARE
             [[ "$IN_GIT" = false ]] && continue
@@ -804,21 +804,21 @@ while true; do
             get_branch_list_raw "cmp"
             print_colored_branch_list "cmp"
             
-            read -p "Base branch (what you have): " base_idx
+            read -e -p "Base branch (what you have): " base_idx
             [[ "$base_idx" =~ ^[Xx]$ ]] && continue
 
             if [[ ! "$base_idx" =~ ^[0-9]+$ ]] || [[ -z "$(eval echo "\${cmp_${base_idx}:-}")" ]]; then
                 printf "${RED}Invalid selection.${NC}\n"
-                read -p "Enter..." junk
+                read -e -p "Enter..." junk
                 continue
             fi
 
-            read -p "Compare branch (what you want to check): " cmp_idx
+            read -e -p "Compare branch (what you want to check): " cmp_idx
             [[ "$cmp_idx" =~ ^[Xx]$ ]] && continue
 
             if [[ ! "$cmp_idx" =~ ^[0-9]+$ ]] || [[ -z "$(eval echo "\${cmp_${cmp_idx}:-}")" ]]; then
                 printf "${RED}Invalid selection.${NC}\n"
-                read -p "Enter..." junk
+                read -e -p "Enter..." junk
                 continue
             fi
             
@@ -831,12 +831,12 @@ while true; do
                 printf "\n${YELLOW}Commits in ${cmp_br} not in ${base_br}:${NC}\n\n"
                 git log "${base_br}".."${cmp_br}" --oneline | more
                 printf "\n"
-                read -p "Show file differences? (y/n): " show_files
+                read -e -p "Show file differences? (y/n): " show_files
                 if [[ "$show_files" == "y" ]]; then
                     git diff "${base_br}"..."${cmp_br}" --stat | more
                 fi
             fi
-            read -p "Enter..." junk ;;
+            read -e -p "Enter..." junk ;;
 
         23) # STASH PULL POP
             [[ "$IN_GIT" = false ]] && continue
@@ -853,7 +853,7 @@ while true; do
                 printf "${YELLOW}Popping stash...${NC}\n"
                 git stash pop
             fi
-            read -p "Enter..." junk ;;
+            read -e -p "Enter..." junk ;;
 
         24) # FORGET CACHED FILE
             [[ "$IN_GIT" = false ]] && continue
@@ -862,7 +862,7 @@ while true; do
                 git rm --cached "$file_to_forget"
                 printf "${GREEN}File removed from cache.${NC}\n"
             fi
-            read -p "Enter..." junk ;;
+            read -e -p "Enter..." junk ;;
 
         25) # RESTORE BACKUP
             [[ "$IN_GIT" = false ]] && continue
@@ -877,7 +877,7 @@ while true; do
 
             if [[ ${#backup_branches[@]} -eq 0 ]]; then
                 printf "${YELLOW}No backup branches found.${NC}\n"
-                read -p "Enter..." junk
+                read -e -p "Enter..." junk
                 continue
             fi
 
@@ -886,12 +886,12 @@ while true; do
                 printf " %2d) %s\n" "$((i+1))" "${backup_branches[$i]}"
             done
 
-            read -p "Select backup to restore (X to cancel): " backup_idx
+            read -e -p "Select backup to restore (X to cancel): " backup_idx
             [[ "$backup_idx" =~ ^[Xx]$ ]] && continue
 
             if [[ ! "$backup_idx" =~ ^[0-9]+$ ]] || [[ "$backup_idx" -lt 1 ]] || [[ "$backup_idx" -gt "${#backup_branches[@]}" ]]; then
                 printf "${RED}Invalid selection.${NC}\n"
-                read -p "Enter..." junk
+                read -e -p "Enter..." junk
                 continue
             fi
 
@@ -902,7 +902,7 @@ while true; do
             printf "3) Overwrite 'main' locally AND force push to GitHub\n"
             printf "X) Cancel\n"
 
-            read -p "Choose action: " restore_action
+            read -e -p "Choose action: " restore_action
             case "$restore_action" in
                 1)
                     git checkout "$selected_backup"
@@ -923,7 +923,7 @@ while true; do
                     printf "${YELLOW}Action cancelled.${NC}\n"
                     ;;
             esac
-            read -p "Enter..." junk ;;
+            read -e -p "Enter..." junk ;;
 
         [Ss]) # SETUP
             clear
@@ -935,7 +935,7 @@ while true; do
             printf "3) Show current configuration\n"
             printf "4) Install Aliases (Multi-Shell Support)\n"
             printf "X) Cancel\n\n"
-            read -p "Choose option: " setup_choice
+            read -e -p "Choose option: " setup_choice
             
             case "$setup_choice" in
                 1)
@@ -954,16 +954,16 @@ while true; do
                         done
                         printf "${YELLOW}=============================${NC}\n\n"
 
-                        read -p "Existing configuration found. Use this configuration (and cancel overwrite)? (y/n): " use_existing
+                        read -e -p "Existing configuration found. Use this configuration (and cancel overwrite)? (y/n): " use_existing
                         if [[ "$use_existing" == "y" ]]; then
                             printf "${GREEN}Keeping existing configuration.${NC}\n"
-                            read -p "Enter..." junk
+                            read -e -p "Enter..." junk
                             continue
                         fi
                     fi
 
                     if [[ -f "$ENV_EXAMPLE" ]]; then
-                        read -p "This will overwrite current .env. Continue? (y/n): " confirm
+                        read -e -p "This will overwrite current .env. Continue? (y/n): " confirm
                         if [[ "$confirm" == "y" ]]; then
                             cp "$ENV_EXAMPLE" "$ENV_FILE"
                             printf "${GREEN}Created new .env from template${NC}\n"
@@ -993,11 +993,11 @@ while true; do
                      else
                          printf "${YELLOW}Master Dev Tools script not found. Please run it from root.${NC}\n"
                      fi
-                     read -p "Enter..." junk
+                     read -e -p "Enter..." junk
                      ;;
                 [Xx]) ;;
             esac
-            read -p "Enter..." junk ;;
+            read -e -p "Enter..." junk ;;
 
         [Qq]) clear; exit 0 ;;
         *) sleep 0.1 ;;

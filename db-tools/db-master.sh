@@ -18,13 +18,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Function to get credentials
 get_creds() {
-    read -p "Database Name: " DB_NAME
-    read -p "Database User [root]: " DB_USER
+    read -e -p "Database Name: " DB_NAME
+    read -e -p "Database User [root]: " DB_USER
     DB_USER=${DB_USER:-root}
     read -rsp "Database Password: " DB_PASS
     echo ""
     # QNAP fix: default to 127.0.0.1 to force TCP (skips socket issues)
-    read -p "Host [127.0.0.1]: " DB_HOST
+    read -e -p "Host [127.0.0.1]: " DB_HOST
     DB_HOST=${DB_HOST:-127.0.0.1}
 }
 
@@ -55,7 +55,13 @@ backup_db() {
     # Use set +e locally to catch error without exiting script
     set +e
     set -o pipefail
-    mysqldump --defaults-extra-file="$TMP_CNF" "$DB_NAME" | gzip > "$FILENAME"
+
+    if command -v mariadb-dump &> /dev/null; then
+        mariadb-dump --defaults-extra-file="$TMP_CNF" "$DB_NAME" | gzip > "$FILENAME"
+    else
+        mysqldump --defaults-extra-file="$TMP_CNF" "$DB_NAME" | gzip > "$FILENAME"
+    fi
+
     STATUS=$?
     set +o pipefail
     set -e
@@ -99,7 +105,7 @@ while true; do
     echo "2) Analyze Database (Table Stats)"
     echo "X) Exit"
 
-    read -p "Select: " choice
+    read -e -p "Select: " choice
     case $choice in
         1) backup_db ;;
         2) analyze_db ;;

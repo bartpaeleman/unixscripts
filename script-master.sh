@@ -70,7 +70,7 @@ while true; do
     echo "S) Setup Environment (Permissions & Aliases)"
     echo "X) Exit"
 
-    read -p "Select Tool: " choice
+    read -e -p "Select Tool: " choice
     case $choice in
         1) launch_container ;;
         2) launch_git ;;

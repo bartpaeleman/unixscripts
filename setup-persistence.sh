@@ -25,7 +25,7 @@ echo "It will also create shortcuts to jump to PROD, DEV, and TEST directories."
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo -e "\nTarget directory for aliases: ${CYAN}${SCRIPT_DIR}${NC}"
-read -p "Install/Update aliases to point to this location? (y/n): " INSTALL_ALIAS
+read -e -p "Install/Update aliases to point to this location? (y/n): " INSTALL_ALIAS
 
 if [[ "$INSTALL_ALIAS" != "y" ]]; then
     echo "Skipping persistence setup."
@@ -111,7 +111,7 @@ if [[ ${#PROFILES[@]} -eq 0 ]]; then
     echo -e "Detected shell: ${CYAN}$CURRENT_SHELL${NC}"
     echo -e "Preferred profile: ${CYAN}$PREFERRED_PROFILE${NC}"
 
-    read -p "Create $PREFERRED_PROFILE? (y/n): " CREATE_PROF
+    read -e -p "Create $PREFERRED_PROFILE? (y/n): " CREATE_PROF
     if [[ "$CREATE_PROF" == "y" ]]; then
         touch "$PREFERRED_PROFILE"
         PROFILES+=("$PREFERRED_PROFILE")
@@ -152,13 +152,13 @@ fi
 [[ -z "$PATH_TEST" && -n "$EXISTING_TEST" ]] && PATH_TEST="$EXISTING_TEST"
 
 echo -e "\n${CYAN}Configuring Navigation Aliases...${NC}"
-read -p "Enter path for PROD [${PATH_PROD}]: " INPUT_PROD
+read -e -p "Enter path for PROD [${PATH_PROD}]: " INPUT_PROD
 PATH_PROD="${INPUT_PROD:-$PATH_PROD}"
 
-read -p "Enter path for DEV [${PATH_DEV}]: " INPUT_DEV
+read -e -p "Enter path for DEV [${PATH_DEV}]: " INPUT_DEV
 PATH_DEV="${INPUT_DEV:-$PATH_DEV}"
 
-read -p "Enter path for TEST [${PATH_TEST}]: " INPUT_TEST
+read -e -p "Enter path for TEST [${PATH_TEST}]: " INPUT_TEST
 PATH_TEST="${INPUT_TEST:-$PATH_TEST}"
 
 

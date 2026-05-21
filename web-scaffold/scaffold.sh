@@ -16,7 +16,7 @@ NC='\033[0m'
 echo -e "${CYAN}=== Web Project Scaffolder ===${NC}"
 
 # 1. Get Project Name
-read -p "Enter Project Name (no spaces, alphanumeric): " PROJECT_NAME
+read -e -p "Enter Project Name (no spaces, alphanumeric): " PROJECT_NAME
 if [[ -z "$PROJECT_NAME" ]]; then
     echo -e "${YELLOW}Error: Project name required.${NC}"
     exit 1
@@ -28,12 +28,12 @@ if [[ ! "$PROJECT_NAME" =~ ^[a-zA-Z0-9_-]+$ ]]; then
 fi
 
 # 2. Get Target Directory
-read -p "Install path [./$PROJECT_NAME]: " INSTALL_PATH
+read -e -p "Install path [./$PROJECT_NAME]: " INSTALL_PATH
 INSTALL_PATH=${INSTALL_PATH:-"./$PROJECT_NAME"}
 
 if [[ -d "$INSTALL_PATH" ]]; then
     echo -e "${YELLOW}Warning: Directory '$INSTALL_PATH' already exists.${NC}"
-    read -p "Continue? (y/n): " CONFIRM
+    read -e -p "Continue? (y/n): " CONFIRM
     if [[ "$CONFIRM" != "y" ]]; then
         exit 0
     fi
@@ -160,7 +160,7 @@ echo -e "${GREEN}✓ Project created successfully at: $INSTALL_PATH${NC}"
 
 # 5. Optional Documentation
 echo -e "\n${CYAN}--- Documentation ---${NC}"
-read -p "Generate README.md? (y/n): " GEN_DOC
+read -e -p "Generate README.md? (y/n): " GEN_DOC
 if [[ "$GEN_DOC" == "y" ]]; then
     if command -v python3 &> /dev/null; then
         python3 "$(dirname "$0")/generate_readme.py" "$INSTALL_PATH" "$PROJECT_NAME"

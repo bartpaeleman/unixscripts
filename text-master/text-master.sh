@@ -21,7 +21,7 @@ pause() {
 
 text_stats() {
     echo -e "\n${CYAN}=== Text Analysis ===${NC}"
-    read -p "File Path: " FILE
+    read -e -p "File Path: " FILE
     if [[ -f "$FILE" ]]; then
         if command -v python3 &> /dev/null; then
             python3 "$SCRIPT_DIR/text_stats.py" "$FILE"
@@ -37,19 +37,19 @@ text_stats() {
 
 text_search() {
     echo -e "\n${CYAN}=== Search & Replace (sed) ===${NC}"
-    read -p "File Path: " FILE
+    read -e -p "File Path: " FILE
     [[ ! -f "$FILE" ]] && echo "File not found" && pause && return
 
     echo "1) Search (grep)"
     echo "2) Replace (sed - create backup)"
-    read -p "Action: " act
+    read -e -p "Action: " act
 
     if [[ "$act" == "1" ]]; then
-        read -p "Search Term: " term
+        read -e -p "Search Term: " term
         grep -n --color=always "$term" "$FILE" | less
     elif [[ "$act" == "2" ]]; then
-        read -p "Find: " find_str
-        read -p "Replace with: " rep_str
+        read -e -p "Find: " find_str
+        read -e -p "Replace with: " rep_str
 
         sed -i.bak "s/$find_str/$rep_str/g" "$FILE"
         echo -e "${GREEN}Replaced. Backup created at $FILE.bak${NC}"
@@ -59,8 +59,8 @@ text_search() {
 
 text_compare() {
     echo -e "\n${CYAN}=== Compare Files ===${NC}"
-    read -p "File 1: " F1
-    read -p "File 2: " F2
+    read -e -p "File 1: " F1
+    read -e -p "File 2: " F2
 
     if [[ -f "$F1" ]] && [[ -f "$F2" ]]; then
         diff --color=always "$F1" "$F2" | less
@@ -72,9 +72,9 @@ text_compare() {
 
 text_merge() {
     echo -e "\n${CYAN}=== Merge Files ===${NC}"
-    read -p "File 1: " F1
-    read -p "File 2: " F2
-    read -p "Output File: " OUT
+    read -e -p "File 1: " F1
+    read -e -p "File 2: " F2
+    read -e -p "Output File: " OUT
 
     if [[ -f "$F1" ]] && [[ -f "$F2" ]]; then
         cat "$F1" "$F2" > "$OUT"
@@ -87,14 +87,14 @@ text_merge() {
 
 case_convert() {
     echo -e "\n${CYAN}=== Case Conversion ===${NC}"
-    read -p "File Path: " FILE
+    read -e -p "File Path: " FILE
     [[ ! -f "$FILE" ]] && echo "File not found" && pause && return
 
     echo "1) To UPPERCASE"
     echo "2) To lowercase"
-    read -p "Select: " c
+    read -e -p "Select: " c
 
-    read -p "Output File: " OUT
+    read -e -p "Output File: " OUT
 
     if [[ "$c" == "1" ]]; then
         tr '[:lower:]' '[:upper:]' < "$FILE" > "$OUT"
@@ -118,7 +118,7 @@ while true; do
     echo "5) Case Conversion (Upper/Lower)"
     echo "X) Exit"
 
-    read -p "Select: " choice
+    read -e -p "Select: " choice
     case $choice in
         1) text_stats ;;
         2) text_search ;;

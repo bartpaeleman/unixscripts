@@ -38,7 +38,7 @@ get_target() {
 run_rename() {
     local expr="$1"
 
-    read -p "Execute as Dry-run (do not rename anything yet)? [Y/n]: " dry_choice
+    read -e -p "Execute as Dry-run (do not rename anything yet)? [Y/n]: " dry_choice
     local flags="-v -d"
     if [[ "$dry_choice" != "n" && "$dry_choice" != "N" ]]; then
         flags="$flags -n"
@@ -46,7 +46,7 @@ run_rename() {
     fi
 
     if [[ -d "$target_path" ]]; then
-        read -p "Search in subfolders too (recursive)? [y/N]: " recurse
+        read -e -p "Search in subfolders too (recursive)? [y/N]: " recurse
         if [[ "$recurse" == "y" || "$recurse" == "Y" ]]; then
             # Use find and pipe output to rename via xargs
             # -print0 and -0 for spaces in filenames
@@ -90,11 +90,11 @@ while true; do
     echo "0) Back / Exit"
     echo -e "${CYAN}================================================${NC}"
 
-    read -p "Choose an option: " choice
+    read -e -p "Choose an option: " choice
     case $choice in
         1)
-            read -p "Search text: " search_text
-            read -p "Replace with: " replace_text
+            read -e -p "Search text: " search_text
+            read -e -p "Replace with: " replace_text
             # Basic escape for slashes to prevent breaking the expression
             s_escaped=$(echo "$search_text" | sed 's/\//\\\//g')
             r_escaped=$(echo "$replace_text" | sed 's/\//\\\//g')
@@ -107,7 +107,7 @@ while true; do
             run_rename 'tr/a-z/A-Z/'
             ;;
         4)
-            read -p "Text to remove: " rem_text
+            read -e -p "Text to remove: " rem_text
             r_escaped=$(echo "$rem_text" | sed 's/\//\\\//g')
             run_rename "s/$r_escaped//g"
             ;;
@@ -115,19 +115,19 @@ while true; do
             run_rename 's/ /_/g'
             ;;
         6)
-            read -p "Prefix text: " prefix_text
+            read -e -p "Prefix text: " prefix_text
             p_escaped=$(echo "$prefix_text" | sed 's/\//\\\//g')
             # '$_' holds the filename. Prefix prepends it.
             run_rename "s/^/$p_escaped/"
             ;;
         7)
-            read -p "Suffix text: " suffix_text
+            read -e -p "Suffix text: " suffix_text
             s_escaped=$(echo "$suffix_text" | sed 's/\//\\\//g')
             # Insert right before the last dot (extension), or at the end if no dot
             run_rename "s/(\.[^.]+)?$/$s_escaped\$1/"
             ;;
         8)
-            read -p "Provide full Perl expression (e.g. s/foo/bar/): " custom_expr
+            read -e -p "Provide full Perl expression (e.g. s/foo/bar/): " custom_expr
             run_rename "$custom_expr"
             ;;
         0) break ;;
