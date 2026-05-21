@@ -24,12 +24,22 @@ get_creds() {
     read -rsp "Database Password: " DB_PASS
     echo ""
 
-    # QNAP detection for default host/socket
+    # Auto-detect default host or socket
     DEFAULT_HOST="127.0.0.1"
+
+    # QNAP specific checks
     if command -v getcfg &> /dev/null; then
-        DEFAULT_HOST="/tmp/mariadb10.sock"
+        # Try to find the active socket file
+        if [ -S "/var/run/mariadb10.sock" ]; then
+            DEFAULT_HOST="/var/run/mariadb10.sock"
+        elif [ -S "/tmp/mariadb10.sock" ]; then
+            DEFAULT_HOST="/tmp/mariadb10.sock"
+        elif [ -S "/tmp/mysql.sock" ]; then
+            DEFAULT_HOST="/tmp/mysql.sock"
+        fi
     fi
 
+    echo -e "${CYAN}Tip: Press Enter to use the detected default for Host/Socket.${NC}"
     read -e -p "Host/Socket [$DEFAULT_HOST]: " DB_HOST
     DB_HOST=${DB_HOST:-$DEFAULT_HOST}
 }

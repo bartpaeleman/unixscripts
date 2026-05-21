@@ -34,8 +34,13 @@ def get_db_stats(host, user, db_name):
         print("Error: 'mariadb' or 'mysql' command not found. Make sure MariaDB is installed.")
         return
 
+    # Pass password securely via environment variable
+    env = os.environ.copy()
+    if password:
+        env["MYSQL_PWD"] = password
+
     # Construct command
-    cmd = [mysql_bin, "-u", user, f"-p{password}", "-e", sql, "-t"]
+    cmd = [mysql_bin, "-u", user, "-e", sql, "-t"]
     if host.startswith("/"):
         cmd.insert(1, f"--socket={host}")
     else:
@@ -44,11 +49,15 @@ def get_db_stats(host, user, db_name):
 
     print(f"\n--- Statistics for {db_name} ---")
     try:
-        # Suppress password warning
-        result = subprocess.run(cmd, check=True, text=True, stderr=subprocess.DEVNULL)
-    except subprocess.CalledProcessError:
+        # Capture stderr so we can print the real error if it fails
+        result = subprocess.run(cmd, check=True, text=True, capture_output=True, env=env)
+        print(result.stdout)
+    except subprocess.CalledProcessError as e:
         print("Error: Could not connect to database or query failed.")
-        print("Check your credentials and host.")
+        if e.stderr:
+            print(f"Details: {e.stderr.strip()}")
+        else:
+            print("Check your credentials and host/socket path.")
     except FileNotFoundError:
         print("Error: 'mariadb' or 'mysql' command not found.")
 
