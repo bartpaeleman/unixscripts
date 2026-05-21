@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# Zorg dat autocomplete het scherm niet overvol maakt door het te wissen bij tab
-set -o emacs
-bind '"\t": "\C-l\e\e"' 2>/dev/null || true
-
 GREEN='\033[1;32m'
 CYAN='\033[1;36m'
 YELLOW='\033[1;33m'
@@ -20,15 +16,21 @@ export PATH="$HOME/.local/bin:$PATH"
 
 check_dependencies() {
     local install_needed=false
+    local rnr_bin=$(command -v rnr)
 
-    if ! command -v rnr &> /dev/null; then
+    if [[ -z "$rnr_bin" ]]; then
         install_needed=true
         echo -e "${YELLOW}'rnr' (Advanced Rename Tool) is not installed.${NC}"
-    elif ! rnr --version &> /dev/null; then
+    elif ! "$rnr_bin" --version &> /dev/null; then
         # Catch GLIBC linker errors from previously installed wrong binary versions
         install_needed=true
-        echo -e "${RED}'rnr' is installed but cannot execute (likely GLIBC error). Replacing it...${NC}"
-        rm -f "$HOME/.local/bin/rnr"
+        echo -e "${RED}'rnr' is installed at $rnr_bin but cannot execute (likely GLIBC error). Replacing it...${NC}"
+        if rm -f "$rnr_bin" 2>/dev/null; then
+             echo -e "${YELLOW}Corrupted binary removed successfully.${NC}"
+        else
+             echo -e "${RED}Failed to remove $rnr_bin. Permission denied. Please delete it manually and re-run this script.${NC}"
+             exit 1
+        fi
     fi
 
     if [ "$install_needed" = true ]; then
