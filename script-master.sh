@@ -49,6 +49,10 @@ launch_text() {
     bash "$SCRIPT_DIR/text-master/text-master.sh"
 }
 
+launch_system() {
+    bash "$SCRIPT_DIR/system-manager/systemmanager.sh"
+}
+
 setup_env() {
     bash "$SCRIPT_DIR/dev-tools.sh"
 }
@@ -66,6 +70,7 @@ while true; do
     echo "5) File Master      (Rename, Archive, Cleanup)"
     echo "6) Data Master      (Convert/View CSV,JSON,XML)"
     echo "7) Web Scaffold     (Project Generator)"
+    echo "8) System Manager   (System Config & Crontab)"
     echo -e "-----------------------------------"
     echo "S) Setup Environment (Permissions & Aliases)"
     echo "X) Exit"
@@ -79,6 +84,7 @@ while true; do
         5) launch_file ;;
         6) launch_data ;;
         7) launch_web ;;
+        8) launch_system ;;
         [sS]) setup_env ;;
         [xX]) exit 0 ;;
         *) echo "Invalid option." ; pause ;;
