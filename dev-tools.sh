@@ -116,21 +116,36 @@ if [[ "$CHECK_PYTHON" == "y" ]]; then
             CMD_ALIAS_1="alias python='$TARGET_PY'"
             CMD_ALIAS_2="alias python3='$TARGET_PY'"
 
-            for prof in "${PROFILES[@]}"; do
-                echo -e "Updating ${CYAN}$prof${NC}..."
+            # Define alias store
+            if [[ -d "/share/Public" ]]; then
+                ALIAS_STORE="/share/Public/.bash_aliases"
+            else
+                ALIAS_STORE="/share/CACHEDEV1_DATA/.bash_aliases"
+            fi
 
-                if ! grep -q "# --- PYTHON SETUP ---" "$prof"; then
-                    echo "" >> "$prof"
-                    echo "# --- PYTHON SETUP ---" >> "$prof"
-                    echo "$CMD_EXPORT" >> "$prof"
-                    echo "$CMD_ALIAS_1" >> "$prof"
-                    echo "$CMD_ALIAS_2" >> "$prof"
-                    echo "# --------------------" >> "$prof"
-                    echo -e "  ${GREEN}Added Python configuration${NC}"
-                else
-                    echo -e "  ${YELLOW}Python config already exists${NC}"
+            echo -e "Updating ${CYAN}$ALIAS_STORE${NC}..."
+            touch "$ALIAS_STORE"
+
+            if ! grep -q "# --- PYTHON SETUP ---" "$ALIAS_STORE"; then
+                echo "" >> "$ALIAS_STORE"
+                echo "# --- PYTHON SETUP ---" >> "$ALIAS_STORE"
+                echo "$CMD_EXPORT" >> "$ALIAS_STORE"
+                echo "$CMD_ALIAS_1" >> "$ALIAS_STORE"
+                echo "$CMD_ALIAS_2" >> "$ALIAS_STORE"
+                echo "# --------------------" >> "$ALIAS_STORE"
+                echo -e "  ${GREEN}Added Python configuration to aliases${NC}"
+            else
+                echo -e "  ${YELLOW}Python config already exists in aliases${NC}"
+            fi
+
+            # Clean up legacy python config in profiles if present
+            for prof in "${PROFILES[@]}"; do
+                if grep -q "# --- PYTHON SETUP ---" "$prof"; then
+                     sed '/# --- PYTHON SETUP ---/,/# --------------------/d' "$prof" > "${prof}.tmp" && mv "${prof}.tmp" "$prof"
+                     echo -e "  ${YELLOW}Removed legacy inline Python config from ${prof}.${NC}"
                 fi
             done
+
             echo -e "${GREEN}Python setup complete.${NC}"
         else
             echo "Skipping Python setup."
