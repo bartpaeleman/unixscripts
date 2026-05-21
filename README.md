@@ -4,13 +4,14 @@ A comprehensive collection of development utilities and scripts designed for QNA
 
 ## Installation
 
-For a robust setup, use the interactive installer. This script will:
-1.  Ask where you want to install the tools (default: `~/dev-tools`).
-2.  Copy all necessary files to that location.
-3.  Configure your environment (`.env`) with GitHub credentials.
-4.  Set up aliases and permissions automatically.
+For a robust setup, clone the repository and use the interactive installer. This script will:
+1.  Initialize the tools in your current cloned directory.
+2.  Configure your environment (`.env`) with GitHub credentials.
+3.  Set up aliases and permissions automatically so that you can run the tools from anywhere.
 
 ```bash
+git clone <repository_url> dev-tools
+cd dev-tools
 chmod +x install.sh
 ./install.sh
 ```
