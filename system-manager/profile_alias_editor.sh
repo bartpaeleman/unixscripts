@@ -77,7 +77,9 @@ while true; do
     printf "3) Voeg alias toe (snel)\n"
     printf "4) Verwijder alias\n"
     printf "5) Activeer aliases nu (injecteer in /etc/profile)\n"
-    printf "6) Stel autorun.sh in voor persistentie na reboot\n"
+    printf "6) Bekijk /etc/profile\n"
+    printf "7) Bewerk /etc/profile (editor)\n"
+    printf "8) Stel autorun.sh in voor persistentie na reboot\n"
     printf "0) Terug\n"
     printf "${CYAN}================================================\n${NC}"
 
@@ -165,6 +167,27 @@ while true; do
             pause
             ;;
         6)
+            printf "\n${YELLOW}Inhoud van %s:${NC}\n" "$LIVE_PROFILE"
+            printf "${CYAN}------------------------------------------------\n${NC}"
+            if command -v more >/dev/null 2>&1; then
+                cat "$LIVE_PROFILE" | more
+            else
+                cat "$LIVE_PROFILE"
+            fi
+            printf "${CYAN}------------------------------------------------\n${NC}"
+            pause
+            ;;
+        7)
+            if [ "$(id -u)" = "0" ]; then
+                EDITOR="${EDITOR:-vi}"
+                "$EDITOR" "$LIVE_PROFILE"
+                printf "\n${GREEN}Opgeslagen in %s${NC}\n" "$LIVE_PROFILE"
+            else
+                printf "${RED}Root-toegang vereist voor bewerken van %s.${NC}\n" "$LIVE_PROFILE"
+            fi
+            pause
+            ;;
+        8)
             printf "\n${YELLOW}autorun.sh instellen voor persistentie na reboot...${NC}\n"
             if [ "$(id -u)" != "0" ]; then
                 printf "${RED}Root-toegang vereist.${NC}\n"
@@ -172,15 +195,37 @@ while true; do
                 continue
             fi
 
-            # Mount de config-partitie (QNAP TS-464 = Intel/AMD x86)
+            # Mount de config-partitie
             printf "Config-partitie mounten...\n"
+            mkdir -p /tmp/config
+            MOUNTED=0
+
+            # Methode 1: HAL app (Recente QNAP's)
             BOOT_PD=$(/sbin/hal_app --get_boot_pd port_id=0 2>/dev/null)
             if [ -n "$BOOT_PD" ]; then
-                mount "${BOOT_PD}6" /tmp/config 2>/dev/null \
-                    || printf "${YELLOW}Mogelijk al gemount, doorgaan...${NC}\n"
-            else
-                printf "${RED}Kon boot device niet bepalen via hal_app.${NC}\n"
-                printf "${YELLOW}Mount /tmp/config handmatig en probeer opnieuw.${NC}\n"
+                if mount -t ext2 "${BOOT_PD}6" /tmp/config 2>/dev/null || mount -t ext4 "${BOOT_PD}6" /tmp/config 2>/dev/null || mount "${BOOT_PD}6" /tmp/config 2>/dev/null; then
+                    MOUNTED=1
+                fi
+            fi
+
+            # Methode 2: Fallback standaard mount points
+            if [ "$MOUNTED" -eq 0 ]; then
+                for dev in /dev/sdx6 /dev/mmcblk0p6; do
+                    if mount -t ext2 "$dev" /tmp/config 2>/dev/null || mount -t ext4 "$dev" /tmp/config 2>/dev/null || mount "$dev" /tmp/config 2>/dev/null; then
+                        MOUNTED=1
+                        break
+                    fi
+                done
+            fi
+
+            # Controle of het mounten via /proc/mounts echt gelukt is (of al was)
+            if grep -q "/tmp/config" /proc/mounts; then
+                MOUNTED=1
+            fi
+
+            if [ "$MOUNTED" -eq 0 ]; then
+                printf "${RED}Kon boot device partitie niet mounten.${NC}\n"
+                printf "${YELLOW}Dit kan betekenen dat uw model een afwijkende flash-structuur heeft.\nMount /tmp/config handmatig en voer het script opnieuw uit.${NC}\n"
                 pause
                 continue
             fi
