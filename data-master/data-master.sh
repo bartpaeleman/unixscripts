@@ -28,7 +28,7 @@ check_deps() {
     if [[ $RET -ne 0 ]]; then
         echo ""
         if command -v pip3 &>/dev/null; then
-            read -p "Install missing dependencies? (y/n): " INSTALL
+            read -e -p "Install missing dependencies? (y/n): " INSTALL
             if [[ "$INSTALL" == "y" ]]; then
                 echo -e "${CYAN}Installing pandas pyyaml...${NC}"
                 pip3 install --user pandas pyyaml
@@ -44,7 +44,7 @@ check_deps() {
 
 view_csv() {
     echo -e "\n${CYAN}=== View CSV ===${NC}"
-    read -p "CSV File Path: " FILE
+    read -e -p "CSV File Path: " FILE
     if [[ ! -f "$FILE" ]]; then
         echo "File not found."
         pause
@@ -55,14 +55,14 @@ view_csv() {
 
 convert_delim() {
     echo -e "\n${CYAN}=== Convert Delimiter ===${NC}"
-    read -p "Input CSV Path: " IN_FILE
+    read -e -p "Input CSV Path: " IN_FILE
     if [[ ! -f "$IN_FILE" ]]; then
         echo "File not found."
         pause
         return
     fi
-    read -p "Output CSV Path: " OUT_FILE
-    read -p "New Delimiter (e.g. , ;): " NEW_DELIM
+    read -e -p "Output CSV Path: " OUT_FILE
+    read -e -p "New Delimiter (e.g. , ;): " NEW_DELIM
 
     if [[ -z "$NEW_DELIM" ]]; then
         echo "Delimiter required."
@@ -77,14 +77,14 @@ convert_delim() {
 convert_format() {
     echo -e "\n${CYAN}=== Convert Format ===${NC}"
     echo "Supports: CSV <-> JSON, XML -> JSON, YAML -> JSON/CSV"
-    read -p "Input File Path: " IN_FILE
+    read -e -p "Input File Path: " IN_FILE
     if [[ ! -f "$IN_FILE" ]]; then
         echo "File not found."
         pause
         return
     fi
 
-    read -p "Output File Path: " OUT_FILE
+    read -e -p "Output File Path: " OUT_FILE
 
     python3 "$SCRIPT_DIR/data_utils.py" convert "$IN_FILE" "$OUT_FILE"
     pause
@@ -92,14 +92,14 @@ convert_format() {
 
 normalize_dataset() {
     echo -e "\n${CYAN}=== Normalize Dataset ===${NC}"
-    read -p "Input CSV Path: " IN_FILE
+    read -e -p "Input CSV Path: " IN_FILE
     if [[ ! -f "$IN_FILE" ]]; then
         echo "File not found."
         pause
         return
     fi
 
-    read -p "Output CSV Path: " OUT_FILE
+    read -e -p "Output CSV Path: " OUT_FILE
 
     python3 "$SCRIPT_DIR/data_utils.py" normalize "$IN_FILE" "$OUT_FILE"
     pause
@@ -118,7 +118,7 @@ while true; do
     echo "5) Check Dependencies"
     echo "X) Exit"
 
-    read -p "Select: " choice
+    read -e -p "Select: " choice
     case $choice in
         1) view_csv ;;
         2) convert_delim ;;

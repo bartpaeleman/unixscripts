@@ -50,7 +50,7 @@ fi
 
 # --- PYTHON SETUP ---
 echo -e "\n${CYAN}=== Python Environment Setup ===${NC}"
-read -p "Check for Python configuration? (y/n): " CHECK_PYTHON
+read -e -p "Check for Python configuration? (y/n): " CHECK_PYTHON
 
 if [[ "$CHECK_PYTHON" == "y" ]]; then
     # Ensure profiles are detected if not already done
@@ -97,14 +97,14 @@ if [[ "$CHECK_PYTHON" == "y" ]]; then
         TARGET_PY=""
 
         if [[ -n "$FOUND_QNAP_PY" ]]; then
-            read -p "Use found QNAP Python ($FOUND_QNAP_PY)? (y/n): " USE_QNAP
+            read -e -p "Use found QNAP Python ($FOUND_QNAP_PY)? (y/n): " USE_QNAP
             if [[ "$USE_QNAP" == "y" ]]; then
                 TARGET_PY="$FOUND_QNAP_PY"
             fi
         fi
 
         if [[ -z "$TARGET_PY" ]]; then
-            read -p "Enter path to python3 executable (empty to skip): " MANUAL_PY
+            read -e -p "Enter path to python3 executable (empty to skip): " MANUAL_PY
             TARGET_PY="$MANUAL_PY"
         fi
 

@@ -34,7 +34,7 @@ else
     NEEDS_CONFIG=false
     if [[ -f "$ENV_FILE" ]]; then
         echo -e "${YELLOW}.env file already exists in target.${NC}"
-        read -p "Overwrite with new configuration? (y/n): " OVR_ENV
+        read -e -p "Overwrite with new configuration? (y/n): " OVR_ENV
         if [[ "$OVR_ENV" =~ ^[Yy]$ ]]; then
             cp "$ENV_EXAMPLE" "$ENV_FILE"
             NEEDS_CONFIG=true
@@ -49,8 +49,8 @@ else
     if [[ "$NEEDS_CONFIG" == true && -f "$ENV_FILE" ]]; then
         echo -e "\n${YELLOW}Please enter your GitHub credentials for the tools:${NC}"
 
-        read -p "GitHub Username: " GH_USER
-        read -p "GitHub Token (ghp_...): " GH_TOKEN
+        read -e -p "GitHub Username: " GH_USER
+        read -e -p "GitHub Token (ghp_...): " GH_TOKEN
 
         # Escape special chars for sed
         GH_USER=$(echo "$GH_USER" | sed 's/[\/&]/\\&/g')

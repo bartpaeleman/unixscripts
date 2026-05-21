@@ -26,7 +26,7 @@ get_path_input() {
     local default_path="$PWD"
 
     echo -e "${CYAN}${prompt_msg}${NC} (Press Enter for Current Directory: ${YELLOW}${default_path}${NC})" >&2
-    read -p "> " input_path
+    read -e -p "> " input_path
 
     if [[ -z "$input_path" || "$input_path" == "." ]]; then
         echo "$default_path"
@@ -47,13 +47,13 @@ bulk_rename() {
     echo "Regex Support (Python re)"
     echo "Example: 'image_(\d+)' -> 'img_\1'"
     read -r -p "Pattern (Regex): " PATTERN
-    read -p "Replacement: " REPLACE
+    read -e -p "Replacement: " REPLACE
 
     echo -e "\n${YELLOW}Previewing changes...${NC}"
     python3 "$SCRIPT_DIR/file_manager.py" rename "$DIR" "$PATTERN" "$REPLACE"
 
     echo ""
-    read -p "Apply changes? (y/n): " CONFIRM
+    read -e -p "Apply changes? (y/n): " CONFIRM
     if [[ "$CONFIRM" == "y" ]]; then
         python3 "$SCRIPT_DIR/file_manager.py" rename "$DIR" "$PATTERN" "$REPLACE" --run
     fi
@@ -63,7 +63,7 @@ bulk_rename() {
 create_struct() {
     echo -e "\n${CYAN}=== Create Structure ===${NC}"
     echo "Provide a text file where each line is a directory path to create."
-    read -p "Template File Path: " TMPL
+    read -e -p "Template File Path: " TMPL
 
     if [[ ! -f "$TMPL" ]]; then
         echo "File not found."
@@ -87,7 +87,7 @@ archive_dir() {
 
     echo "1) Zip"
     echo "2) Tar.gz"
-    read -p "Select Format: " FMT_CHOICE
+    read -e -p "Select Format: " FMT_CHOICE
 
     TYPE="zip"
     if [[ "$FMT_CHOICE" == "2" ]]; then
@@ -117,7 +117,7 @@ cleanup_dir() {
         echo "5) All of the above"
         echo "0) Cancel"
 
-        read -p "Select Action: " clean_choice
+        read -e -p "Select Action: " clean_choice
 
         ARGS=""
         case $clean_choice in
@@ -125,9 +125,9 @@ cleanup_dir() {
             2) ARGS="--empty" ;;
             3) ARGS="--dupes" ;;
             4)
-                read -p "Delete Junk Files? (y/n): " c_junk
-                read -p "Delete Empty Directories? (y/n): " c_empty
-                read -p "Delete Duplicates? (y/n): " c_dupes
+                read -e -p "Delete Junk Files? (y/n): " c_junk
+                read -e -p "Delete Empty Directories? (y/n): " c_empty
+                read -e -p "Delete Duplicates? (y/n): " c_dupes
                 [[ "$c_junk" == "y" ]] && ARGS="$ARGS --junk"
                 [[ "$c_empty" == "y" ]] && ARGS="$ARGS --empty"
                 [[ "$c_dupes" == "y" ]] && ARGS="$ARGS --dupes"
@@ -151,7 +151,7 @@ cleanup_dir() {
 
         python3 "$SCRIPT_DIR/file_manager.py" cleanup "$DIR" $ARGS
 
-        read -p "Execute cleanup? (y/n): " CONFIRM
+        read -e -p "Execute cleanup? (y/n): " CONFIRM
         if [[ "$CONFIRM" == "y" ]]; then
             python3 "$SCRIPT_DIR/file_manager.py" cleanup "$DIR" $ARGS --run
             echo "${GREEN}Cleanup complete.${NC}"
@@ -165,8 +165,8 @@ cleanup_dir() {
 
 compare_files() {
     echo -e "\n${CYAN}=== Compare Files ===${NC}"
-    read -p "File 1: " F1
-    read -p "File 2: " F2
+    read -e -p "File 1: " F1
+    read -e -p "File 2: " F2
 
     if [[ ! -f "$F1" ]] || [[ ! -f "$F2" ]]; then
         echo "One or both files not found."
@@ -197,7 +197,7 @@ while true; do
     echo "11) Compare Folders"
     echo "X) Exit"
 
-    read -p "Select: " choice
+    read -e -p "Select: " choice
     case $choice in
         1) bulk_rename ;;
         2) create_struct ;;

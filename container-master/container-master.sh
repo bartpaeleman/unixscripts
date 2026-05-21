@@ -74,7 +74,7 @@ view_logs() {
         ((i++))
     done
 
-    read -p "Number: " choice
+    read -e -p "Number: " choice
     if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#containers[@]}" ]; then
         target="${containers[$((choice-1))]}"
         echo -e "\n${GREEN}Logs for $target (Last 50 lines, follow mode)...${NC}"
@@ -103,7 +103,7 @@ manage_lifecycle() {
         ((i++))
     done
 
-    read -p "Number: " choice
+    read -e -p "Number: " choice
     if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#containers[@]}" ]; then
         target="${containers[$((choice-1))]}"
         echo -e "\n${YELLOW}Executing $action on $target...${NC}"
@@ -118,7 +118,7 @@ create_container() {
     echo "1) From Template (Docker Compose)"
     echo "2) Custom Image Run"
     echo "X) Back"
-    read -p "Select: " method
+    read -e -p "Select: " method
 
     case $method in
         1)
@@ -136,10 +136,10 @@ create_container() {
                 ((i++))
             done
 
-            read -p "Select Template: " t_idx
+            read -e -p "Select Template: " t_idx
             if [[ "$t_idx" =~ ^[0-9]+$ ]] && [ "$t_idx" -ge 1 ] && [ "$t_idx" -le "${#templates[@]}" ]; then
                 selected="${templates[$((t_idx-1))]}"
-                read -p "Project Name (folder name): " p_name
+                read -e -p "Project Name (folder name): " p_name
 
                 if [[ -z "$p_name" ]]; then echo "Cancelled"; pause; return; fi
 
@@ -147,7 +147,7 @@ create_container() {
                 cp "$selected" "$p_name/docker-compose.yml"
 
                 echo -e "${GREEN}Created folder '$p_name' with docker-compose.yml${NC}"
-                read -p "Start stack now? (y/n): " start_now
+                read -e -p "Start stack now? (y/n): " start_now
                 if [[ "$start_now" == "y" ]]; then
                     cd "$p_name" && docker compose up -d
                     cd ..
@@ -155,9 +155,9 @@ create_container() {
             fi
             ;;
         2)
-            read -p "Image Name (e.g., nginx:alpine): " img
-            read -p "Container Name: " c_name
-            read -p "Port Mapping (host:container, e.g., 8080:80): " ports
+            read -e -p "Image Name (e.g., nginx:alpine): " img
+            read -e -p "Container Name: " c_name
+            read -e -p "Port Mapping (host:container, e.g., 8080:80): " ports
 
             # Construct command using array for safety
             local cmd_args=("run" "-d" "--name" "$c_name")
@@ -182,7 +182,7 @@ cleanup_system() {
     echo "3) Prune Unused Volumes"
     echo "4) Prune Everything (System Prune -a)"
     echo "X) Cancel"
-    read -p "Select: " clean_opt
+    read -e -p "Select: " clean_opt
 
     case $clean_opt in
         1) docker container prune ;;
@@ -217,13 +217,13 @@ while true; do
     echo -e "\n---------------------------------------------------------------"
     echo " Q) Quit"
     echo -e "${BOLD}===============================================================${NC}"
-    read -p "Select action: " choice
+    read -e -p "Select action: " choice
 
     case $choice in
         1) list_containers ;;
         2) view_logs ;;
         3)
-           read -p "Container Name/ID: " c_id
+           read -e -p "Container Name/ID: " c_id
            if command -v python3 &> /dev/null; then
                python3 "$SCRIPT_DIR/inspect_viewer.py" "$c_id" | less
            else
@@ -234,7 +234,7 @@ while true; do
         5) manage_lifecycle "stop" ;;
         6) manage_lifecycle "restart" ;;
         7)
-            read -p "Container Name: " c_name
+            read -e -p "Container Name: " c_name
             echo "Entering shell (type 'exit' to leave)..."
             docker exec -it "$c_name" /bin/sh || docker exec -it "$c_name" /bin/bash
             ;;
