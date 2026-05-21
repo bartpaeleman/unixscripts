@@ -75,7 +75,7 @@ alias datamaster='"${REPO_DIR}/data-master/data-master.sh"'
 alias filemaster='"${REPO_DIR}/file-master/file-master.sh"'
 alias textmaster='"${REPO_DIR}/text-master/text-master.sh"'
 
-
+alias scripts='cd "${REPO_DIR}"'
 alias persis='"${REPO_DIR}/setup-persistence.sh"'
 # ------------------------------------
 EOF
@@ -152,7 +152,12 @@ fi
 [[ -z "$PATH_TEST" && -n "$EXISTING_TEST" ]] && PATH_TEST="$EXISTING_TEST"
 
 # Dedicated alias file configuration
-ALIAS_FILE="/share/CACHEDEV1_DATA/.bash_aliases"
+if [[ -d "/share/Public" ]]; then
+    ALIAS_FILE="/share/Public/.bash_aliases"
+else
+    ALIAS_FILE="/share/CACHEDEV1_DATA/.bash_aliases"
+fi
+
 # Check if alias file exists and extract existing alias paths to use as defaults
 if [[ -f "$ALIAS_FILE" ]]; then
     if grep -q "alias prd=" "$ALIAS_FILE"; then

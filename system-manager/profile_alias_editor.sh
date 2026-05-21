@@ -18,7 +18,11 @@ RED='\033[1;31m'
 NC='\033[0m'
 
 # Persistent opslaglocatie voor aliases (op RAID — overleeft reboots)
-ALIAS_STORE="/share/CACHEDEV1_DATA/.bash_aliases"
+if [ -d "/share/Public" ]; then
+    ALIAS_STORE="/share/Public/.bash_aliases"
+else
+    ALIAS_STORE="/share/CACHEDEV1_DATA/.bash_aliases"
+fi
 
 # Live profiel waar aliases actief worden geladen
 LIVE_PROFILE="/etc/profile"
@@ -51,7 +55,7 @@ inject_to_profile() {
 
     # Voeg nieuw blok toe aan het einde
     printf "\n%s\n" "$marker" >> "$LIVE_PROFILE"
-    cat "$ALIAS_STORE" >> "$LIVE_PROFILE"
+    printf "[ -f \"%s\" ] && . \"%s\"\n" "$ALIAS_STORE" "$ALIAS_STORE" >> "$LIVE_PROFILE"
     printf "%s\n" "$marker_end" >> "$LIVE_PROFILE"
 }
 
@@ -193,21 +197,21 @@ while true; do
                     printf "#!/bin/sh\n" > "$AUTORUN"
                 fi
 
-                cat >> "$AUTORUN" << 'AUTORUN_BLOCK'
+                cat >> "$AUTORUN" << AUTORUN_BLOCK
 
 # >>> SYSTEM aliases begin <<<
 # Injecteer persistente aliases in /etc/profile bij elke opstart
-_ALIAS_STORE="/share/CACHEDEV1_DATA/.bash_aliases"
+_ALIAS_STORE="${ALIAS_STORE}"
 _MARKER_BEGIN="# >>> SYSTEM aliases begin <<<"
 _MARKER_END="# <<< SYSTEM aliases end >>>"
-if [ -f "$_ALIAS_STORE" ]; then
-    if grep -q "$_MARKER_BEGIN" /etc/profile 2>/dev/null; then
-        awk "/$_MARKER_BEGIN/{found=1} !found{print} /$_MARKER_END/{found=0}" \
+if [ -f "\$_ALIAS_STORE" ]; then
+    if grep -q "\$_MARKER_BEGIN" /etc/profile 2>/dev/null; then
+        awk "/\$_MARKER_BEGIN/{found=1} !found{print} /\$_MARKER_END/{found=0}" \
             /etc/profile > /tmp/profile_clean && mv /tmp/profile_clean /etc/profile
     fi
-    printf "\n%s\n" "$_MARKER_BEGIN" >> /etc/profile
-    cat "$_ALIAS_STORE" >> /etc/profile
-    printf "%s\n" "$_MARKER_END" >> /etc/profile
+    printf "\n%s\n" "\$_MARKER_BEGIN" >> /etc/profile
+    printf "[ -f \"%s\" ] && . \"%s\"\n" "\$_ALIAS_STORE" "\$_ALIAS_STORE" >> /etc/profile
+    printf "%s\n" "\$_MARKER_END" >> /etc/profile
 fi
 # <<< SYSTEM aliases end >>>
 AUTORUN_BLOCK
