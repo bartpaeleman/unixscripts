@@ -75,17 +75,25 @@ if [[ "$CHECK_PYTHON" == "y" ]]; then
         fi
 
         # 2. Check for common QNAP location
-        QNAP_PY_DIR="/share/CACHEDEV1_DATA/.samba_python3/Python3/bin"
         FOUND_QNAP_PY=""
+        COMMON_PATHS=(
+            "/share/CACHEDEV1_DATA/.qpkg/Python3/bin/python3"
+            "/share/CACHEDEV1_DATA/.samba_python3/Python3/bin/python3"
+            "/opt/bin/python3"
+            "/usr/local/bin/python3"
+        )
 
-        if [[ -d "$QNAP_PY_DIR" ]]; then
-            # Look for python3 or python3.*
-            for py in "$QNAP_PY_DIR"/python3*; do
-                if [[ -x "$py" ]]; then
-                    FOUND_QNAP_PY="$py"
-                    break
-                fi
-            done
+        for p in "${COMMON_PATHS[@]}"; do
+            if [[ -x "$p" ]]; then
+                FOUND_QNAP_PY="$p"
+                break
+            fi
+        done
+
+        # Extended search if not found in common locations
+        if [[ -z "$FOUND_QNAP_PY" && -d "/share/CACHEDEV1_DATA/.qpkg" ]]; then
+            echo -e "${YELLOW}Searching for python3 in .qpkg...${NC}"
+            FOUND_QNAP_PY=$(find "/share/CACHEDEV1_DATA/.qpkg" -maxdepth 4 -name "python3" -type f -executable 2>/dev/null | head -n 1)
         fi
 
         if [[ -n "$FOUND_QNAP_PY" ]]; then
@@ -96,16 +104,17 @@ if [[ "$CHECK_PYTHON" == "y" ]]; then
         echo -e "\nConfiguring persistence..."
         TARGET_PY=""
 
-        if [[ -n "$FOUND_QNAP_PY" ]]; then
-            read -e -p "Use found QNAP Python ($FOUND_QNAP_PY)? (y/n): " USE_QNAP
-            if [[ "$USE_QNAP" == "y" ]]; then
-                TARGET_PY="$FOUND_QNAP_PY"
+        # Check if current bash supports read -e -i for prefilling prompts
+        if bash -c 'help read' 2>/dev/null | grep -q '\[-i text\]'; then
+            read -e -i "$FOUND_QNAP_PY" -p "Enter path to python3 executable (empty to skip): " TARGET_PY
+        else
+            # Fallback for older Bash
+            if [[ -n "$FOUND_QNAP_PY" ]]; then
+                read -e -p "Enter path to python3 executable [${FOUND_QNAP_PY}]: " TARGET_PY
+                TARGET_PY="${TARGET_PY:-$FOUND_QNAP_PY}"
+            else
+                read -e -p "Enter path to python3 executable (empty to skip): " TARGET_PY
             fi
-        fi
-
-        if [[ -z "$TARGET_PY" ]]; then
-            read -e -p "Enter path to python3 executable (empty to skip): " MANUAL_PY
-            TARGET_PY="$MANUAL_PY"
         fi
 
         # 4. Apply
