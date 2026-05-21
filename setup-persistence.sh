@@ -151,6 +151,27 @@ fi
 [[ -z "$PATH_DEV" && -n "$EXISTING_DEV" ]] && PATH_DEV="$EXISTING_DEV"
 [[ -z "$PATH_TEST" && -n "$EXISTING_TEST" ]] && PATH_TEST="$EXISTING_TEST"
 
+# Dedicated alias file configuration
+ALIAS_FILE="/share/CACHEDEV1_DATA/.bash_aliases"
+# Check if alias file exists and extract existing alias paths to use as defaults
+if [[ -f "$ALIAS_FILE" ]]; then
+    if grep -q "alias prd=" "$ALIAS_FILE"; then
+        FOUND_PROD=$(grep "alias prd=" "$ALIAS_FILE" | tail -n 1 | cut -d'"' -f2 | cut -d"'" -f2)
+        FOUND_PROD="${FOUND_PROD#cd }"
+        [[ -n "$FOUND_PROD" ]] && PATH_PROD="$FOUND_PROD"
+    fi
+    if grep -q "alias dev=" "$ALIAS_FILE"; then
+        FOUND_DEV=$(grep "alias dev=" "$ALIAS_FILE" | tail -n 1 | cut -d'"' -f2 | cut -d"'" -f2)
+        FOUND_DEV="${FOUND_DEV#cd }"
+        [[ -n "$FOUND_DEV" ]] && PATH_DEV="$FOUND_DEV"
+    fi
+    if grep -q "alias tst=" "$ALIAS_FILE"; then
+        FOUND_TEST=$(grep "alias tst=" "$ALIAS_FILE" | tail -n 1 | cut -d'"' -f2 | cut -d"'" -f2)
+        FOUND_TEST="${FOUND_TEST#cd }"
+        [[ -n "$FOUND_TEST" ]] && PATH_TEST="$FOUND_TEST"
+    fi
+fi
+
 echo -e "\n${CYAN}Configuring Navigation Aliases...${NC}"
 read -e -p "Enter path for PROD [${PATH_PROD}]: " INPUT_PROD
 PATH_PROD="${INPUT_PROD:-$PATH_PROD}"
@@ -182,42 +203,61 @@ ALIAS_BLOCK_NAV="${ALIAS_BLOCK_NAV}
 # ----------------------------"
 
 # --- 5. INSTALLATION ---
+echo -e "\n${CYAN}Installing aliases to ${ALIAS_FILE}...${NC}"
+
+# Ensure alias file exists
+touch "$ALIAS_FILE"
+
+# Clean up old blocks in alias file if present
+if grep -q "# --- DEV TOOLS COLLECTION ALIASES ---" "$ALIAS_FILE"; then
+     sed -i.bak '/# --- DEV TOOLS COLLECTION ALIASES ---/,/# ------------------------------------/d' "$ALIAS_FILE"
+     rm -f "$ALIAS_FILE.bak"
+     echo -e "  ${YELLOW}Updated existing Tools Aliases in ${ALIAS_FILE}.${NC}"
+else
+     echo -e "  ${GREEN}Added Tools Aliases to ${ALIAS_FILE}.${NC}"
+fi
+echo "$ALIAS_BLOCK_TOOLS" >> "$ALIAS_FILE"
+
+if grep -q "# --- NAVIGATION ALIASES ---" "$ALIAS_FILE"; then
+     sed -i.bak '/# --- NAVIGATION ALIASES ---/,/# ----------------------------/d' "$ALIAS_FILE"
+     rm -f "$ALIAS_FILE.bak"
+     echo -e "  ${YELLOW}Updated existing Navigation Aliases in ${ALIAS_FILE}.${NC}"
+else
+     echo -e "  ${GREEN}Added Navigation Aliases to ${ALIAS_FILE}.${NC}"
+fi
+echo "$ALIAS_BLOCK_NAV" >> "$ALIAS_FILE"
+
+
 if [[ ${#PROFILES[@]} -gt 0 ]]; then
-    echo -e "\n${CYAN}Detected Profiles:${NC}"
+    echo -e "\n${CYAN}Linking alias file in detected Profiles:${NC}"
     for prof in "${PROFILES[@]}"; do
         echo -e "  - $prof"
     done
 
-    echo -e "\nInstalling aliases..."
-
     for prof in "${PROFILES[@]}"; do
         echo -e "\nProcessing profile: ${CYAN}$prof${NC}"
 
-        # Clean up old blocks if present
-        # Using a loop to handle multiple blocks or partial updates logic
-        # Ideally, check if block exists, prompt to update.
-
-        # Tools Block
+        # Clean up legacy inline blocks if present
         if grep -q "# --- DEV TOOLS COLLECTION ALIASES ---" "$prof"; then
-             # Remove old block (Portable sed: delete range)
              sed -i.bak '/# --- DEV TOOLS COLLECTION ALIASES ---/,/# ------------------------------------/d' "$prof"
              rm -f "$prof.bak"
-             echo -e "  ${YELLOW}Updated existing Tools Aliases.${NC}"
-        else
-             echo -e "  ${GREEN}Added Tools Aliases.${NC}"
+             echo -e "  ${YELLOW}Removed legacy inline Tools Aliases from ${prof}.${NC}"
         fi
-        echo "$ALIAS_BLOCK_TOOLS" >> "$prof"
-
-        # Navigation Block
         if grep -q "# --- NAVIGATION ALIASES ---" "$prof"; then
              sed -i.bak '/# --- NAVIGATION ALIASES ---/,/# ----------------------------/d' "$prof"
              rm -f "$prof.bak"
-             echo -e "  ${YELLOW}Updated existing Navigation Aliases.${NC}"
-        else
-             echo -e "  ${GREEN}Added Navigation Aliases.${NC}"
+             echo -e "  ${YELLOW}Removed legacy inline Navigation Aliases from ${prof}.${NC}"
         fi
-        echo "$ALIAS_BLOCK_NAV" >> "$prof"
 
+        # Check if the alias file is already sourced in the profile
+        if ! grep -q "\[ -f $ALIAS_FILE \] && \. $ALIAS_FILE" "$prof"; then
+             echo "" >> "$prof"
+             echo "# Source dedicated bash aliases file" >> "$prof"
+             echo "[ -f $ALIAS_FILE ] && . $ALIAS_FILE" >> "$prof"
+             echo -e "  ${GREEN}Linked ${ALIAS_FILE} in ${prof}.${NC}"
+        else
+             echo -e "  ${YELLOW}Alias file link already exists in ${prof}.${NC}"
+        fi
     done
 
     echo -e "\n${GREEN}Setup complete.${NC}"
