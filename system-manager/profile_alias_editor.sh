@@ -149,6 +149,11 @@ while true; do
                 inject_to_profile
                 printf "${GREEN}Klaar. Aliases zijn actief in nieuwe shell-sessies.${NC}\n"
                 printf "${YELLOW}Voor de huidige sessie: ${NC}. %s\n" "$LIVE_PROFILE"
+                # Probeer het commando in de bash history van de gebruiker te zetten
+                if [ -f "$HOME/.bash_history" ]; then
+                    printf ". %s\n" "$LIVE_PROFILE" >> "$HOME/.bash_history"
+                    printf "${CYAN}(Het commando is toegevoegd aan je geschiedenis. Druk na afsluiten op 'Pijltje Omhoog' en Enter!)${NC}\n"
+                fi
             else
                 printf "${RED}Root-toegang vereist voor schrijven naar %s.${NC}\n" "$LIVE_PROFILE"
                 printf "${YELLOW}Start het script als root of voer uit via: sudo sh systemmanager.sh${NC}\n"
