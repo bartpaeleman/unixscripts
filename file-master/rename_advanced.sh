@@ -32,7 +32,7 @@ check_dependencies() {
         local asset=""
 
         case $arch in
-            x86_64) asset="rnr-v0.5.1-x86_64-unknown-linux-gnu.tar.gz" ;;
+            x86_64) asset="rnr-v0.5.1-x86_64-unknown-linux-musl.tar.gz" ;;
             aarch64) asset="rnr-v0.5.1-aarch64-unknown-linux-gnu.tar.gz" ;;
             armv7l) asset="rnr-v0.5.1-armv7-unknown-linux-gnueabihf.tar.gz" ;;
             *)
