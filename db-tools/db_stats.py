@@ -16,11 +16,31 @@ def get_db_stats(host, user, db_name):
     ORDER BY (data_length + index_length) DESC;
     """
 
-    # Construct command (using mysql CLI to avoid dependencies)
-    cmd = ["mariadb" if subprocess.run(["which", "mariadb"], stdout=subprocess.DEVNULL).returncode == 0 else "mysql", "-h", host, "-u", user, f"-p{password}", "-e", sql, "-t"]
+    # Determine the correct binary
+    mysql_bin = None
+    if subprocess.run(["which", "mariadb"], stdout=subprocess.DEVNULL).returncode == 0:
+        mysql_bin = "mariadb"
+    elif subprocess.run(["which", "mysql"], stdout=subprocess.DEVNULL).returncode == 0:
+        mysql_bin = "mysql"
+    else:
+        # Check QNAP specific path if global isn't found
+        qnap_check = subprocess.run(["getcfg", "MariaDB10", "Install_Path", "-f", "/etc/config/qpkg.conf"], capture_output=True, text=True)
+        if qnap_check.returncode == 0 and qnap_check.stdout.strip():
+            qnap_bin = os.path.join(qnap_check.stdout.strip(), "bin", "mysql")
+            if os.path.isfile(qnap_bin) and os.access(qnap_bin, os.X_OK):
+                mysql_bin = qnap_bin
 
-    # If host is localhost or 127.0.0.1, QNAP might need explicit socket or TCP
-    # Since we don't know socket path, stick to what's passed, but handle error gracefully
+    if not mysql_bin:
+        print("Error: 'mariadb' or 'mysql' command not found. Make sure MariaDB is installed.")
+        return
+
+    # Construct command
+    cmd = [mysql_bin, "-u", user, f"-p{password}", "-e", sql, "-t"]
+    if host.startswith("/"):
+        cmd.insert(1, f"--socket={host}")
+    else:
+        cmd.insert(1, "-h")
+        cmd.insert(2, host)
 
     print(f"\n--- Statistics for {db_name} ---")
     try:

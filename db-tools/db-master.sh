@@ -23,9 +23,15 @@ get_creds() {
     DB_USER=${DB_USER:-root}
     read -rsp "Database Password: " DB_PASS
     echo ""
-    # QNAP fix: default to 127.0.0.1 to force TCP (skips socket issues)
-    read -e -p "Host [127.0.0.1]: " DB_HOST
-    DB_HOST=${DB_HOST:-127.0.0.1}
+
+    # QNAP detection for default host/socket
+    DEFAULT_HOST="127.0.0.1"
+    if command -v getcfg &> /dev/null; then
+        DEFAULT_HOST="/tmp/mariadb10.sock"
+    fi
+
+    read -e -p "Host/Socket [$DEFAULT_HOST]: " DB_HOST
+    DB_HOST=${DB_HOST:-$DEFAULT_HOST}
 }
 
 pause() {
@@ -50,17 +56,38 @@ backup_db() {
     echo "[client]" > "$TMP_CNF"
     echo "user=$DB_USER" >> "$TMP_CNF"
     echo "password=$DB_PASS" >> "$TMP_CNF"
-    echo "host=$DB_HOST" >> "$TMP_CNF"
+
+    if [[ "$DB_HOST" == /* ]]; then
+        echo "socket=$DB_HOST" >> "$TMP_CNF"
+    else
+        echo "host=$DB_HOST" >> "$TMP_CNF"
+    fi
+
+    # Detect QNAP specialized path if no global command is found
+    DUMP_CMD=""
+    if command -v mariadb-dump &> /dev/null; then
+        DUMP_CMD="mariadb-dump"
+    elif command -v mysqldump &> /dev/null; then
+        DUMP_CMD="mysqldump"
+    elif command -v getcfg &> /dev/null; then
+        QNAP_MARIADB_PATH=$(getcfg MariaDB10 Install_Path -f /etc/config/qpkg.conf 2>/dev/null)
+        if [[ -n "$QNAP_MARIADB_PATH" && -x "$QNAP_MARIADB_PATH/bin/mysqldump" ]]; then
+            DUMP_CMD="$QNAP_MARIADB_PATH/bin/mysqldump"
+        fi
+    fi
+
+    if [[ -z "$DUMP_CMD" ]]; then
+        echo -e "${RED}✗ Error: Neither mysqldump nor mariadb-dump found.${NC}"
+        rm -f "$TMP_CNF"
+        pause
+        return
+    fi
 
     # Use set +e locally to catch error without exiting script
     set +e
     set -o pipefail
 
-    if command -v mariadb-dump &> /dev/null; then
-        mariadb-dump --defaults-extra-file="$TMP_CNF" "$DB_NAME" | gzip > "$FILENAME"
-    else
-        mysqldump --defaults-extra-file="$TMP_CNF" "$DB_NAME" | gzip > "$FILENAME"
-    fi
+    "$DUMP_CMD" --defaults-extra-file="$TMP_CNF" "$DB_NAME" | gzip > "$FILENAME"
 
     STATUS=$?
     set +o pipefail
