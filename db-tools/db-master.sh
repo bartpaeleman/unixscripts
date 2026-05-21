@@ -16,32 +16,96 @@ NC='\033[0m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Function to get credentials
-get_creds() {
-    read -e -p "Database Name: " DB_NAME
-    read -e -p "Database User [root]: " DB_USER
-    DB_USER=${DB_USER:-root}
-    read -rsp "Database Password: " DB_PASS
+# Global State
+DB_CONNECTED=false
+GLOBAL_DB_USER="root"
+GLOBAL_DB_PASS=""
+GLOBAL_DB_HOST="127.0.0.1"
+MYSQL_CMD=""
+MYSQLDUMP_CMD=""
+
+# Function to detect binaries
+detect_binaries() {
+    if command -v mariadb &> /dev/null; then
+        MYSQL_CMD="mariadb"
+    elif command -v mysql &> /dev/null; then
+        MYSQL_CMD="mysql"
+    elif command -v getcfg &> /dev/null; then
+        QNAP_MARIADB_PATH=$(getcfg MariaDB10 Install_Path -f /etc/config/qpkg.conf 2>/dev/null)
+        if [[ -n "$QNAP_MARIADB_PATH" && -x "$QNAP_MARIADB_PATH/bin/mysql" ]]; then
+            MYSQL_CMD="$QNAP_MARIADB_PATH/bin/mysql"
+        fi
+    fi
+
+    if command -v mariadb-dump &> /dev/null; then
+        MYSQLDUMP_CMD="mariadb-dump"
+    elif command -v mysqldump &> /dev/null; then
+        MYSQLDUMP_CMD="mysqldump"
+    elif command -v getcfg &> /dev/null; then
+        QNAP_MARIADB_PATH=$(getcfg MariaDB10 Install_Path -f /etc/config/qpkg.conf 2>/dev/null)
+        if [[ -n "$QNAP_MARIADB_PATH" && -x "$QNAP_MARIADB_PATH/bin/mysqldump" ]]; then
+            MYSQLDUMP_CMD="$QNAP_MARIADB_PATH/bin/mysqldump"
+        fi
+    fi
+}
+
+# Function to connect to server
+connect_server() {
+    echo -e "\n${CYAN}=== Connect to Server ===${NC}"
+    detect_binaries
+
+    if [[ -z "$MYSQL_CMD" ]]; then
+        echo -e "${RED}✗ Error: Neither mysql nor mariadb client found.${NC}"
+        pause
+        return 1
+    fi
+
+    read -e -p "Database User [$GLOBAL_DB_USER]: " input_user
+    GLOBAL_DB_USER=${input_user:-$GLOBAL_DB_USER}
+
+    read -rsp "Database Password: " GLOBAL_DB_PASS
     echo ""
 
     # Auto-detect default host or socket
-    DEFAULT_HOST="127.0.0.1"
-
-    # QNAP specific checks
+    local default_host="127.0.0.1"
     if command -v getcfg &> /dev/null; then
-        # Try to find the active socket file
         if [ -S "/var/run/mariadb10.sock" ]; then
-            DEFAULT_HOST="/var/run/mariadb10.sock"
+            default_host="/var/run/mariadb10.sock"
         elif [ -S "/tmp/mariadb10.sock" ]; then
-            DEFAULT_HOST="/tmp/mariadb10.sock"
+            default_host="/tmp/mariadb10.sock"
         elif [ -S "/tmp/mysql.sock" ]; then
-            DEFAULT_HOST="/tmp/mysql.sock"
+            default_host="/tmp/mysql.sock"
         fi
     fi
 
     echo -e "${CYAN}Tip: Press Enter to use the detected default for Host/Socket.${NC}"
-    read -e -p "Host/Socket [$DEFAULT_HOST]: " DB_HOST
-    DB_HOST=${DB_HOST:-$DEFAULT_HOST}
+    read -e -p "Host/Socket [$default_host]: " input_host
+    GLOBAL_DB_HOST=${input_host:-$default_host}
+
+    # Build connection args
+    local conn_args=("-u" "$GLOBAL_DB_USER")
+    if [[ "$GLOBAL_DB_HOST" == /* ]]; then
+        conn_args+=("--socket=$GLOBAL_DB_HOST")
+    else
+        conn_args+=("-h" "$GLOBAL_DB_HOST")
+    fi
+
+    echo "Testing connection..."
+    export MYSQL_PWD="$GLOBAL_DB_PASS"
+    set +e
+    "$MYSQL_CMD" "${conn_args[@]}" -e "SELECT 1;" > /dev/null 2>&1
+    local status=$?
+    set -e
+
+    if [ $status -eq 0 ]; then
+        echo -e "${GREEN}✓ Connection established successfully.${NC}"
+        DB_CONNECTED=true
+    else
+        echo -e "${RED}✗ Connection failed. Check credentials and host.${NC}"
+        DB_CONNECTED=false
+        GLOBAL_DB_PASS="" # clear failed password
+    fi
+    pause
 }
 
 pause() {
@@ -49,44 +113,73 @@ pause() {
     read -r
 }
 
+# Function to get database name with autocomplete
+get_db_name() {
+    local conn_args=("-u" "$GLOBAL_DB_USER")
+    if [[ "$GLOBAL_DB_HOST" == /* ]]; then
+        conn_args+=("--socket=$GLOBAL_DB_HOST")
+    else
+        conn_args+=("-h" "$GLOBAL_DB_HOST")
+    fi
+
+    # Fetch databases
+    export MYSQL_PWD="$GLOBAL_DB_PASS"
+    local dbs=$("$MYSQL_CMD" "${conn_args[@]}" -sNe "SHOW DATABASES;" 2>/dev/null)
+
+    if [[ -z "$dbs" ]]; then
+        # Fallback if no DBs retrieved
+        read -e -p "Database Name: " DB_NAME
+        return
+    fi
+
+    # Create temporary directory for bash completion trick
+    local tmp_dir=$(mktemp -d)
+    for db in $dbs; do
+        touch "$tmp_dir/$db"
+    done
+
+    # Use a subshell to change directory safely
+    DB_NAME=$(
+        cd "$tmp_dir"
+        read -e -p "Database Name (TAB to autocomplete): " input_db > /dev/tty < /dev/tty
+        echo "$input_db"
+    )
+
+    rm -rf "$tmp_dir"
+}
+
 backup_db() {
     echo -e "\n${CYAN}=== Database Backup ===${NC}"
-    get_creds
+
+    if [ "$DB_CONNECTED" != true ]; then
+        connect_server || return
+    fi
+
+    get_db_name
+    if [[ -z "$DB_NAME" ]]; then
+        echo -e "${RED}✗ Action cancelled.${NC}"
+        pause
+        return
+    fi
 
     TIMESTAMP=$(date +%Y%m%d_%H%M%S)
     FILENAME="${DB_NAME}_${TIMESTAMP}.sql.gz"
 
     echo -e "\nBacking up '$DB_NAME'..."
 
-    # Use existing backup script logic but inline here for simpler menu or call it?
-    # Calling the existing logic inline is safer to keep it contained.
-
     TMP_CNF=$(mktemp)
     chmod 600 "$TMP_CNF"
     echo "[client]" > "$TMP_CNF"
-    echo "user=$DB_USER" >> "$TMP_CNF"
-    echo "password=$DB_PASS" >> "$TMP_CNF"
+    echo "user=$GLOBAL_DB_USER" >> "$TMP_CNF"
+    echo "password=$GLOBAL_DB_PASS" >> "$TMP_CNF"
 
-    if [[ "$DB_HOST" == /* ]]; then
-        echo "socket=$DB_HOST" >> "$TMP_CNF"
+    if [[ "$GLOBAL_DB_HOST" == /* ]]; then
+        echo "socket=$GLOBAL_DB_HOST" >> "$TMP_CNF"
     else
-        echo "host=$DB_HOST" >> "$TMP_CNF"
+        echo "host=$GLOBAL_DB_HOST" >> "$TMP_CNF"
     fi
 
-    # Detect QNAP specialized path if no global command is found
-    DUMP_CMD=""
-    if command -v mariadb-dump &> /dev/null; then
-        DUMP_CMD="mariadb-dump"
-    elif command -v mysqldump &> /dev/null; then
-        DUMP_CMD="mysqldump"
-    elif command -v getcfg &> /dev/null; then
-        QNAP_MARIADB_PATH=$(getcfg MariaDB10 Install_Path -f /etc/config/qpkg.conf 2>/dev/null)
-        if [[ -n "$QNAP_MARIADB_PATH" && -x "$QNAP_MARIADB_PATH/bin/mysqldump" ]]; then
-            DUMP_CMD="$QNAP_MARIADB_PATH/bin/mysqldump"
-        fi
-    fi
-
-    if [[ -z "$DUMP_CMD" ]]; then
+    if [[ -z "$MYSQLDUMP_CMD" ]]; then
         echo -e "${RED}✗ Error: Neither mysqldump nor mariadb-dump found.${NC}"
         rm -f "$TMP_CNF"
         pause
@@ -97,7 +190,7 @@ backup_db() {
     set +e
     set -o pipefail
 
-    "$DUMP_CMD" --defaults-extra-file="$TMP_CNF" "$DB_NAME" | gzip > "$FILENAME"
+    "$MYSQLDUMP_CMD" --defaults-extra-file="$TMP_CNF" "$DB_NAME" | gzip > "$FILENAME"
 
     STATUS=$?
     set +o pipefail
@@ -123,11 +216,20 @@ analyze_db() {
         return
     fi
 
-    get_creds
+    if [ "$DB_CONNECTED" != true ]; then
+        connect_server || return
+    fi
+
+    get_db_name
+    if [[ -z "$DB_NAME" ]]; then
+        echo -e "${RED}✗ Action cancelled.${NC}"
+        pause
+        return
+    fi
 
     echo -e "\nFetching statistics..."
-    export DB_PASS
-    python3 "$SCRIPT_DIR/db_stats.py" "$DB_HOST" "$DB_USER" "$DB_NAME"
+    export DB_PASS="$GLOBAL_DB_PASS"
+    python3 "$SCRIPT_DIR/db_stats.py" "$GLOBAL_DB_HOST" "$GLOBAL_DB_USER" "$DB_NAME"
     unset DB_PASS
     pause
 }
@@ -138,12 +240,21 @@ while true; do
     echo -e "${CYAN}===================================${NC}"
     echo -e "      ${CYAN}DATABASE MASTER TOOL${NC}"
     echo -e "${CYAN}===================================${NC}"
+
+    if [ "$DB_CONNECTED" = true ]; then
+        echo -e "Status: ${GREEN}Connected${NC} ($GLOBAL_DB_USER @ $GLOBAL_DB_HOST)"
+    else
+        echo -e "Status: ${RED}Disconnected${NC}"
+    fi
+    echo -e "-----------------------------------"
+    echo "C) Connect to Server"
     echo "1) Backup Database"
     echo "2) Analyze Database (Table Stats)"
     echo "X) Exit"
 
     read -e -p "Select: " choice
     case $choice in
+        [Cc]) connect_server ;;
         1) backup_db ;;
         2) analyze_db ;;
         [Xx]) exit 0 ;;
