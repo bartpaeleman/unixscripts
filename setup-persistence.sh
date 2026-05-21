@@ -75,6 +75,8 @@ alias datamaster='"${REPO_DIR}/data-master/data-master.sh"'
 alias filemaster='"${REPO_DIR}/file-master/file-master.sh"'
 alias textmaster='"${REPO_DIR}/text-master/text-master.sh"'
 
+alias sysmaster='"${REPO_DIR}/system-manager/systemmanager.sh"'
+
 alias scripts='cd "${REPO_DIR}"'
 alias persis='"${REPO_DIR}/setup-persistence.sh"'
 # ------------------------------------
@@ -178,14 +180,39 @@ if [[ -f "$ALIAS_FILE" ]]; then
 fi
 
 echo -e "\n${CYAN}Configuring Navigation Aliases...${NC}"
-read -e -p "Enter path for PROD [${PATH_PROD}]: " INPUT_PROD
-PATH_PROD="${INPUT_PROD:-$PATH_PROD}"
 
-read -e -p "Enter path for DEV [${PATH_DEV}]: " INPUT_DEV
-PATH_DEV="${INPUT_DEV:-$PATH_DEV}"
+# Provide standard QNAP Web defaults if empty
+[[ -z "$PATH_PROD" ]] && PATH_PROD="/share/Web/"
 
-read -e -p "Enter path for TEST [${PATH_TEST}]: " INPUT_TEST
-PATH_TEST="${INPUT_TEST:-$PATH_TEST}"
+# Check if current bash supports read -e -i for prefilling prompts
+if bash -c 'help read' 2>/dev/null | grep -q '\[-i text\]'; then
+    read -e -i "${PATH_PROD}" -p "Enter path for PROD: " INPUT_PROD
+    PATH_PROD="${INPUT_PROD:-$PATH_PROD}"
+
+    # Calculate DEV and TEST defaults based on the chosen PROD path
+    [[ -z "$PATH_DEV" ]] && PATH_DEV="${PATH_PROD}DEV/"
+    [[ -z "$PATH_TEST" ]] && PATH_TEST="${PATH_PROD}TEST/"
+
+    read -e -i "${PATH_DEV}" -p "Enter path for DEV: " INPUT_DEV
+    PATH_DEV="${INPUT_DEV:-$PATH_DEV}"
+
+    read -e -i "${PATH_TEST}" -p "Enter path for TEST: " INPUT_TEST
+    PATH_TEST="${INPUT_TEST:-$PATH_TEST}"
+else
+    # Fallback for older Bash (e.g. macOS default) that doesn't support -i
+    read -e -p "Enter path for PROD [${PATH_PROD}]: " INPUT_PROD
+    PATH_PROD="${INPUT_PROD:-$PATH_PROD}"
+
+    # Calculate DEV and TEST defaults based on the chosen PROD path
+    [[ -z "$PATH_DEV" ]] && PATH_DEV="${PATH_PROD}DEV/"
+    [[ -z "$PATH_TEST" ]] && PATH_TEST="${PATH_PROD}TEST/"
+
+    read -e -p "Enter path for DEV [${PATH_DEV}]: " INPUT_DEV
+    PATH_DEV="${INPUT_DEV:-$PATH_DEV}"
+
+    read -e -p "Enter path for TEST [${PATH_TEST}]: " INPUT_TEST
+    PATH_TEST="${INPUT_TEST:-$PATH_TEST}"
+fi
 
 
 ALIAS_BLOCK_NAV="# --- NAVIGATION ALIASES ---"
