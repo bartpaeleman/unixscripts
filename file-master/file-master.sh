@@ -115,7 +115,7 @@ cleanup_dir() {
         echo "3) Remove Duplicates (MD5)"
         echo "4) Custom (Select combination)"
         echo "5) All of the above"
-        echo "0) Cancel"
+        echo "X) Cancel"
 
         read -e -p "Select Action: " clean_choice
 
@@ -133,7 +133,7 @@ cleanup_dir() {
                 [[ "$c_dupes" == "y" ]] && ARGS="$ARGS --dupes"
                 ;;
             5) ARGS="--junk --empty --dupes" ;;
-            0) return ;;
+            [Xx]) return ;;
             *) echo "Invalid option"; continue ;;
         esac
 

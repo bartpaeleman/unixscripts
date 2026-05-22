@@ -146,7 +146,7 @@ while true; do
     echo "5) Replace spaces with underscores"
     echo "6) Add Prefix to the name"
     echo "7) Add Suffix (before extension)"
-    echo "0) Back / Exit"
+    echo "X) Back / Exit"
     echo -e "${CYAN}================================================${NC}"
 
     read -e -p "Choose an option: " choice
@@ -178,7 +178,7 @@ while true; do
             read -e -p "Suffix text: " suffix_text
             run_rename '(\.[^.]+)?$' "${suffix_text}\$1"
             ;;
-        0) break ;;
+        [Xx]) break ;;
         *) echo -e "${RED}Invalid choice.${NC}"; sleep 1 ;;
     esac
 done

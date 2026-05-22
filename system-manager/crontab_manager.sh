@@ -26,7 +26,7 @@ while true; do
     printf "4) Bekijk System Crontab (/etc/crontab)\n"
     printf "5) Bewerk System Crontab (/etc/crontab)\n"
     printf "6) Wis System Crontab (/etc/crontab)\n"
-    printf "0) Terug\n"
+    printf "X) Terug\n"
     printf "${CYAN}================================================\n${NC}"
 
     printf "Kies een optie: "
@@ -101,7 +101,7 @@ while true; do
             fi
             pause
             ;;
-        0) break ;;
+        [Xx]) break ;;
         *)
             printf "${RED}Ongeldige keuze.${NC}\n"
             sleep 1

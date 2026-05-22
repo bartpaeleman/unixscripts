@@ -154,7 +154,7 @@ while true; do
     echo "1) Search and open file"
     echo "2) Search file content (grep + fzf)"
     echo "3) Search and move file"
-    echo "0) Back / Exit"
+    echo "X) Back / Exit"
     echo -e "${CYAN}================================================${NC}"
 
     read -p "Choose an option: " choice
@@ -162,7 +162,7 @@ while true; do
         1) search_and_open ;;
         2) search_content ;;
         3) search_and_move ;;
-        0) break ;;
+        [Xx]) break ;;
         *) echo -e "${RED}Invalid choice.${NC}"; sleep 1 ;;
     esac
 done

@@ -80,7 +80,7 @@ while true; do
     printf "6) Bekijk /etc/profile\n"
     printf "7) Bewerk /etc/profile (editor)\n"
     printf "8) Stel autorun.sh in voor persistentie na reboot\n"
-    printf "0) Terug\n"
+    printf "X) Terug\n"
     printf "${CYAN}================================================\n${NC}"
 
     printf "Kies een optie: "
@@ -270,7 +270,7 @@ AUTORUN_BLOCK
             printf "${YELLOW}Vergeet niet: Control Panel → Hardware → General → Run user defined startup processes (autorun.sh) moet aangevinkt zijn!${NC}\n"
             pause
             ;;
-        0) break ;;
+        [Xx]) break ;;
         *)
             printf "${RED}Ongeldige keuze.${NC}\n"
             sleep 1

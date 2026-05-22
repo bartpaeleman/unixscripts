@@ -75,7 +75,7 @@ echo -e "\n${CYAN}Choose an action:${NC}"
 echo "1) Copy (Transfer new or changed files, don't delete anything on target)"
 echo "2) Sync 1-way (Only add new files, don't delete, don't overwrite existing)"
 echo "3) Sync exact (Make target exactly like source, including DELETING on target)"
-echo "0) Cancel"
+echo "X) Cancel"
 
 read -e -p "Choice: " choice
 
@@ -94,7 +94,7 @@ case "$choice" in
         echo -e "\n${RED}Mode: Sync exact (--delete will be added)${NC}"
         rsync_flags+=("--delete")
         ;;
-    [0])
+    [Xx])
         echo -e "${YELLOW}Cancelled.${NC}"
         exit 0
         ;;
