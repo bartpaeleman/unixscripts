@@ -69,15 +69,26 @@ else
         echo -e "\n${YELLOW}Please enter your GitHub credentials for the tools:${NC}"
 
         read -e -p "GitHub Username: " GH_USER
+        read -e -p "GitHub Email: " GH_EMAIL
         read -e -p "GitHub Token (ghp_...): " GH_TOKEN
 
         # Escape special chars for sed
         GH_USER=$(echo "$GH_USER" | sed 's/[\/&]/\\&/g')
+        GH_EMAIL=$(echo "$GH_EMAIL" | sed 's/[\/&]/\\&/g')
         GH_TOKEN=$(echo "$GH_TOKEN" | sed 's/[\/&]/\\&/g')
 
         # GNU sed (QNAP)
             sed -i "s/^GITHUB_USERNAME=.*/GITHUB_USERNAME=\"$GH_USER\"/" "$ENV_FILE"
+            if grep -q "^GITHUB_EMAIL=" "$ENV_FILE"; then
+                sed -i "s/^GITHUB_EMAIL=.*/GITHUB_EMAIL=\"$GH_EMAIL\"/" "$ENV_FILE"
+            else
+                sed -i "/^GITHUB_USERNAME=.*/a GITHUB_EMAIL=\"$GH_EMAIL\"" "$ENV_FILE"
+            fi
             sed -i "s/^GITHUB_TOKEN=.*/GITHUB_TOKEN=\"$GH_TOKEN\"/" "$ENV_FILE"
+
+        git config --global user.name "$GH_USER"
+        git config --global user.email "$GH_EMAIL"
+        echo -e "${GREEN}Global Git configuration updated (user.name & user.email)${NC}"
 
         echo -e "${GREEN}Credentials updated in .env${NC}"
     fi
