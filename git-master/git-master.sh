@@ -60,9 +60,17 @@ load_env() {
     done < "$ENV_FILE"
     
     # Validate required variables
-    if [[ -z "${GITHUB_TOKEN:-}" ]] || [[ -z "${GITHUB_USERNAME:-}" ]]; then
-        printf "\033[1;31mERROR: GITHUB_TOKEN and GITHUB_USERNAME must be set in .env\033[0m\n"
+    if [[ -z "${GITHUB_TOKEN:-}" ]] || [[ -z "${GITHUB_USERNAME:-}" ]] || [[ -z "${GITHUB_EMAIL:-}" ]]; then
+        printf "\033[1;31mERROR: GITHUB_TOKEN, GITHUB_USERNAME, and GITHUB_EMAIL must be set in .env\033[0m\n"
         exit 1
+    fi
+
+    # Set git config globally if not yet set
+    if [[ -z "$(git config --global user.name)" && -n "${GITHUB_USERNAME}" ]]; then
+        git config --global user.name "${GITHUB_USERNAME}"
+    fi
+    if [[ -z "$(git config --global user.email)" && -n "${GITHUB_EMAIL}" ]]; then
+        git config --global user.email "${GITHUB_EMAIL}"
     fi
     
     # Set default paths if not configured
@@ -947,7 +955,7 @@ while true; do
                     if [[ -f "$ENV_FILE" ]]; then
                         printf "\n${YELLOW}=== CURRENT REQUIRED INFO ===${NC}\n"
                         # Parse only REQUIRED fields for display
-                        grep -E "^(GITHUB_TOKEN|GITHUB_USERNAME|PATH_ROOT)=" "$ENV_FILE" | while IFS='=' read -r key value; do
+                        grep -E "^(GITHUB_TOKEN|GITHUB_USERNAME|GITHUB_EMAIL|PATH_ROOT)=" "$ENV_FILE" | while IFS='=' read -r key value; do
                             value="${value%\"}"
                             value="${value#\"}"
                             printf "  ${CYAN}%-15s${NC}: %s\n" "$key" "$value"
@@ -978,6 +986,7 @@ while true; do
                 3)
                     printf "\n${CYAN}Current Configuration:${NC}\n"
                     printf "  GitHub User: ${GITHUB_USERNAME}\n"
+                    printf "  GitHub Email: ${GITHUB_EMAIL}\n"
                     printf "  GitHub Token: $([ -n "$GITHUB_TOKEN" ] && echo "***configured***" || echo "NOT SET")\n"
                     printf "  PATH_ROOT: ${PATH_ROOT}\n"
                     printf "  PATH_PROD: ${PATH_PROD}\n"
