@@ -330,7 +330,7 @@ while true; do
                 printf " g) MERGE FIXES     - Process external fixes (Jules)\n"
                 printf " h) RELEASE TAG     - Mark current state (v1.x)\n"
                 printf " i) CLEANUP PRUNE   - Delete branches gone on GitHub\n"
-                printf " j) DELETE LOCAL    - Manually delete a local branch\n"
+                printf " j) DELETE BRANCH   - Manually delete a branch\n"
                 read -e -p "Select command (X to return): " sub_choice
                 case "$sub_choice" in
                     [Aa]) choice="2" ;;
@@ -609,7 +609,7 @@ while true; do
             fi
             read -e -p "Enter..." junk ;;
 
-        13) # DELETE LOCAL
+        13) # DELETE BRANCH
             [[ "$IN_GIT" = false ]] && continue
             get_branch_list_raw "dk"
             print_colored_branch_list "dk"
@@ -632,8 +632,14 @@ while true; do
             
             del_br=$(eval echo "\$dk_${dk_idx}")
             if [[ "$del_br" != "$CURRENT_BRANCH" ]] && [[ -n "$del_br" ]]; then
-                git branch -D "$del_br"
-                printf "${RED}Branch $del_br deleted.${NC}\n"
+                if [[ "$del_br" == remotes/origin/* ]]; then
+                    remote_br="${del_br#remotes/origin/}"
+                    git push origin --delete "$remote_br" || true
+                    printf "${RED}Remote branch $remote_br deleted.${NC}\n"
+                else
+                    git branch -D "$del_br" || true
+                    printf "${RED}Branch $del_br deleted.${NC}\n"
+                fi
             fi
             read -e -p "Enter..." junk ;;
 
