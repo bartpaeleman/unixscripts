@@ -62,7 +62,14 @@ load_env() {
     # Validate required variables
     if [[ -z "${GITHUB_TOKEN:-}" ]] || [[ -z "${GITHUB_USERNAME:-}" ]] || [[ -z "${GITHUB_EMAIL:-}" ]]; then
         printf "\033[1;31mERROR: GITHUB_TOKEN, GITHUB_USERNAME, and GITHUB_EMAIL must be set in .env\033[0m\n"
-        exit 1
+        read -e -p "Would you like to edit the .env file now? (y/n): " edit_env
+        if [[ "$edit_env" =~ ^[Yy]$ ]]; then
+            ${EDITOR:-nano} "$ENV_FILE"
+            printf "${GREEN}Please re-run gitmaster to apply the changes.${NC}\n"
+            exit 0
+        else
+            exit 1
+        fi
     fi
 
     # Set git config globally if not yet set
