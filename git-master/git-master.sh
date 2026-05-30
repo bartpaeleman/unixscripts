@@ -592,10 +592,10 @@ while true; do
             [[ "$IN_GIT" = false ]] && continue
             git fetch origin --prune || true
             # || true prevents script exit if grep finds nothing (set -e)
-            GONE=$(git branch -vv | grep ': gone]' | awk '{print $1}' || true)
+            GONE=$(git branch -vv | sed 's/^[* ]*//' | grep ': gone]' | awk '{print $1}' || true)
             
             if [[ -n "$GONE" ]]; then
-                echo "$GONE" | xargs git branch -D
+                echo "$GONE" | xargs git branch -D || true
                 printf "${GREEN}Pruned dead branches.${NC}\n"
             else
                 printf "Nothing to prune.\n"
