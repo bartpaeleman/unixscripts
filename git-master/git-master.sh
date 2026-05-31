@@ -393,14 +393,16 @@ while true; do
                 ;;
             4)
                 printf "\n${YELLOW}${BOLD}[FILES]${NC}\n"
-                printf " 1) EDIT/CREATE FILE - Open file in editor\n"
-                printf " 2) DELETE FILE      - Remove a file\n"
-                printf " 3) VIEW FILE        - Read file contents\n"
+                printf " 1) EXCLUDE SYNC      - Prevent file/pattern from syncing\n"
+                printf " 2) EDIT/CREATE FILE - Open file in editor\n"
+                printf " 3) DELETE FILE      - Remove a file\n"
+                printf " 4) VIEW FILE        - Read file contents\n"
                 read -e -p "Select command (X to return): " sub_choice
                 case "$sub_choice" in
-                    1) choice="26" ;;
-                    2) choice="27" ;;
-                    3) choice="28" ;;
+                    1) choice="29" ;;
+                    2) choice="26" ;;
+                    3) choice="27" ;;
+                    4) choice="28" ;;
                     [Xx]) continue ;;
                     *) continue ;;
                 esac
@@ -980,6 +982,41 @@ while true; do
                     printf "${YELLOW}Action cancelled.${NC}\n"
                     ;;
             esac
+            read -e -p "Enter..." junk ;;
+
+        29) # EXCLUDE SYNC
+            [[ "$IN_GIT" = false ]] && continue
+            clear
+            printf "${CYAN}${BOLD}EXCLUDE SYNC${NC}\n\n"
+            printf "This will prevent a file, folder, or pattern from being overwritten\n"
+            printf "by git sync/checkout, and ensure it remains untracked in GitHub.\n\n"
+            read -e -p "Enter file, folder, or pattern to exclude (e.g. config.php, logs/, *.tmp): " exclude_pattern
+            if [[ -n "$exclude_pattern" ]]; then
+                # Check if it is already in .gitignore
+                if ! grep -qxF "$exclude_pattern" .gitignore 2>/dev/null; then
+                    echo -e "\n$exclude_pattern" >> .gitignore
+                    printf "${GREEN}Added '%s' to .gitignore${NC}\n" "$exclude_pattern"
+                else
+                    printf "${YELLOW}'%s' is already in .gitignore${NC}\n" "$exclude_pattern"
+                fi
+
+                # Remove from git cache (stops tracking but keeps local file)
+                # Suppress error if the file wasn't tracked anyway
+                git rm -r --cached "$exclude_pattern" 2>/dev/null || true
+                printf "${GREEN}Removed '%s' from git tracking (kept locally).${NC}\n" "$exclude_pattern"
+
+                # Stage .gitignore
+                git add .gitignore
+
+                # Ask to commit
+                read -e -p "Commit this exclusion now? (y/n): " do_commit
+                if [[ "$do_commit" == [Yy]* ]]; then
+                    git commit -m "chore: exclude $exclude_pattern from sync" -q
+                    printf "${GREEN}Committed exclusion of '%s'.${NC}\n" "$exclude_pattern"
+                else
+                    printf "${YELLOW}Changes staged. Don't forget to commit them later.${NC}\n"
+                fi
+            fi
             read -e -p "Enter..." junk ;;
 
         26) # EDIT/CREATE FILE
