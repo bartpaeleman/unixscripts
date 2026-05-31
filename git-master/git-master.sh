@@ -137,6 +137,27 @@ print_colored_branch_list() {
 
 check_dirty() {
     if [[ -n $(git status -s) ]]; then
+        # Check for files that are tracked but match .gitignore (causing checkout errors)
+        local ignored_tracked=$(git ls-files -i -c --exclude-standard 2>/dev/null || true)
+        if [[ -n "$ignored_tracked" ]]; then
+            printf "${YELLOW}Detected tracked files that match .gitignore:${NC}\n"
+            echo "$ignored_tracked" | sed 's/^/  /'
+            printf "These will block branch checkouts if they exist on the target branch.\n"
+            read -e -p "Untrack them from git cache now (git rm --cached) and commit? (y/n): " rm_conf
+            if [[ "$rm_conf" == "y" ]]; then
+                # Untrack files while leaving them locally
+                echo "$ignored_tracked" | tr '\n' '\0' | xargs -0 git rm --cached -q
+                # Commit the deletion from git
+                git commit -m "chore: untrack ignored files" -q
+                printf "${GREEN}Files untracked and committed. They will remain locally.${NC}\n"
+
+                # If no more changes, return success
+                if [[ -z $(git status -s) ]]; then
+                    return 0
+                fi
+            fi
+        fi
+
         printf "${YELLOW}Uncommitted changes detected!${NC}\n"
         git status -s
         read -e -p "Continue anyway? (y/n): " cont
