@@ -22,35 +22,35 @@ Een command-line interface voor Docker, ideaal voor systemen zoals QNAP Containe
 Beheert complexe git workflows en vereenvoudigt het werken met de repository. Deze is verdeeld in vier hoofdcategorieën: INFO, DEVELOPMENT, FIX en MAINTENANCE.
 
 ### 1. INFO
-* **a) STATUS & BRANCH INFO:** Toont de huidige branch, niet-gecommitte wijzigingen (status) en een beknopte log van de laatste paar commits.
-* **b) PENDING CHANGES:** Toont in detail (diff) welke bestanden zijn aangepast en wat de specifieke code-wijzigingen zijn ten opzichte van de vorige commit.
-* **c) COMMIT HISTORY:** Laat een uitgebreidere grafische weergave (tree view) zien van de commit geschiedenis over de verschillende branches.
-* **d) COMPARE SERVER:** Vergelijkt je lokale `main` branch met de `origin/main` (op GitHub) om te zien of je achterloopt of wijzigingen klaar hebt staan om te pushen.
+* **1) STATUS & BRANCH INFO:** Toont de huidige branch, niet-gecommitte wijzigingen (status) en een beknopte log van de laatste paar commits.
+* **2) PENDING CHANGES:** Toont in detail (diff) welke bestanden zijn aangepast en wat de specifieke code-wijzigingen zijn ten opzichte van de vorige commit.
+* **3) COMMIT HISTORY:** Laat een uitgebreidere grafische weergave (tree view) zien van de commit geschiedenis over de verschillende branches.
+* **4) COMPARE SERVER:** Vergelijkt je lokale `main` branch met de `origin/main` (op GitHub) om te zien of je achterloopt of wijzigingen klaar hebt staan om te pushen.
 
 ### 2. DEVELOPMENT
-* **a) START FEATURE:** Vraagt om een naam (bijv. `login-page`) en creëert automatisch een nieuwe lokale branch (`feature/login-page`) gebaseerd op de actuele `main` branch.
-* **b) SWITCH BRANCH:** Laat een lijst zien van alle lokale branches en stelt je in staat snel over te schakelen. Handig als je wil wisselen naar een nieuwe feature branch aan of wissel tussen bestaande branches.
-* **c) QUICK COMMIT:** Voegt automatisch alle wijzigingen toe (`git add .`), vraagt om een commitbericht en pusht deze naar de origin server.
-* **d) SYNC FETCH:** Haalt externe wijzigingen (`git pull`) voor de huidige branch binnen.
-* **e) PREPARE UAT:** Voegt een specifieke branch samen met de `uat` branch (forceert overschrijven bij conflicten) voor testdoeleinden.
-* **f) STAGING PUSH:** Forceert de huidige branch naar de `dev-stable` branch.
-* **g) MERGE FIXES:** Integreer gemakkelijk een externe 'fix'-branch in de huidige branch en verwijder daarna de fix-branch.
-* **h) RELEASE TAG:** Geef het huidige werk een versie-tag (bijv. v1.0) en push deze direct naar de server.
-* **i) CLEANUP PRUNE:** Verwijdert lokaal branches die op de server (GitHub) niet meer bestaan.
+* **1) START FEATURE:** Vraagt om een naam (bijv. `login-page`) en creëert automatisch een nieuwe lokale branch (`feature/login-page`) gebaseerd op de actuele `main` branch.
+* **2) SWITCH BRANCH:** Laat een lijst zien van alle lokale branches en stelt je in staat snel over te schakelen. Handig als je wil wisselen naar een nieuwe feature branch aan of wissel tussen bestaande branches.
+* **3) QUICK COMMIT:** Voegt automatisch alle wijzigingen toe (`git add .`), vraagt om een commitbericht en pusht deze naar de origin server.
+* **4) SYNC FETCH:** Haalt externe wijzigingen (`git pull`) voor de huidige branch binnen.
+* **5) PREPARE UAT:** Voegt een specifieke branch samen met de `uat` branch (forceert overschrijven bij conflicten) voor testdoeleinden.
+* **6) STAGING PUSH:** Forceert de huidige branch naar de `dev-stable` branch.
+* **7) MERGE FIXES:** Integreer gemakkelijk een externe 'fix'-branch in de huidige branch en verwijder daarna de fix-branch.
+* **8) RELEASE TAG:** Geef het huidige werk een versie-tag (bijv. v1.0) en push deze direct naar de server.
+* **9) CLEANUP PRUNE:** Verwijdert lokaal branches die op de server (GitHub) niet meer bestaan.
 * **j) DELETE LOCAL:** Handmatig een lokale branch selecteren en verwijderen.
 
 ### 3. FIX
-* **a) SYNC FORCE:** Handige tool bij conflicten; kies om de lokale wijzigingen te overschrijven met de serverversie, of forceer de lokale versie naar de server.
-* **b) UNDO COMMIT:** Draait de laatste commit terug (`git reset --soft`), waardoor je bestanden behouden blijven in staging.
-* **c) FORCE RESET:** Een gevaarlijke (rode) optie die alle lokale wijzigingen vernietigt en de repository reset naar `origin/main`.
-* **d) EMERGENCY:** Opties om een mislukte merge af te breken, git locks `.git/index.lock` te verwijderen of een verborgen stash terug te halen.
-* **e) RESTORE COMMIT:** Blader door recente commits en kies om een oudere commit uit te checken (voor inspectie), te reverten (een nieuwe undo-commit te maken) of de branch hard terug te zetten naar dit punt.
-* **f) STASH PULL POP:** Slaat tijdelijke wijzigingen op (stash), haalt externe wijzigingen binnen via pull, en past de tijdelijke wijzigingen weer toe (pop).
-* **g) FORGET FILE:** Verwijdert een bestand uit de git cache (`git rm --cached`).
+* **1) SYNC FORCE:** Handige tool bij conflicten; kies om de lokale wijzigingen te overschrijven met de serverversie, of forceer de lokale versie naar de server.
+* **2) UNDO COMMIT:** Draait de laatste commit terug (`git reset --soft`), waardoor je bestanden behouden blijven in staging.
+* **3) FORCE RESET:** Een gevaarlijke (rode) optie die alle lokale wijzigingen vernietigt en de repository reset naar `origin/main`.
+* **4) EMERGENCY:** Opties om een mislukte merge af te breken, git locks `.git/index.lock` te verwijderen of een verborgen stash terug te halen.
+* **5) RESTORE COMMIT:** Blader door recente commits en kies om een oudere commit uit te checken (voor inspectie), te reverten (een nieuwe undo-commit te maken) of de branch hard terug te zetten naar dit punt.
+* **6) STASH PULL POP:** Slaat tijdelijke wijzigingen op (stash), haalt externe wijzigingen binnen via pull, en past de tijdelijke wijzigingen weer toe (pop).
+* **7) FORGET FILE:** Verwijdert een bestand uit de git cache (`git rm --cached`).
 
 ### 4. MAINTENANCE
-* **a) BACKUP POINT:** Maakt direct een lokale snapshot/kopie aan van de huidige branch met een tijdstempel.
-* **b) RESTORE BACKUP:** Herstel een eerdere backup snapshot over de huidige branch, force push naar GitHub of check de backup los uit.
+* **1) BACKUP POINT:** Maakt direct een lokale snapshot/kopie aan van de huidige branch met een tijdstempel.
+* **2) RESTORE BACKUP:** Herstel een eerdere backup snapshot over de huidige branch, force push naar GitHub of check de backup los uit.
 
 * **S) SETUP PERSISTENCE:** Configureert de `.env` file met je GitHub token en installeert command-line aliassen voor snelle toegang in elke terminal sessie.
 

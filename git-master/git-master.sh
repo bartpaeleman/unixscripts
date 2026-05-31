@@ -311,7 +311,8 @@ while true; do
         printf " 1. INFO          (Status, History & Analysis)\n"
         printf " 2. DEVELOPMENT   (Repo & Branch commands)\n"
         printf " 3. FIX           (Errors)\n"
-        printf " 4. MAINTENANCE   (Backup & Restore)\n"
+        printf " 4. FILES          (Create, Edit, Delete Repo Files)\n"
+        printf " 5. MAINTENANCE   (Backup & Restore)\n"
         printf -- "\n---------------------------------------------------------------\n"
         printf " S) SETUP PERSISTENCE- Fix QNAP login & Aliases\n"
         printf " Q) QUIT\n"
@@ -322,82 +323,96 @@ while true; do
         case "$main_choice" in
             1)
                 printf "\n${YELLOW}${BOLD}[INFO]${NC}\n"
-                printf " a) DASHBOARD        - Status & History Overview (Scrollable)\n"
-                printf " b) DIFF VIEWER     - Compare changes between branches\n"
-                printf " c) FILE HISTORY    - Show all commits for a file\n"
-                printf " d) SEARCH CODE     - Find text in all files (grep)\n"
-                printf " e) COMMIT FINDER   - Search commits by message\n"
-                printf " f) BRANCH COMPARE  - See differences between branches\n"
+                printf " 1) DASHBOARD        - Status & History Overview (Scrollable)\n"
+                printf " 2) DIFF VIEWER     - Compare changes between branches\n"
+                printf " 3) FILE HISTORY    - Show all commits for a file\n"
+                printf " 4) SEARCH CODE     - Find text in all files (grep)\n"
+                printf " 5) COMMIT FINDER   - Search commits by message\n"
+                printf " 6) BRANCH COMPARE  - See differences between branches\n"
                 read -e -p "Select command (X to return): " sub_choice
                 case "$sub_choice" in
-                    [Aa]) choice="1" ;;
-                    [Bb]) choice="18" ;;
-                    [Cc]) choice="19" ;;
-                    [Dd]) choice="20" ;;
-                    [Ee]) choice="21" ;;
-                    [Ff]) choice="22" ;;
+                    1) choice="1" ;;
+                    2) choice="18" ;;
+                    3) choice="19" ;;
+                    4) choice="20" ;;
+                    5) choice="21" ;;
+                    6) choice="22" ;;
                     [Xx]) continue ;;
                     *) continue ;;
                 esac
                 ;;
             2)
                 printf "\n${YELLOW}${BOLD}[DEVELOPMENT]${NC}\n"
-                printf " a) CHECKOUT REPO    - Fetch & Switch to Repository (Branch)\n"
-                printf " b) BRANCH EXPLORER  - Switch or Create new Feature Branch\n"
-                printf " c) QUICK COMMIT     - Stage, Commit & Push active work\n"
-                printf " d) SYNC FETCH       - Pull remote changes into active branch\n"
-                printf " e) PREPARE UAT      - Merge branch into TEST (Overwrite conflicts)\n"
-                printf " f) STAGING PUSH     - Force sync current to DEV-STABLE\n"
-                printf " g) MERGE FIXES     - Process external fixes (Jules)\n"
-                printf " h) RELEASE TAG     - Mark current state (v1.x)\n"
-                printf " i) CLEANUP PRUNE   - Delete branches gone on GitHub\n"
-                printf " j) DELETE BRANCH   - Manually delete a branch\n"
+                printf " 7) CHECKOUT REPO    - Fetch & Switch to Repository (Branch)\n"
+                printf " 8) BRANCH EXPLORER  - Switch or Create new Feature Branch\n"
+                printf " 9) QUICK COMMIT     - Stage, Commit & Push active work\n"
+                printf " 10) SYNC FETCH       - Pull remote changes into active branch\n"
+                printf " 11) PREPARE UAT      - Merge branch into TEST (Overwrite conflicts)\n"
+                printf " 12) STAGING PUSH     - Force sync current to DEV-STABLE\n"
+                printf " 13) MERGE FIXES     - Process external fixes (Jules)\n"
+                printf " 14) RELEASE TAG     - Mark current state (v1.x)\n"
+                printf " 15) CLEANUP PRUNE   - Delete branches gone on GitHub\n"
+                printf " 16) DELETE BRANCH   - Manually delete a branch\n"
                 read -e -p "Select command (X to return): " sub_choice
                 case "$sub_choice" in
-                    [Aa]) choice="2" ;;
-                    [Bb]) choice="3" ;;
-                    [Cc]) choice="4" ;;
-                    [Dd]) choice="5" ;;
-                    [Ee]) choice="8" ;;
-                    [Ff]) choice="9" ;;
-                    [Gg]) choice="10" ;;
-                    [Hh]) choice="11" ;;
-                    [Ii]) choice="12" ;;
-                    [Jj]) choice="13" ;;
+                    7) choice="2" ;;
+                    8) choice="3" ;;
+                    9) choice="4" ;;
+                    10) choice="5" ;;
+                    11) choice="8" ;;
+                    12) choice="9" ;;
+                    13) choice="10" ;;
+                    14) choice="11" ;;
+                    15) choice="12" ;;
+                    16) choice="13" ;;
                     [Xx]) continue ;;
                     *) continue ;;
                 esac
                 ;;
             3)
                 printf "\n${YELLOW}${BOLD}[FIX]${NC}\n"
-                printf " a) SYNC FORCE       - Overwrite Local or GitHub (Conflict fix)\n"
-                printf " b) UNDO COMMIT     - Revert last commit (keep files)\n"
-                printf " c) FORCE RESET     - Wipe local and reset to main (CAUTION)\n"
-                printf " d) EMERGENCY       - Abort failed merges / Clear locks\n"
-                printf " e) RESTORE COMMIT  - Checkout, Revert or Reset to a previous commit\n"
-                printf " f) STASH PULL POP  - Stash local changes, pull and pop\n"
-                printf " g) FORGET FILE     - Remove file from git cache\n"
+                printf " 17) SYNC FORCE       - Overwrite Local or GitHub (Conflict fix)\n"
+                printf " 18) UNDO COMMIT     - Revert last commit (keep files)\n"
+                printf " 19) FORCE RESET     - Wipe local and reset to main (CAUTION)\n"
+                printf " 20) EMERGENCY       - Abort failed merges / Clear locks\n"
+                printf " 21) RESTORE COMMIT  - Checkout, Revert or Reset to a previous commit\n"
+                printf " 22) STASH PULL POP  - Stash local changes, pull and pop\n"
+                printf " 23) FORGET FILE     - Remove file from git cache\n"
                 read -e -p "Select command (X to return): " sub_choice
                 case "$sub_choice" in
-                    [Aa]) choice="6" ;;
-                    [Bb]) choice="14" ;;
-                    [Cc]) choice="15" ;;
-                    [Dd]) choice="16" ;;
-                    [Ee]) choice="17" ;;
-                    [Ff]) choice="23" ;;
-                    [Gg]) choice="24" ;;
+                    17) choice="6" ;;
+                    18) choice="14" ;;
+                    19) choice="15" ;;
+                    20) choice="16" ;;
+                    21) choice="17" ;;
+                    22) choice="23" ;;
+                    23) choice="24" ;;
                     [Xx]) continue ;;
                     *) continue ;;
                 esac
                 ;;
             4)
-                printf "\n${YELLOW}${BOLD}[MAINTENANCE]${NC}\n"
-                printf " a) BACKUP POINT     - Create local snapshot branch\n"
-        printf " b) RESTORE BACKUP   - Restore from a local snapshot branch\n"
+                printf "\n${YELLOW}${BOLD}[FILES]${NC}\n"
+                printf " 26) EDIT/CREATE FILE - Open file in editor\n"
+                printf " 27) DELETE FILE      - Remove a file\n"
+                printf " 28) VIEW FILE        - Read file contents\n"
                 read -e -p "Select command (X to return): " sub_choice
                 case "$sub_choice" in
-                    [Aa]) choice="7" ;;
-            [Bb]) choice="25" ;;
+                    26) choice="26" ;;
+                    27) choice="27" ;;
+                    28) choice="28" ;;
+                    [Xx]) continue ;;
+                    *) continue ;;
+                esac
+                ;;
+            5)
+                printf "\n${YELLOW}${BOLD}[MAINTENANCE]${NC}\n"
+                printf " 24) BACKUP POINT     - Create local snapshot branch\n"
+        printf " 25) RESTORE BACKUP   - Restore from a local snapshot branch\n"
+                read -e -p "Select command (X to return): " sub_choice
+                case "$sub_choice" in
+                    24) choice="7" ;;
+            25) choice="25" ;;
                     [Xx]) continue ;;
                     *) continue ;;
                 esac
@@ -482,7 +497,7 @@ while true; do
             if [[ -n "$sel_br" ]]; then
                 printf "${YELLOW}Checking out $sel_br...${NC}\n"
                 git checkout "$sel_br" 2>/dev/null || git checkout -b "$sel_br" "origin/$sel_br"
-                git pull origin "$sel_br"
+                git pull origin "$sel_br" || { printf "${RED}Error: Pull failed.${NC}\n"; read -e -p "Enter..." junk; continue; }
             else
                 printf "${RED}Invalid selection.${NC}\n"
             fi
@@ -501,7 +516,7 @@ while true; do
                 target_branch=$(eval echo "\$be_${be_val}")
                 target_branch="${target_branch#remotes/origin/}"
                 git checkout "$target_branch" 2>/dev/null || git checkout -b "$target_branch" "origin/$target_branch"
-                git pull origin "$target_branch" 2>/dev/null
+                git pull origin "$target_branch" 2>/dev/null || { printf "${RED}Error: Pull failed.${NC}\n"; read -e -p "Enter..." junk; continue; }
             else
                 git checkout -b "$be_val" && printf "${GREEN}Branch $be_val created.${NC}\n"
             fi
@@ -516,7 +531,7 @@ while true; do
             if [[ -n "$msg" ]]; then
                 git add . && \
                 git commit -m "$msg" && \
-                git push origin "$CURRENT_BRANCH"
+                git push origin "$CURRENT_BRANCH" || { printf "${RED}Error: Push failed.${NC}\n"; read -e -p "Enter..." junk; continue; }
                 read -e -p "Work pushed. Enter..." junk
             fi ;;
 
@@ -528,10 +543,10 @@ while true; do
         6) # SYNC FORCE
             [[ "$IN_GIT" = false ]] && continue
             git fetch origin || printf "${RED}Fetch failed.${NC}\n"
-            printf "A) OVERWRITE LOCAL (Loss of local work)\nB) FORCE PUSH (Loss of GitHub work)\nX) Cancel\n"
+            printf "1) OVERWRITE LOCAL (Loss of local work)\n2) FORCE PUSH (Loss of GitHub work)\nX) Cancel\n"
             read -e -p "Action: " fa_choice
-            [[ "$fa_choice" =~ [Aa] ]] && git reset --hard "origin/$CURRENT_BRANCH"
-            [[ "$fa_choice" =~ [Bb] ]] && git push origin "$CURRENT_BRANCH" --force
+            if [[ "$fa_choice" == "1" ]]; then git reset --hard "origin/$CURRENT_BRANCH" || { printf "${RED}Error: Reset failed.${NC}\n"; read -e -p "Enter..." junk; continue; }; fi
+            if [[ "$fa_choice" == "2" ]]; then git branch -f "$CURRENT_BRANCH" || true; git push origin "$CURRENT_BRANCH" --force || { printf "${RED}Error: Force push failed.${NC}\n"; read -e -p "Enter..." junk; continue; }; fi
             read -e -p "Sync complete. Enter..." junk ;;
 
         7) # BACKUP POINT
@@ -553,7 +568,7 @@ while true; do
             jules_br=$(eval echo "\$uat_${uat_idx}")
             jules_br="${jules_br#remotes/origin/}"
             
-            git checkout main && git pull origin main
+            git checkout main && git pull origin main || { printf "${RED}Error: Pull main failed.${NC}\n"; read -e -p "Enter..." junk; continue; }
             git checkout -B uat
             
             printf "${YELLOW}Merging and forcing file checkout to bypass untracked errors...${NC}\n"
@@ -602,7 +617,7 @@ while true; do
             fix_br="${fix_br#remotes/origin/}"
             
             if [[ -n "$fix_br" ]]; then
-                git merge "origin/$fix_br" --no-edit && git push origin "$CURRENT_BRANCH" && git branch -D "$fix_br" 2>/dev/null
+                git merge "origin/$fix_br" --no-edit && git push origin "$CURRENT_BRANCH" || { printf "${RED}Error: Push failed.${NC}\n"; read -e -p "Enter..." junk; continue; } && git branch -D "$fix_br" 2>/dev/null
             fi
             read -e -p "Enter..." junk ;;
 
@@ -966,6 +981,39 @@ while true; do
                     ;;
             esac
             read -e -p "Enter..." junk ;;
+
+        26) # EDIT/CREATE FILE
+            clear
+            printf "${CYAN}${BOLD}EDIT/CREATE FILE${NC}\n\n"
+            read -e -p "Enter filename (with path): " filepath
+            if [[ -n "$filepath" ]]; then
+                ${EDITOR:-nano} "$filepath"
+            fi
+            ;;
+
+        27) # DELETE FILE
+            clear
+            printf "${CYAN}${BOLD}DELETE FILE${NC}\n\n"
+            read -e -p "Enter filename to delete: " filepath
+            if [[ -f "$filepath" ]]; then
+                rm -i "$filepath"
+            else
+                printf "${RED}File not found: $filepath${NC}\n"
+                read -e -p "Enter..." junk
+            fi
+            ;;
+
+        28) # VIEW FILE
+            clear
+            printf "${CYAN}${BOLD}VIEW FILE${NC}\n\n"
+            read -e -p "Enter filename to view: " filepath
+            if [[ -f "$filepath" ]]; then
+                cat "$filepath" | more
+            else
+                printf "${RED}File not found: $filepath${NC}\n"
+                read -e -p "Enter..." junk
+            fi
+            ;;
 
         [Ss]) # SETUP
             clear
