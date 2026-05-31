@@ -37,7 +37,7 @@ Beheert complexe git workflows en vereenvoudigt het werken met de repository. De
 * **7) MERGE FIXES:** Integreer gemakkelijk een externe 'fix'-branch in de huidige branch en verwijder daarna de fix-branch.
 * **8) RELEASE TAG:** Geef het huidige werk een versie-tag (bijv. v1.0) en push deze direct naar de server.
 * **9) CLEANUP PRUNE:** Verwijdert lokaal branches die op de server (GitHub) niet meer bestaan.
-* **j) DELETE LOCAL:** Handmatig een lokale branch selecteren en verwijderen.
+* **10) DELETE LOCAL:** Handmatig een lokale branch selecteren en verwijderen.
 
 ### 3. FIX
 * **1) SYNC FORCE:** Handige tool bij conflicten; kies om de lokale wijzigingen te overschrijven met de serverversie, of forceer de lokale versie naar de server.

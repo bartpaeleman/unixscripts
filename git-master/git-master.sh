@@ -343,76 +343,76 @@ while true; do
                 ;;
             2)
                 printf "\n${YELLOW}${BOLD}[DEVELOPMENT]${NC}\n"
-                printf " 7) CHECKOUT REPO    - Fetch & Switch to Repository (Branch)\n"
-                printf " 8) BRANCH EXPLORER  - Switch or Create new Feature Branch\n"
-                printf " 9) QUICK COMMIT     - Stage, Commit & Push active work\n"
-                printf " 10) SYNC FETCH       - Pull remote changes into active branch\n"
-                printf " 11) PREPARE UAT      - Merge branch into TEST (Overwrite conflicts)\n"
-                printf " 12) STAGING PUSH     - Force sync current to DEV-STABLE\n"
-                printf " 13) MERGE FIXES     - Process external fixes (Jules)\n"
-                printf " 14) RELEASE TAG     - Mark current state (v1.x)\n"
-                printf " 15) CLEANUP PRUNE   - Delete branches gone on GitHub\n"
-                printf " 16) DELETE BRANCH   - Manually delete a branch\n"
+                printf " 1) CHECKOUT REPO    - Fetch & Switch to Repository (Branch)\n"
+                printf " 2) BRANCH EXPLORER  - Switch or Create new Feature Branch\n"
+                printf " 3) QUICK COMMIT     - Stage, Commit & Push active work\n"
+                printf " 4) SYNC FETCH       - Pull remote changes into active branch\n"
+                printf " 5) PREPARE UAT      - Merge branch into TEST (Overwrite conflicts)\n"
+                printf " 6) STAGING PUSH     - Force sync current to DEV-STABLE\n"
+                printf " 7) MERGE FIXES     - Process external fixes (Jules)\n"
+                printf " 8) RELEASE TAG     - Mark current state (v1.x)\n"
+                printf " 9) CLEANUP PRUNE   - Delete branches gone on GitHub\n"
+                printf " 10) DELETE BRANCH   - Manually delete a branch\n"
                 read -e -p "Select command (X to return): " sub_choice
                 case "$sub_choice" in
-                    7) choice="2" ;;
-                    8) choice="3" ;;
-                    9) choice="4" ;;
-                    10) choice="5" ;;
-                    11) choice="8" ;;
-                    12) choice="9" ;;
-                    13) choice="10" ;;
-                    14) choice="11" ;;
-                    15) choice="12" ;;
-                    16) choice="13" ;;
+                    1) choice="2" ;;
+                    2) choice="3" ;;
+                    3) choice="4" ;;
+                    4) choice="5" ;;
+                    5) choice="8" ;;
+                    6) choice="9" ;;
+                    7) choice="10" ;;
+                    8) choice="11" ;;
+                    9) choice="12" ;;
+                    10) choice="13" ;;
                     [Xx]) continue ;;
                     *) continue ;;
                 esac
                 ;;
             3)
                 printf "\n${YELLOW}${BOLD}[FIX]${NC}\n"
-                printf " 17) SYNC FORCE       - Overwrite Local or GitHub (Conflict fix)\n"
-                printf " 18) UNDO COMMIT     - Revert last commit (keep files)\n"
-                printf " 19) FORCE RESET     - Wipe local and reset to main (CAUTION)\n"
-                printf " 20) EMERGENCY       - Abort failed merges / Clear locks\n"
-                printf " 21) RESTORE COMMIT  - Checkout, Revert or Reset to a previous commit\n"
-                printf " 22) STASH PULL POP  - Stash local changes, pull and pop\n"
-                printf " 23) FORGET FILE     - Remove file from git cache\n"
+                printf " 1) SYNC FORCE       - Overwrite Local or GitHub (Conflict fix)\n"
+                printf " 2) UNDO COMMIT     - Revert last commit (keep files)\n"
+                printf " 3) FORCE RESET     - Wipe local and reset to main (CAUTION)\n"
+                printf " 4) EMERGENCY       - Abort failed merges / Clear locks\n"
+                printf " 5) RESTORE COMMIT  - Checkout, Revert or Reset to a previous commit\n"
+                printf " 6) STASH PULL POP  - Stash local changes, pull and pop\n"
+                printf " 7) FORGET FILE     - Remove file from git cache\n"
                 read -e -p "Select command (X to return): " sub_choice
                 case "$sub_choice" in
-                    17) choice="6" ;;
-                    18) choice="14" ;;
-                    19) choice="15" ;;
-                    20) choice="16" ;;
-                    21) choice="17" ;;
-                    22) choice="23" ;;
-                    23) choice="24" ;;
+                    1) choice="6" ;;
+                    2) choice="14" ;;
+                    3) choice="15" ;;
+                    4) choice="16" ;;
+                    5) choice="17" ;;
+                    6) choice="23" ;;
+                    7) choice="24" ;;
                     [Xx]) continue ;;
                     *) continue ;;
                 esac
                 ;;
             4)
                 printf "\n${YELLOW}${BOLD}[FILES]${NC}\n"
-                printf " 26) EDIT/CREATE FILE - Open file in editor\n"
-                printf " 27) DELETE FILE      - Remove a file\n"
-                printf " 28) VIEW FILE        - Read file contents\n"
+                printf " 1) EDIT/CREATE FILE - Open file in editor\n"
+                printf " 2) DELETE FILE      - Remove a file\n"
+                printf " 3) VIEW FILE        - Read file contents\n"
                 read -e -p "Select command (X to return): " sub_choice
                 case "$sub_choice" in
-                    26) choice="26" ;;
-                    27) choice="27" ;;
-                    28) choice="28" ;;
+                    1) choice="26" ;;
+                    2) choice="27" ;;
+                    3) choice="28" ;;
                     [Xx]) continue ;;
                     *) continue ;;
                 esac
                 ;;
             5)
                 printf "\n${YELLOW}${BOLD}[MAINTENANCE]${NC}\n"
-                printf " 24) BACKUP POINT     - Create local snapshot branch\n"
-        printf " 25) RESTORE BACKUP   - Restore from a local snapshot branch\n"
+                printf " 1) BACKUP POINT     - Create local snapshot branch\n"
+        printf " 2) RESTORE BACKUP   - Restore from a local snapshot branch\n"
                 read -e -p "Select command (X to return): " sub_choice
                 case "$sub_choice" in
-                    24) choice="7" ;;
-            25) choice="25" ;;
+                    1) choice="7" ;;
+                    2) choice="25" ;;
                     [Xx]) continue ;;
                     *) continue ;;
                 esac
