@@ -55,6 +55,7 @@ else
         echo -e "${YELLOW}.env file already exists in target.${NC}"
         read -e -p "Overwrite with new configuration? (y/n): " OVR_ENV
         if [[ "$OVR_ENV" =~ ^[Yy]$ ]]; then
+            cp "$ENV_FILE" "${ENV_FILE}.bak"
             cp "$ENV_EXAMPLE" "$ENV_FILE"
             NEEDS_CONFIG=true
         fi
