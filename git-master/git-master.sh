@@ -501,7 +501,14 @@ while true; do
             if [[ -n "$sel_br" ]]; then
                 printf "${YELLOW}Checking out $sel_br...${NC}\n"
                 git checkout "$sel_br" 2>/dev/null || git checkout -b "$sel_br" "origin/$sel_br"
-                git pull origin "$sel_br" || { printf "${RED}Error: Pull failed.${NC}\n"; read -e -p "Enter..." junk; continue; }
+
+                # Check if remote branch still exists before pulling
+                if git ls-remote --exit-code --heads origin "$sel_br" >/dev/null 2>&1; then
+                    git pull origin "$sel_br" || { printf "${RED}Error: Pull failed.${NC}\n"; read -e -p "Enter..." junk; continue; }
+                else
+                    printf "${YELLOW}Notice: Remote branch 'origin/%s' is gone.${NC}\n" "$sel_br"
+                    git branch --unset-upstream "$sel_br" 2>/dev/null || true
+                fi
             else
                 printf "${RED}Invalid selection.${NC}\n"
             fi
@@ -520,7 +527,14 @@ while true; do
                 target_branch=$(eval echo "\$be_${be_val}")
                 target_branch="${target_branch#remotes/origin/}"
                 git checkout "$target_branch" 2>/dev/null || git checkout -b "$target_branch" "origin/$target_branch"
-                git pull origin "$target_branch" 2>/dev/null || { printf "${RED}Error: Pull failed.${NC}\n"; read -e -p "Enter..." junk; continue; }
+
+                # Check if remote branch still exists before pulling
+                if git ls-remote --exit-code --heads origin "$target_branch" >/dev/null 2>&1; then
+                    git pull origin "$target_branch" 2>/dev/null || { printf "${RED}Error: Pull failed.${NC}\n"; read -e -p "Enter..." junk; continue; }
+                else
+                    printf "${YELLOW}Notice: Remote branch 'origin/%s' is gone.${NC}\n" "$target_branch"
+                    git branch --unset-upstream "$target_branch" 2>/dev/null || true
+                fi
             else
                 git checkout -b "$be_val" && printf "${GREEN}Branch $be_val created.${NC}\n"
             fi
