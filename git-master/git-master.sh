@@ -371,22 +371,24 @@ while true; do
                 ;;
             3)
                 printf "\n${YELLOW}${BOLD}[FIX]${NC}\n"
-                printf " 1) SYNC FORCE       - Overwrite Local or GitHub (Conflict fix)\n"
-                printf " 2) UNDO COMMIT     - Revert last commit (keep files)\n"
-                printf " 3) FORCE RESET     - Wipe local and reset to main (CAUTION)\n"
-                printf " 4) EMERGENCY       - Abort failed merges / Clear locks\n"
-                printf " 5) RESTORE COMMIT  - Checkout, Revert or Reset to a previous commit\n"
-                printf " 6) STASH PULL POP  - Stash local changes, pull and pop\n"
-                printf " 7) FORGET FILE     - Remove file from git cache\n"
+                printf " 1) FIX PULL ISSUES  - Resolve unstaged changes blocking pull\n"
+                printf " 2) SYNC FORCE       - Overwrite Local or GitHub (Conflict fix)\n"
+                printf " 3) UNDO COMMIT     - Revert last commit (keep files)\n"
+                printf " 4) FORCE RESET     - Wipe local and reset to main (CAUTION)\n"
+                printf " 5) EMERGENCY       - Abort failed merges / Clear locks\n"
+                printf " 6) RESTORE COMMIT  - Checkout, Revert or Reset to a previous commit\n"
+                printf " 7) STASH PULL POP  - Stash local changes, pull and pop\n"
+                printf " 8) FORGET FILE     - Remove file from git cache\n"
                 read -e -p "Select command (X to return): " sub_choice
                 case "$sub_choice" in
-                    1) choice="6" ;;
-                    2) choice="14" ;;
-                    3) choice="15" ;;
-                    4) choice="16" ;;
-                    5) choice="17" ;;
-                    6) choice="23" ;;
-                    7) choice="24" ;;
+                    1) choice="30" ;;
+                    2) choice="6" ;;
+                    3) choice="14" ;;
+                    4) choice="15" ;;
+                    5) choice="16" ;;
+                    6) choice="17" ;;
+                    7) choice="23" ;;
+                    8) choice="24" ;;
                     [Xx]) continue ;;
                     *) continue ;;
                 esac
@@ -499,7 +501,14 @@ while true; do
             if [[ -n "$sel_br" ]]; then
                 printf "${YELLOW}Checking out $sel_br...${NC}\n"
                 git checkout "$sel_br" 2>/dev/null || git checkout -b "$sel_br" "origin/$sel_br"
-                git pull origin "$sel_br" || { printf "${RED}Error: Pull failed.${NC}\n"; read -e -p "Enter..." junk; continue; }
+
+                # Check if remote branch still exists before pulling
+                if git ls-remote --exit-code --heads origin "$sel_br" >/dev/null 2>&1; then
+                    git pull origin "$sel_br" || { printf "${RED}Error: Pull failed.${NC}\n"; read -e -p "Enter..." junk; continue; }
+                else
+                    printf "${YELLOW}Notice: Remote branch 'origin/%s' is gone.${NC}\n" "$sel_br"
+                    git branch --unset-upstream "$sel_br" 2>/dev/null || true
+                fi
             else
                 printf "${RED}Invalid selection.${NC}\n"
             fi
@@ -518,7 +527,14 @@ while true; do
                 target_branch=$(eval echo "\$be_${be_val}")
                 target_branch="${target_branch#remotes/origin/}"
                 git checkout "$target_branch" 2>/dev/null || git checkout -b "$target_branch" "origin/$target_branch"
-                git pull origin "$target_branch" 2>/dev/null || { printf "${RED}Error: Pull failed.${NC}\n"; read -e -p "Enter..." junk; continue; }
+
+                # Check if remote branch still exists before pulling
+                if git ls-remote --exit-code --heads origin "$target_branch" >/dev/null 2>&1; then
+                    git pull origin "$target_branch" 2>/dev/null || { printf "${RED}Error: Pull failed.${NC}\n"; read -e -p "Enter..." junk; continue; }
+                else
+                    printf "${YELLOW}Notice: Remote branch 'origin/%s' is gone.${NC}\n" "$target_branch"
+                    git branch --unset-upstream "$target_branch" 2>/dev/null || true
+                fi
             else
                 git checkout -b "$be_val" && printf "${GREEN}Branch $be_val created.${NC}\n"
             fi
@@ -1016,6 +1032,71 @@ while true; do
                 else
                     printf "${YELLOW}Changes staged. Don't forget to commit them later.${NC}\n"
                 fi
+            fi
+            read -e -p "Enter..." junk ;;
+
+        30) # FIX PULL ISSUES
+            [[ "$IN_GIT" = false ]] && continue
+            clear
+            printf "${CYAN}${BOLD}FIX PULL ISSUES${NC}\n\n"
+
+            # Check if there are unstaged changes
+            if [[ -z $(git status --porcelain) ]]; then
+                printf "${GREEN}No unstaged changes found. You can pull safely.${NC}\n"
+                printf "${CYAN}Attempting to pull from origin ${CURRENT_BRANCH}...${NC}\n"
+                git pull origin "$CURRENT_BRANCH" || { printf "${RED}Pull failed.${NC}\n"; }
+            else
+                printf "${YELLOW}You have unstaged changes blocking the pull.${NC}\n\n"
+                printf "How would you like to resolve this?\n"
+                printf " 1) Stash changes, pull, and restore them (Recommended)\n"
+                printf " 2) Commit changes, then pull\n"
+                printf " 3) Discard local changes and pull (WARNING: Loses work)\n"
+                printf " X) Cancel\n\n"
+
+                read -e -p "Select action: " pull_fix_choice
+                case "$pull_fix_choice" in
+                    1)
+                        printf "\n${YELLOW}Stashing local changes...${NC}\n"
+                        git stash
+                        printf "${CYAN}Pulling from origin ${CURRENT_BRANCH}...${NC}\n"
+                        git pull origin "$CURRENT_BRANCH" || { printf "${RED}Pull failed.${NC}\n"; read -e -p "Enter..." junk; continue; }
+                        printf "${YELLOW}Popping stash...${NC}\n"
+                        git stash pop || true
+                        printf "${GREEN}Process completed.${NC}\n"
+                        ;;
+                    2)
+                        printf "\n${YELLOW}Committing changes...${NC}\n"
+                        read -e -p "Enter commit message: " fix_commit_msg
+                        if [[ -z "$fix_commit_msg" ]]; then
+                            fix_commit_msg="chore: auto-commit before pull"
+                        fi
+                        git add -A
+                        git commit -m "$fix_commit_msg" -q
+                        printf "${CYAN}Pulling from origin ${CURRENT_BRANCH}...${NC}\n"
+                        git pull origin "$CURRENT_BRANCH" --no-rebase || { printf "${RED}Pull failed. You may need to resolve merge conflicts.${NC}\n"; read -e -p "Enter..." junk; continue; }
+                        printf "${GREEN}Process completed.${NC}\n"
+                        ;;
+                    3)
+                        printf "\n${RED}WARNING: This will permanently destroy all uncommitted changes.${NC}\n"
+                        read -e -p "Are you absolutely sure? (y/N): " confirm_discard
+                        if [[ "$confirm_discard" == [Yy]* ]]; then
+                            printf "${YELLOW}Discarding local changes...${NC}\n"
+                            git reset --hard HEAD
+                            git clean -fd
+                            printf "${CYAN}Pulling from origin ${CURRENT_BRANCH}...${NC}\n"
+                            git pull origin "$CURRENT_BRANCH" || { printf "${RED}Pull failed.${NC}\n"; }
+                            printf "${GREEN}Process completed.${NC}\n"
+                        else
+                            printf "${YELLOW}Cancelled.${NC}\n"
+                        fi
+                        ;;
+                    [Xx])
+                        printf "${YELLOW}Cancelled.${NC}\n"
+                        ;;
+                    *)
+                        printf "${RED}Invalid selection.${NC}\n"
+                        ;;
+                esac
             fi
             read -e -p "Enter..." junk ;;
 
