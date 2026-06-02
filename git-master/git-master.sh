@@ -517,6 +517,10 @@ while true; do
         3) # BRANCH EXPLORER
             [[ "$IN_GIT" = false ]] && continue
             check_dirty || continue
+
+            printf "${CYAN}Fetching updates from origin...${NC}\n"
+            git fetch origin --prune >/dev/null 2>&1 || true
+
             get_branch_list_raw "be"
             print_colored_branch_list "be"
             read -e -p "Select number or name for NEW branch: " be_val
