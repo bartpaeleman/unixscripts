@@ -346,25 +346,29 @@ while true; do
                 printf " 1) CHECKOUT REPO    - Fetch & Switch to Repository (Branch)\n"
                 printf " 2) BRANCH EXPLORER  - Switch or Create new Feature Branch\n"
                 printf " 3) QUICK COMMIT     - Stage, Commit & Push active work\n"
-                printf " 4) SYNC FETCH       - Pull remote changes into active branch\n"
-                printf " 5) PREPARE UAT      - Merge branch into TEST (Overwrite conflicts)\n"
-                printf " 6) STAGING PUSH     - Force sync current to DEV-STABLE\n"
-                printf " 7) MERGE FIXES     - Process external fixes (Jules)\n"
-                printf " 8) RELEASE TAG     - Mark current state (v1.x)\n"
-                printf " 9) CLEANUP PRUNE   - Delete branches gone on GitHub\n"
-                printf " 10) DELETE BRANCH   - Manually delete a branch\n"
+        printf " 4) COMMIT LOCAL     - Stage & Commit local changes (No push)\n"
+        printf " 5) AMEND COMMIT     - Add local changes to last commit / edit message\n"
+        printf " 6) SYNC FETCH       - Pull remote changes into active branch\n"
+        printf " 7) PREPARE UAT      - Merge branch into TEST (Overwrite conflicts)\n"
+        printf " 8) STAGING PUSH     - Force sync current to DEV-STABLE\n"
+        printf " 9) MERGE FIXES      - Process external fixes (Jules)\n"
+        printf " 10) RELEASE TAG     - Mark current state (v1.x)\n"
+        printf " 11) CLEANUP PRUNE   - Delete branches gone on GitHub\n"
+        printf " 12) DELETE BRANCH   - Manually delete a branch\n"
                 read -e -p "Select command (X to return): " sub_choice
                 case "$sub_choice" in
                     1) choice="2" ;;
                     2) choice="3" ;;
                     3) choice="4" ;;
-                    4) choice="5" ;;
-                    5) choice="8" ;;
-                    6) choice="9" ;;
-                    7) choice="10" ;;
-                    8) choice="11" ;;
-                    9) choice="12" ;;
-                    10) choice="13" ;;
+            4) choice="31" ;;
+            5) choice="32" ;;
+            6) choice="5" ;;
+            7) choice="8" ;;
+            8) choice="9" ;;
+            9) choice="10" ;;
+            10) choice="11" ;;
+            11) choice="12" ;;
+            12) choice="13" ;;
                     [Xx]) continue ;;
                     *) continue ;;
                 esac
@@ -373,12 +377,12 @@ while true; do
                 printf "\n${YELLOW}${BOLD}[FIX]${NC}\n"
                 printf " 1) FIX PULL ISSUES  - Resolve unstaged changes blocking pull\n"
                 printf " 2) SYNC FORCE       - Overwrite Local or GitHub (Conflict fix)\n"
-                printf " 3) UNDO COMMIT     - Revert last commit (keep files)\n"
-                printf " 4) FORCE RESET     - Wipe local and reset to main (CAUTION)\n"
-                printf " 5) EMERGENCY       - Abort failed merges / Clear locks\n"
-                printf " 6) RESTORE COMMIT  - Checkout, Revert or Reset to a previous commit\n"
-                printf " 7) STASH PULL POP  - Stash local changes, pull and pop\n"
-                printf " 8) FORGET FILE     - Remove file from git cache\n"
+        printf " 3) UNDO COMMIT      - Revert last commit (keep files)\n"
+        printf " 4) FORCE RESET      - Wipe local and reset to main (CAUTION)\n"
+        printf " 5) EMERGENCY        - Abort failed merges / Clear locks\n"
+        printf " 6) RESTORE COMMIT   - Checkout, Revert or Reset to a previous commit\n"
+        printf " 7) STASH MANAGER    - View, apply, pop, or delete stashes\n"
+        printf " 8) FORGET FILE      - Remove file from git cache\n"
                 read -e -p "Select command (X to return): " sub_choice
                 case "$sub_choice" in
                     1) choice="30" ;;
@@ -917,21 +921,108 @@ while true; do
             fi
             read -e -p "Enter..." junk ;;
 
-        23) # STASH PULL POP
+        31) # COMMIT LOCAL
             [[ "$IN_GIT" = false ]] && continue
-            if [[ -n $(git status --porcelain) ]]; then
-                printf "${YELLOW}Stashing local changes...${NC}\n"
-                git stash
-                did_stash=true
+            git status -s
+            read -e -p "Commit Message (X to cancel): " msg
+            [[ "$msg" =~ ^[Xx]$ ]] && continue
+
+            if [[ -n "$msg" ]]; then
+                git add . && \
+                git commit -m "$msg" || { printf "${RED}Error: Commit failed.${NC}\n"; read -e -p "Enter..." junk; continue; }
+                printf "${GREEN}Changes committed locally.${NC}\n"
+                read -e -p "Enter..." junk
+            fi ;;
+
+        32) # AMEND COMMIT
+            [[ "$IN_GIT" = false ]] && continue
+            printf "${CYAN}${BOLD}AMEND COMMIT${NC}\n\n"
+            printf "${YELLOW}Last commit details:${NC}\n"
+            git log -1 --stat | more
+            printf "\n"
+
+            git status -s
+            printf "\n"
+
+            read -e -p "Do you want to stage and add current local changes to the last commit? (y/n): " add_changes
+            if [[ "$add_changes" == "y" ]]; then
+                git add .
+                printf "${GREEN}Local changes staged.${NC}\n"
+            fi
+
+            read -e -p "Do you want to change the commit message? (y/n): " change_msg
+            if [[ "$change_msg" == "y" ]]; then
+                read -e -p "New commit message: " new_msg
+                if [[ -n "$new_msg" ]]; then
+                    git commit --amend -m "$new_msg" || { printf "${RED}Error: Amend failed.${NC}\n"; read -e -p "Enter..." junk; continue; }
+                    printf "${GREEN}Commit amended with new message.${NC}\n"
+                else
+                    printf "${RED}Message empty. Amend aborted.${NC}\n"
+                fi
             else
-                did_stash=false
+                git commit --amend --no-edit || { printf "${RED}Error: Amend failed.${NC}\n"; read -e -p "Enter..." junk; continue; }
+                printf "${GREEN}Commit amended (message kept).${NC}\n"
             fi
-            printf "${CYAN}Pulling from origin ${CURRENT_BRANCH}...${NC}\n"
-            git pull origin "$CURRENT_BRANCH"
-            if [[ "$did_stash" == true ]]; then
-                printf "${YELLOW}Popping stash...${NC}\n"
-                git stash pop
+            read -e -p "Enter..." junk ;;
+
+        23) # STASH MANAGER
+            [[ "$IN_GIT" = false ]] && continue
+            clear
+            printf "${CYAN}${BOLD}STASH MANAGER${NC}\n\n"
+
+            stash_count=$(git stash list | wc -l)
+            if [[ "$stash_count" -eq 0 ]]; then
+                printf "${YELLOW}No stashes found.${NC}\n"
+                read -e -p "Enter..." junk
+                continue
             fi
+
+            printf "${YELLOW}Current Stashes:${NC}\n"
+            git stash list
+            printf "\n"
+
+            printf " 1) View Stash Changes (show)\n"
+            printf " 2) Apply Stash (keep in stash list)\n"
+            printf " 3) Pop Stash (apply and remove from list)\n"
+            printf " 4) Drop Stash (delete specific stash)\n"
+            printf " 5) Clear All Stashes (delete ALL)\n"
+            printf " X) Cancel\n\n"
+
+            read -e -p "Select action: " stash_action
+            case "$stash_action" in
+                1)
+                    read -e -p "Enter stash index (e.g., 0 for stash@{0}): " s_idx
+                    if [[ "$s_idx" =~ ^[0-9]+$ ]]; then
+                        git stash show -p "stash@{$s_idx}" | more
+                    fi
+                    ;;
+                2)
+                    read -e -p "Enter stash index (e.g., 0 for stash@{0}): " s_idx
+                    if [[ "$s_idx" =~ ^[0-9]+$ ]]; then
+                        git stash apply "stash@{$s_idx}"
+                    fi
+                    ;;
+                3)
+                    read -e -p "Enter stash index (e.g., 0 for stash@{0}): " s_idx
+                    if [[ "$s_idx" =~ ^[0-9]+$ ]]; then
+                        git stash pop "stash@{$s_idx}"
+                    fi
+                    ;;
+                4)
+                    read -e -p "Enter stash index to drop (e.g., 0 for stash@{0}): " s_idx
+                    if [[ "$s_idx" =~ ^[0-9]+$ ]]; then
+                        git stash drop "stash@{$s_idx}"
+                        printf "${GREEN}Stash stash@{$s_idx} dropped.${NC}\n"
+                    fi
+                    ;;
+                5)
+                    read -e -p "Are you sure you want to delete ALL stashes? (y/n): " clear_conf
+                    if [[ "$clear_conf" == "y" ]]; then
+                        git stash clear
+                        printf "${GREEN}All stashes cleared.${NC}\n"
+                    fi
+                    ;;
+            esac
             read -e -p "Enter..." junk ;;
 
         24) # FORGET CACHED FILE
