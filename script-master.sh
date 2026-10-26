@@ -49,6 +49,11 @@ launch_text() {
     bash "$SCRIPT_DIR/text-master/text-master.sh"
 }
 
+launch_network() {
+    bash "$SCRIPT_DIR/network-master/network-master.sh"
+}
+
+
 launch_system() {
     bash "$SCRIPT_DIR/system-manager/systemmanager.sh"
 }
@@ -71,6 +76,7 @@ while true; do
     echo "6) Data Master      (Convert/View CSV,JSON,XML)"
     echo "7) Web Scaffold     (Project Generator)"
     echo "8) System Manager   (System Config & Crontab)"
+    echo "9) Network Master   (Network Info & Sweeping)"
     echo -e "-----------------------------------"
     echo "S) Setup Environment (Permissions & Aliases)"
     echo "X) Exit"
@@ -85,6 +91,7 @@ while true; do
         6) launch_data ;;
         7) launch_web ;;
         8) launch_system ;;
+        9) launch_network ;;
         [sS]) setup_env ;;
         [xX]) exit 0 ;;
         *) echo "Invalid option." ; pause ;;
