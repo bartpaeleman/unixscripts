@@ -1,7 +1,6 @@
 import socket
 import sys
 import time
-import concurrent.futures
 import threading
 
 # Lock to ensure print output doesn't get interleaved
@@ -35,11 +34,19 @@ def scan_ports(target_ip, start_port, end_port):
             print("Could not connect to server.")
             sys.exit()
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
+        threads = []
+        for port in range(start_port, end_port + 1):
+            t = threading.Thread(target=scan_port, args=(target_ip, port))
+            threads.append(t)
+            t.start()
+            if len(threads) >= 100:
+                for t in threads:
+                    t.join()
+                threads = []
+        for t in threads:
+            t.join()
             # We use submit to start threads immediately
-            futures = [executor.submit(scan_port, target_ip, port) for port in range(start_port, end_port + 1)]
             # Wait for all futures to complete
-            concurrent.futures.wait(futures)
 
     except KeyboardInterrupt:
         print("\nScan interrupted.")

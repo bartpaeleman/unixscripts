@@ -120,7 +120,11 @@ get_mac() {
             *) printf '%s' "$M" | tr -d '\n\r'; return ;;
         esac
     fi
+    if command -v arp >/dev/null 2>&1; then
     arp -an 2>/dev/null | grep -F "($IP)" | grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}' | head -n1 | tr -d '\n\r'
+    elif command -v ip >/dev/null 2>&1; then
+        ip neigh show $IP 2>/dev/null | awk '{print $5}' | grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}' | head -n1 | tr -d '\n\r'
+    fi
 }
 
 get_name() {

@@ -68,7 +68,15 @@ menu_interfaces() {
                     echo "No routing tool found."
                 fi
                 pause ;;
-            4) check_cmd arp && arp -a | more; pause ;;
+            4)
+                if command -v arp &>/dev/null; then
+                    arp -a | more
+                elif command -v ip &>/dev/null; then
+                    ip neigh show | more
+                else
+                    echo "Neither arp nor ip command found."
+                fi
+                pause ;;
             [0]) return ;;
         esac
     done
@@ -170,8 +178,8 @@ menu_stats() {
             2)
                     netstat -tuln | more
                 pause ;;
-            3) check_cmd ss && ss -t -a | more; pause ;;
-            4) check_cmd ss && ss -u -a | more; pause ;;
+            3) if command -v ss &>/dev/null; then ss -t -a | more; else echo "ss command not found"; fi; pause ;;
+            4) if command -v ss &>/dev/null; then ss -u -a | more; else echo "ss command not found"; fi; pause ;;
             [0]) return ;;
         esac
     done
@@ -672,7 +680,7 @@ menu_nmap() {
                             "${cmd[@]}" > /dev/null 2>&1
                         fi
 
-                        if [[ -f "$tmp_xml" ]]; then
+                        if [[ -f "$tmp_xml" && -s "$tmp_xml" ]]; then
                             if [[ "$opt_output" == "txt" && -n "$opt_outfile" ]]; then
                                 mkdir -p "$(dirname "$opt_outfile")"
                                 if [[ $opt_disp_all -eq 1 ]]; then
@@ -692,7 +700,8 @@ menu_nmap() {
                                 rm -f "$tmp_xml" 2>/dev/null || sudo -n rm -f "$tmp_xml" 2>/dev/null
                             fi
                         else
-                            echo -e "${RED}Failed to generate XML output.${NC}"
+                            echo -e "${RED}Failed to generate XML output or XML is empty. Showing fallback text output:${NC}"
+                            "${cmd[@]:0:${#cmd[@]}-2}" | more
                         fi
                     fi
                 fi
