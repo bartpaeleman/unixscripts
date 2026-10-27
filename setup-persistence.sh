@@ -76,6 +76,7 @@ alias filemaster='"${REPO_DIR}/file-master/file-master.sh"'
 alias textmaster='"${REPO_DIR}/text-master/text-master.sh"'
 
 alias sysmaster='"${REPO_DIR}/system-manager/systemmanager.sh"'
+alias netmaster='"${REPO_DIR}/network-master/network-master.sh"'
 
 alias scripts='cd "${REPO_DIR}"'
 alias persis='"${REPO_DIR}/setup-persistence.sh"'
