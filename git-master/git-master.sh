@@ -143,13 +143,22 @@ check_dirty() {
             printf "${YELLOW}Detected tracked files that match .gitignore:${NC}\n"
             echo "$ignored_tracked" | sed 's/^/  /'
             printf "These will block branch checkouts if they exist on the target branch.\n"
-            read -e -p "Untrack them from git cache now (git rm --cached) and commit? (y/n): " rm_conf
+            printf "To safely proceed, we can back up your local files and untrack them from Git.\n"
+            read -e -p "Backup local files to .bak and untrack them? (y/n): " rm_conf
             if [[ "$rm_conf" == "y" ]]; then
+                # Backup files first to avoid losing them when checking out another branch
+                echo "$ignored_tracked" | while read -r f; do
+                    if [[ -f "$f" ]]; then
+                        cp "$f" "$f.bak"
+                        printf "${GREEN}Backed up ${f} to ${f}.bak${NC}\n"
+                    fi
+                done
+
                 # Untrack files while leaving them locally
                 echo "$ignored_tracked" | tr '\n' '\0' | xargs -0 git rm --cached -q
                 # Commit the deletion from git
                 git commit -m "chore: untrack ignored files" -q
-                printf "${GREEN}Files untracked and committed. They will remain locally.${NC}\n"
+                printf "${GREEN}Files untracked and committed. Your local files and backups are safe.${NC}\n"
 
                 # If no more changes, return success
                 if [[ -z $(git status -s) ]]; then
